@@ -1,0 +1,13 @@
+# Node
+node_modules/
+dist/
+.env
+server/data/*.json
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.moved-aside
+.DS_Store

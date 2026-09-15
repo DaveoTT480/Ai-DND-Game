@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Old Tavern - play test</title>
+<style>
+  :root { color-scheme: dark; --wood:#1d1410; --parch:#f1e4c6; --ink:#2b1d12; --ember:#e0902b; --muted:#a8917a; }
+  body { margin:0; background:var(--wood); color:var(--parch); font-family: Georgia, "Times New Roman", serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-weight: normal; letter-spacing: .04em; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  textarea, input, select { width: 100%; box-sizing: border-box; background:#2a1d16; color:var(--parch); border:1px solid #4a372b; border-radius:8px; padding:10px; font: inherit; }
+  textarea { min-height: 110px; }
+  button { background: var(--ember); color: var(--ink); border: 0; border-radius: 8px; padding: 10px 14px; font: inherit; cursor: pointer; margin: 6px 6px 0 0; }
+  button.secondary { background: #3b2a20; color: var(--parch); }
+  button:disabled { opacity: .5; cursor: wait; }
+  .card { background:#2a1d16; border:1px solid #4a372b; border-radius:12px; padding:14px; margin:10px 0; }
+  .card h3 { margin: 0 0 4px; }
+  .narration { white-space: pre-wrap; line-height: 1.5; }
+  .dice { color: var(--ember); font-style: italic; }
+  .stat { color: var(--muted); font-size: .9em; }
+  .row { display:flex; gap:8px; flex-wrap: wrap; }
+  .hidden { display: none; }
+  .err { color: #ff8b7a; }
+  .npc { display:inline-block; background:#3b2a20; border-radius:999px; padding:3px 10px; margin:4px 4px 0 0; font-size:.85em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The Old Tavern</h1>
+  <div class="sub">Server play-test page. The real game is the iPhone app.</div>
+  <div id="err" class="err"></div>
+
+  <section id="forge">
+    <label>Who are you? Describe your character.</label>
+    <textarea id="background" placeholder="A retired ship's cook with a cursed ladle and a grudge against the Admiralty..."></textarea>
+    <div class="row" style="margin-top:8px">
+      <input id="name" placeholder="Name (optional)" style="flex:1">
+      <select id="tone" style="flex:1">
+        <option>classic fantasy</option><option>grimdark</option><option>lighthearted comedy</option>
+        <option>gothic horror</option><option>swashbuckling high seas</option><option>steampunk mystery</option>
+      </select>
+      <input id="token" placeholder="API token (if set)" style="flex:1">
+    </div>
+    <button id="forgeBtn">Forge character</button>
+    <button id="loadBtn" class="secondary">Saved adventures</button>
+    <div id="saved"></div>
+  </section>
+
+  <section id="pick" class="hidden">
+    <div id="sheet" class="card"></div>
+    <h2>Choose your tale</h2>
+    <div id="scenarios"></div>
+    <div class="card">
+      <h3>Or write your own</h3>
+      <textarea id="custom" placeholder="I wake in a burning library with no memory of how I got here..."></textarea>
+      <button id="customBtn">Begin my own tale</button>
+    </div>
+  </section>
+
+  <section id="play" class="hidden">
+    <div id="status" class="stat"></div>
+    <div id="log"></div>
+    <div id="choices"></div>
+    <div class="row" style="margin-top:10px">
+      <input id="free" placeholder="Or do something else..." style="flex:1">
+      <button id="freeBtn">Act</button>
+    </div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let game = null;
+const headers = () => ({ "content-type": "application/json", ...($("token").value ? { authorization: "Bearer " + $("token").value } : {}) });
+async function api(path, method = "GET", body) {
+  $("err").textContent = "";
+  const res = await fetch("/api" + path, { method, headers: headers(), body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+function busy(on) { document.querySelectorAll("button").forEach((b) => (b.disabled = on)); }
+function show(id) { ["forge", "pick", "play"].forEach((s) => $(s).classList.toggle("hidden", s !== id)); }
+function renderSheet(c) {
+  const a = c.abilities;
+  $("sheet").innerHTML = `<h3>${c.name}</h3><div class="stat">${c.race} ${c.characterClass}, level ${c.level} - HP ${c.maxHp}, AC ${c.armorClass}</div>
+  <div class="stat">STR ${a.STR} DEX ${a.DEX} CON ${a.CON} INT ${a.INT} WIS ${a.WIS} CHA ${a.CHA}</div>
+  <p>${c.backstory.replace(/\n/g, "<br>")}</p><div class="stat">Traits: ${c.traits.join(", ")}</div><div class="stat">Carrying: ${c.inventory.map((i) => i.name).join(", ")} and ${c.gold} gold</div>`;
+}
+function renderScenarios(list) {
+  $("scenarios").innerHTML = list.map((s) => `<div class="card"><h3>${s.title}</h3><div class="dice">${s.tagline}</div><p>${s.synopsis}</p><div class="stat">${s.setting}</div><button data-id="${s.id}">Begin</button></div>`).join("");
+  $("scenarios").querySelectorAll("button").forEach((b) => (b.onclick = () => start({ scenarioId: b.dataset.id })));
+}
+function renderGame(g) {
+  game = g;
+  $("status").textContent = `${g.character.name} - HP ${g.hp}/${g.character.maxHp} - ${g.gold} gold - level ${g.level} (${g.xp} xp) - ${g.location}`;
+  $("log").innerHTML = g.turns.map((t) => {
+    const s = t.scene;
+    return `${t.action.kind !== "start" ? `<div class="card" style="text-align:right"><em>${t.action.text}</em></div>` : ""}
+      <div class="card"><h3>${s.chapterTitle}</h3>${s.diceResult ? `<div class="dice">${s.diceResult.summary}</div>` : ""}
+      <div class="narration">${s.narration}</div>${s.npcs.map((n) => `<span class="npc">${n.name} - ${n.role} (${n.attitude})</span>`).join("")}
+      ${s.ending ? `<hr><strong>${s.ending.victory ? "Victory" : "The End"}</strong><div class="narration">${s.ending.epilogue}</div>` : ""}</div>`;
+  }).join("");
+  const last = g.turns.at(-1)?.scene;
+  $("choices").innerHTML = (last?.choices ?? []).map((c) => `<button data-id="${c.id}" title="${c.hint}">${c.label}${c.check ? ` (${c.check.skill || c.check.ability} DC ${c.check.dc})` : ""}</button>`).join("");
+  $("choices").querySelectorAll("button").forEach((b) => (b.onclick = () => act({ choiceId: b.dataset.id })));
+  $("free").disabled = $("freeBtn").disabled = g.status === "ended";
+  window.scrollTo(0, document.body.scrollHeight);
+}
+async function guard(fn) { busy(true); try { await fn(); } catch (e) { $("err").textContent = e.message; } finally { busy(false); } }
+async function start(body) { await guard(async () => { const d = await api(`/games/${game.id}/start`, "POST", body); show("play"); renderGame(d.game); }); }
+async function act(body) { await guard(async () => { const d = await api(`/games/${game.id}/turn`, "POST", body); renderGame(d.game); $("free").value = ""; }); }
+$("forgeBtn").onclick = () => guard(async () => {
+  const d = await api("/games", "POST", { background: $("background").value, tone: $("tone").value, name: $("name").value });
+  game = d.game; renderSheet(game.character); renderScenarios(game.scenarios); show("pick");
+});
+$("customBtn").onclick = () => start({ customScenario: $("custom").value });
+$("freeBtn").onclick = () => act({ freeText: $("free").value });
+$("free").addEventListener("keydown", (e) => { if (e.key === "Enter") act({ freeText: $("free").value }); });
+$("loadBtn").onclick = () => guard(async () => {
+  const d = await api("/games");
+  $("saved").innerHTML = d.games.length ? d.games.map((g) => `<div class="card"><h3>${g.characterName}</h3><div class="stat">${g.race} ${g.characterClass} - ${g.scenarioTitle || "not started"} - ${g.turnCount} turns - ${g.status}</div><button data-id="${g.id}">Continue</button></div>`).join("") : "<div class='stat'>No saved adventures yet.</div>";
+  $("saved").querySelectorAll("button").forEach((b) => (b.onclick = () => guard(async () => {
+    const r = await api(`/games/${b.dataset.id}`); game = r.game;
+    if (game.status === "forged") { renderSheet(game.character); renderScenarios(game.scenarios); show("pick"); } else { show("play"); renderGame(game); }
+  })));
+});
+</script>
+</body>
+</html>
