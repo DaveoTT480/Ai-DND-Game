@@ -29,6 +29,7 @@ The API key never leaves the server. The app only ever talks to the game server.
 | `server/src/schemas.ts` | The structured-output contract: character sheet, scenarios, scenes, choices, dice, state changes. |
 | `server/src/engine.ts` | Turn logic: server-side dice, hit points, inventory, quests, levelling, history trimming. |
 | `server/public/index.html` | A tiny browser page for play-testing the server without Xcode. |
+| `server/api/index.ts`, `server/vercel.json` | Vercel deployment: one serverless function plus Vercel Blob for saves. |
 | `ios/` | The SwiftUI iPhone app. Open `ios/OldTavern.xcodeproj` in Xcode 16 or newer. |
 
 ## 1. Run the server
@@ -54,7 +55,8 @@ Environment variables (see `server/.env.example`):
 | `DM_MODEL` | `claude-opus-5` | Model that plays Dungeon Master. |
 | `DM_EFFORT` | `medium` | Reasoning effort per turn. `low` is faster and cheaper; `high` is more careful. |
 | `GAME_API_TOKEN` | | Optional shared secret. Clients must send `Authorization: Bearer <token>`. Set this before exposing the server to the internet. |
-| `DATA_DIR` | `./data` | Saved adventures, one JSON file each. |
+| `DATA_DIR` | `./data` | Saved adventures, one JSON file each (local runs). |
+| `BLOB_READ_WRITE_TOKEN` | | Injected by Vercel when a Blob store is connected; switches saves to Vercel Blob. |
 | `PORT` | `8787` | Listen port. |
 
 Tests and typecheck:
@@ -76,8 +78,49 @@ npm run typecheck
    - Simulator: `http://localhost:8787` (the default).
    - A real iPhone on the same Wi-Fi: `http://<your Mac's LAN IP>:8787`. `Info.plist` already
      allows local-network HTTP for development.
-   - Anywhere else: deploy the server behind HTTPS (Fly.io, Render, Railway, a VPS with Caddy)
-     and set `GAME_API_TOKEN` on both sides.
+   - Anywhere else: deploy to Vercel (next section) or any HTTPS host, and set
+     `GAME_API_TOKEN` on both sides.
+
+## 3. Deploy the server to Vercel
+
+The server runs as a single Vercel function (`server/api/index.ts`) with saved adventures in
+Vercel Blob. The iPhone app then talks to `https://<your-project>.vercel.app` from anywhere.
+
+1. Push this repository to GitHub (already done if you are reading this on GitHub).
+2. In Vercel, **Add New Project**, import the repo, and set **Root Directory** to `server`.
+   Leave the framework preset as "Other"; `server/vercel.json` supplies the build settings.
+3. Under **Environment Variables**, add:
+   - `ANTHROPIC_API_KEY` - your Anthropic key.
+   - `GAME_API_TOKEN` - a long random string. The server is public on the internet, so this
+     is what stops strangers from spending your API credits. Put the same value in the app's
+     Settings.
+   - Optional: `DM_MODEL`, `DM_EFFORT`.
+4. **Storage** tab, **Create Database**, choose **Blob**, and connect it to the project. Vercel
+   injects `BLOB_READ_WRITE_TOKEN`; the server detects it and stores each adventure as a
+   private JSON blob under `games/`. Without a Blob store, saves only last while the function
+   instance stays warm.
+5. Deploy. Check `https://<your-project>.vercel.app/health` returns `{"ok":true}`, then open the
+   root URL for the browser play-test page (paste the token in its token box).
+6. In the iPhone app, tap the gear, set the server to `https://<your-project>.vercel.app` and
+   paste the token. Since it is https, no local-network exceptions are involved.
+
+From the command line instead of the dashboard:
+
+```bash
+cd server
+npx vercel link            # pick or create the project, root directory is this folder
+npx vercel env add ANTHROPIC_API_KEY
+npx vercel env add GAME_API_TOKEN
+npx vercel blob store add old-tavern   # then connect it to the project in the dashboard
+npx vercel deploy --prod
+```
+
+Notes:
+
+- Story turns can take 20 to 90 seconds. `vercel.json` and the function set `maxDuration` to
+  300 seconds, the Hobby plan's ceiling. If your plan allows less, lower `DM_EFFORT` to `low`.
+- Redeploying does not lose adventures; they live in Blob, not on the function.
+- `npx vercel build` in `server/` reproduces the production bundle locally.
 
 ## How a game plays
 

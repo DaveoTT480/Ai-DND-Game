@@ -12,5 +12,9 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "api/**/*.ts",
+    "test/**/*.ts"
+  ]
 }
