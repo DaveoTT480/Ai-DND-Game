@@ -28,7 +28,7 @@ The API key never leaves the server. The app only ever talks to the game server.
 | `server/src/prompts.ts` | The Dungeon Master's rules. Edit this to change how the game feels. |
 | `server/src/schemas.ts` | The structured-output contract: character sheet, scenarios, scenes, choices, dice, state changes. |
 | `server/src/engine.ts` | Turn logic: server-side dice, hit points, inventory, quests, levelling, history trimming. |
-| `server/public/index.html` | A tiny browser page for play-testing the server without Xcode. |
+| `server/public/` | The mobile web app: play on iPhone with no Mac by adding it to the home screen. |
 | `server/api/index.ts`, `server/vercel.json` | Vercel deployment: one serverless function plus Vercel Blob for saves. |
 | `ios/` | The SwiftUI iPhone app. Open `ios/OldTavern.xcodeproj` in Xcode 16 or newer. |
 
@@ -42,7 +42,8 @@ set -a; source .env; set +a
 npm run dev                 # http://localhost:8787
 ```
 
-Open http://localhost:8787 in a browser to play-test from your Mac.
+Open http://localhost:8787 in a browser to play from your Mac (or from a phone on the same
+Wi-Fi, using your computer's local address).
 
 No API key yet? `DM_MOCK=1 npm run dev` runs a scripted Dungeon Master so you can exercise
 the app end to end.
@@ -68,7 +69,26 @@ npm test
 npm run typecheck
 ```
 
-## 2. Run the iPhone app
+## 2. Play on your iPhone without a Mac (web app)
+
+The server also serves a full mobile web version of the game at its root URL, with the same
+character forge, scenario picker, story view, dice, choices, free-text actions and character
+sheet as the native app. Once the server is deployed (section 3), you need nothing else:
+
+1. Open `https://<your-project>.vercel.app` in Safari on the iPhone.
+2. Tap the gear, paste your `GAME_API_TOKEN`, save. The key stays on the phone.
+3. Tap Share, then **Add to Home Screen**. The tavern gets its own icon and opens
+   full-screen like an app, no App Store or Xcode involved.
+
+The web app lives in `server/public/` (plain HTML, CSS and JavaScript, no build step). The
+native SwiftUI app in `ios/` is the nicer experience if you do have a Mac, and both share the
+same server and saved tales, so you can switch between them.
+
+If you want the native app on a phone without owning a Mac, the remaining routes are a cloud
+Mac build service (Xcode Cloud, Codemagic, Bitrise) delivering through TestFlight, which needs
+an Apple Developer account, or renting a cloud Mac. The web app is the practical answer.
+
+## 2b. Run the iPhone app from Xcode
 
 1. Open `ios/OldTavern.xcodeproj` in Xcode 16 or newer (the project uses Xcode 16's
    folder-synchronised groups, so any Swift file you add under `ios/OldTavern` is picked up
@@ -101,7 +121,7 @@ Vercel Blob. The iPhone app then talks to `https://<your-project>.vercel.app` fr
    private JSON blob under `games/`. Without a Blob store, saves only last while the function
    instance stays warm.
 5. Deploy. Check `https://<your-project>.vercel.app/health` returns `{"ok":true}`, then open the
-   root URL for the browser play-test page (paste the token in its token box).
+   root URL on your phone: that is the web app (section 2).
 6. In the iPhone app, tap the gear, set the server to `https://<your-project>.vercel.app` and
    paste the token. Since it is https, no local-network exceptions are involved.
 
