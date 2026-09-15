@@ -23,6 +23,8 @@ export interface EngineOptions {
   store: GameStore;
   roll?: RollFn;
   now?: () => Date;
+  /** Maximum Dungeon Master calls per UTC day across all games; 0 or undefined means unlimited. */
+  dailyCallLimit?: number;
 }
 
 export interface NewGameInput {
@@ -57,12 +59,37 @@ export class GameEngine {
   private readonly store: GameStore;
   private readonly roll: RollFn;
   private readonly now: () => Date;
+  private readonly dailyCallLimit: number;
 
   constructor(opts: EngineOptions) {
     this.dm = opts.dm;
     this.store = opts.store;
     this.roll = opts.roll ?? rollDie;
     this.now = opts.now ?? (() => new Date());
+    this.dailyCallLimit = Math.max(0, Math.floor(opts.dailyCallLimit ?? 0));
+  }
+
+  /**
+   * Spend guard: every call to the model counts against a per-day cap kept in
+   * the store, so a leaked token or a runaway client cannot burn through API
+   * credit. The count is best-effort (concurrent turns may race), which is
+   * fine for a ceiling.
+   */
+  private async spendOneCall(): Promise<void> {
+    if (!this.dailyCallLimit) return;
+    const key = `calls-${this.now().toISOString().slice(0, 10)}`;
+    const used = Number((await this.store.getMeta(key)) ?? "0") || 0;
+    if (used >= this.dailyCallLimit) {
+      throw new GameError("The tavern has closed for the night: today's story budget is spent. Come back tomorrow.", 429);
+    }
+    await this.store.setMeta(key, String(used + 1));
+  }
+
+  /** How many model calls have been made today and how many remain. */
+  async usageToday(): Promise<{ used: number; limit: number | null }> {
+    const key = `calls-${this.now().toISOString().slice(0, 10)}`;
+    const used = Number((await this.store.getMeta(key)) ?? "0") || 0;
+    return { used, limit: this.dailyCallLimit || null };
   }
 
   async createGame(input: NewGameInput): Promise<GameState> {
@@ -72,6 +99,7 @@ export class GameEngine {
     const tone = (input.tone ?? "").trim() || "classic fantasy";
     const name = (input.name ?? "").trim() || null;
 
+    await this.spendOneCall();
     const forged = await this.dm.forge({ system: FORGE_SYSTEM, user: forgeUserMessage(background, tone, name) });
     const character = forged.character;
     if (forged.scenarios.length === 0) throw new DungeonMasterError("The Dungeon Master offered no scenarios. Try again.");
@@ -128,6 +156,7 @@ export class GameEngine {
     game.status = "playing";
     const fateRoll = this.roll(20);
     const messages: DMMessage[] = [{ role: "user", content: openingUserMessage(game, fateRoll) }];
+    await this.spendOneCall();
     const scene = await this.dm.narrate({ system: this.systemFor(game), messages });
     this.applyScene(game, { kind: "start", text: "Begin the adventure", choiceId: null }, fateRoll, scene);
     await this.store.save(game);
@@ -165,6 +194,7 @@ export class GameEngine {
       content: actionUserMessage(game, action.text, action.kind === "choice" ? "choice" : "freeText", fateRoll, resolved, olderRecaps),
     });
 
+    await this.spendOneCall();
     const scene = await this.dm.narrate({ system: this.systemFor(game), messages });
     this.applyScene(game, action, fateRoll, scene);
     await this.store.save(game);

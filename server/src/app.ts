@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { DungeonMasterError } from "./dm.js";
@@ -7,9 +8,20 @@ import { toSnapshot, toSummary } from "./schemas.js";
 export interface AppOptions {
   engine: GameEngine;
   apiToken?: string | null;
+  /**
+   * When true and no apiToken is configured, every /api request is refused.
+   * Set on Vercel so a forgotten token can never expose the model to the internet.
+   */
+  requireToken?: boolean;
 }
 
-export function createApp({ engine, apiToken }: AppOptions) {
+function tokensMatch(given: string, expected: string): boolean {
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export function createApp({ engine, apiToken, requireToken = false }: AppOptions) {
   const app = new Hono();
 
   app.use("*", cors());
@@ -18,14 +30,20 @@ export function createApp({ engine, apiToken }: AppOptions) {
 
   const api = new Hono();
 
-  if (apiToken) {
+  if (requireToken && !apiToken) {
+    api.use("*", async (c) =>
+      c.json({ error: "This server has no GAME_API_TOKEN configured, so it refuses all requests. Set one in the environment." }, 503),
+    );
+  } else if (apiToken) {
     api.use("*", async (c, next) => {
       const header = c.req.header("authorization") ?? "";
       const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-      if (token !== apiToken) return c.json({ error: "Unauthorized" }, 401);
+      if (!tokensMatch(token, apiToken)) return c.json({ error: "Unauthorized" }, 401);
       await next();
     });
   }
+
+  api.get("/usage", async (c) => c.json(await engine.usageToday()));
 
   api.get("/games", async (c) => {
     const games = await engine.listGames();

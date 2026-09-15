@@ -72,3 +72,28 @@ test("bearer token protects the API when configured", async () => {
   assert.equal((await app.request("/api/games", { headers: { authorization: "Bearer secret-token" } })).status, 200);
   assert.equal((await app.request("/health")).status, 200, "health stays open");
 });
+
+test("requireToken refuses everything when no token is configured", async () => {
+  const engine = new GameEngine({ dm: new MockDungeonMaster(), store: new MemoryStore() });
+  const app = createApp({ engine, apiToken: null, requireToken: true });
+  const res = await app.request("/api/games");
+  assert.equal(res.status, 503);
+  assert.match(((await res.json()) as any).error, /GAME_API_TOKEN/);
+  assert.equal((await app.request("/health")).status, 200);
+});
+
+test("the daily call limit closes the tavern and /usage reports it", async () => {
+  const engine = new GameEngine({ dm: new MockDungeonMaster(), store: new MemoryStore(), dailyCallLimit: 2 });
+  const app = createApp({ engine, apiToken: "t" });
+  const auth = { authorization: "Bearer t" };
+  const created = await app.request("/api/games", json({ background: "A knight who fears horses more than dragons." }, auth));
+  assert.equal(created.status, 201);
+  const { game } = (await created.json()) as any;
+  const started = await app.request(`/api/games/${game.id}/start`, json({ scenarioId: "debt-of-ash" }, auth));
+  assert.equal(started.status, 200);
+  const blocked = await app.request(`/api/games/${game.id}/turn`, json({ choiceId: "a" }, auth));
+  assert.equal(blocked.status, 429);
+  assert.match(((await blocked.json()) as any).error, /budget/);
+  const usage = (await (await app.request("/api/usage", { headers: auth })).json()) as any;
+  assert.deepEqual(usage, { used: 2, limit: 2 });
+});

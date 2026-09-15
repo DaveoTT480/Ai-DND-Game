@@ -87,6 +87,19 @@ export class BlobStore implements GameStore {
     await this.client.put(this.pathFor(game.id), JSON.stringify(game));
   }
 
+  async getMeta(key: string): Promise<string | null> {
+    return this.client.get(this.metaPath(key));
+  }
+
+  async setMeta(key: string, value: string): Promise<void> {
+    await this.client.put(this.metaPath(key), value);
+  }
+
+  private metaPath(key: string): string {
+    if (!/^[A-Za-z0-9_.-]+$/.test(key)) throw new Error("Invalid meta key");
+    return `meta/${key}`;
+  }
+
   async delete(id: string): Promise<boolean> {
     if (!/^[A-Za-z0-9-]+$/.test(id)) return false;
     const pathname = this.pathFor(id);

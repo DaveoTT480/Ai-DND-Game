@@ -13,8 +13,15 @@ import { FileStore, MemoryStore, type GameStore } from "./store.js";
 export function buildApp(env: NodeJS.ProcessEnv = process.env, defaultDataDir?: string) {
   const mock = env.DM_MOCK === "1";
   const dm: DungeonMaster = mock ? new MockDungeonMaster() : new ClaudeDungeonMaster();
-  const engine = new GameEngine({ dm, store: chooseStore(env, defaultDataDir) });
-  const app = createApp({ engine, apiToken: env.GAME_API_TOKEN || null });
+  const onVercel = Boolean(env.VERCEL);
+  const dailyCallLimit = env.DM_DAILY_CALL_LIMIT !== undefined ? Number(env.DM_DAILY_CALL_LIMIT) : onVercel ? 300 : 0;
+  const engine = new GameEngine({ dm, store: chooseStore(env, defaultDataDir), dailyCallLimit });
+  const app = createApp({
+    engine,
+    apiToken: env.GAME_API_TOKEN || null,
+    // Anything reachable from the internet must have a token; local runs may skip it.
+    requireToken: onVercel || env.REQUIRE_API_TOKEN === "1",
+  });
   return { app, mock };
 }
 

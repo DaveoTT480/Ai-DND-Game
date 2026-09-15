@@ -7,10 +7,14 @@ export interface GameStore {
   list(): Promise<GameState[]>;
   save(game: GameState): Promise<void>;
   delete(id: string): Promise<boolean>;
+  /** Small key/value area for counters such as the daily spend guard. */
+  getMeta(key: string): Promise<string | null>;
+  setMeta(key: string, value: string): Promise<void>;
 }
 
 export class MemoryStore implements GameStore {
   protected games = new Map<string, GameState>();
+  protected meta = new Map<string, string>();
 
   async get(id: string) {
     return this.games.get(id) ?? null;
@@ -23,6 +27,12 @@ export class MemoryStore implements GameStore {
   }
   async delete(id: string) {
     return this.games.delete(id);
+  }
+  async getMeta(key: string) {
+    return this.meta.get(key) ?? null;
+  }
+  async setMeta(key: string, value: string) {
+    this.meta.set(key, value);
   }
 }
 
@@ -41,6 +51,11 @@ export class FileStore extends MemoryStore {
         for (const file of await readdir(this.dir)) {
           if (!file.endsWith(".json")) continue;
           try {
+            if (file === "_meta.json") {
+              const meta = JSON.parse(await readFile(path.join(this.dir, file), "utf8")) as Record<string, string>;
+              for (const [k, v] of Object.entries(meta)) this.meta.set(k, v);
+              continue;
+            }
             const game = JSON.parse(await readFile(path.join(this.dir, file), "utf8")) as GameState;
             this.games.set(game.id, game);
           } catch (error) {
@@ -74,5 +89,14 @@ export class FileStore extends MemoryStore {
     const existed = await super.delete(id);
     if (existed) await rm(path.join(this.dir, `${id}.json`), { force: true });
     return existed;
+  }
+  override async getMeta(key: string) {
+    await this.ensureLoaded();
+    return super.getMeta(key);
+  }
+  override async setMeta(key: string, value: string) {
+    await this.ensureLoaded();
+    await super.setMeta(key, value);
+    await writeFile(path.join(this.dir, "_meta.json"), JSON.stringify(Object.fromEntries(this.meta), null, 2));
   }
 }

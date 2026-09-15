@@ -54,7 +54,9 @@ Environment variables (see `server/.env.example`):
 | `ANTHROPIC_API_KEY` | | Required unless `DM_MOCK=1`. The SDK also picks up an `ant auth login` profile. |
 | `DM_MODEL` | `claude-opus-5` | Model that plays Dungeon Master. |
 | `DM_EFFORT` | `medium` | Reasoning effort per turn. `low` is faster and cheaper; `high` is more careful. |
-| `GAME_API_TOKEN` | | Optional shared secret. Clients must send `Authorization: Bearer <token>`. Set this before exposing the server to the internet. |
+| `GAME_API_TOKEN` | | Shared secret; clients send `Authorization: Bearer <token>`. Optional locally, required on Vercel (the server fails closed without it). |
+| `DM_DAILY_CALL_LIMIT` | 300 on Vercel, unlimited locally | Maximum model calls per UTC day; 429 after that. `0` disables the cap. |
+| `REQUIRE_API_TOKEN` | `0` | Set to `1` to fail closed without a token even for local runs. |
 | `DATA_DIR` | `./data` | Saved adventures, one JSON file each (local runs). |
 | `BLOB_READ_WRITE_TOKEN` | | Injected by Vercel when a Blob store is connected; switches saves to Vercel Blob. |
 | `PORT` | `8787` | Listen port. |
@@ -91,10 +93,9 @@ Vercel Blob. The iPhone app then talks to `https://<your-project>.vercel.app` fr
    Leave the framework preset as "Other"; `server/vercel.json` supplies the build settings.
 3. Under **Environment Variables**, add:
    - `ANTHROPIC_API_KEY` - your Anthropic key.
-   - `GAME_API_TOKEN` - a long random string. The server is public on the internet, so this
-     is what stops strangers from spending your API credits. Put the same value in the app's
-     Settings.
-   - Optional: `DM_MODEL`, `DM_EFFORT`.
+   - `GAME_API_TOKEN` - a long random string (`openssl rand -base64 32`). On Vercel the
+     server refuses every request until this is set. Put the same value in the app's Settings.
+   - Optional: `DM_MODEL`, `DM_EFFORT`, `DM_DAILY_CALL_LIMIT` (see "Keeping it private").
 4. **Storage** tab, **Create Database**, choose **Blob**, and connect it to the project. Vercel
    injects `BLOB_READ_WRITE_TOKEN`; the server detects it and stores each adventure as a
    private JSON blob under `games/`. Without a Blob store, saves only last while the function
@@ -114,6 +115,30 @@ npx vercel env add GAME_API_TOKEN
 npx vercel blob store add old-tavern   # then connect it to the project in the dashboard
 npx vercel deploy --prod
 ```
+
+### Keeping it private
+
+The URL is reachable from the internet, but nothing behind it can spend your API credits
+without the token. Four layers, from the app outwards:
+
+1. **The token is mandatory on Vercel.** With no `GAME_API_TOKEN` the server answers every
+   `/api` request with 503 and never calls the model. With a token, requests must carry
+   `Authorization: Bearer <token>`; the comparison is constant-time. Only your phone (and
+   anyone you hand the token to) can play. Treat it like a password: don't paste it in
+   screenshots, and rotate it in Vercel if a phone is lost.
+2. **Daily spend cap.** `DM_DAILY_CALL_LIMIT` caps model calls per UTC day across all games
+   (default 300 on Vercel, roughly ten long play sessions). When it is hit, the server returns
+   429 "the tavern has closed for the night" and stops calling the model until tomorrow, even
+   with a valid token. `GET /api/usage` shows today's count. Set it lower if you like.
+3. **Anthropic spend limit.** In the Anthropic Console, set a monthly spend limit for the
+   organisation or workspace, and give this project its own API key so you can revoke it
+   without touching anything else. This is the hard ceiling no bug can cross.
+4. **Vercel usage alerts.** Vercel's Hobby plan has fixed function limits and lets you set
+   usage notifications; Pro lets you set a spend cap.
+
+If you would rather not have a public URL at all, skip Vercel: run the server on your Mac and
+play over Wi-Fi, or put your Mac and phone on a private network such as Tailscale and point
+the app at the Mac's Tailscale address. Nothing in the server depends on Vercel.
 
 Notes:
 
@@ -149,6 +174,7 @@ All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, 
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | `GET` | `/health` | | `{ ok: true }` |
+| `GET` | `/api/usage` | | `{ used, limit }` model calls today |
 | `GET` | `/api/games` | | `{ games: GameSummary[] }` |
 | `POST` | `/api/games` | `{ background, tone?, name? }` | `{ game }` with `status: "forged"`, character and scenarios |
 | `GET` | `/api/games/:id` | | `{ game }` |
