@@ -116,6 +116,7 @@ struct ScenarioPickerView: View {
         .tavernCard(accent: Theme.ember.opacity(0.6))
     }
 
+    @MainActor
     private func start(scenarioId: String?, custom: String?) async {
         isStarting = true
         startingId = scenarioId ?? "custom"
@@ -126,9 +127,8 @@ struct ScenarioPickerView: View {
         }
         do {
             let started = try await settings.client.startGame(id: game.id, scenarioId: scenarioId, customScenario: custom)
-            // Replace this screen with the adventure so Back returns to the tavern.
-            if !path.isEmpty { path.removeLast() }
-            path.append(.play(started))
+            // Replace the forge and picker screens with the adventure so Back returns to the tavern.
+            path = [.play(started)]
         } catch {
             errorMessage = error.localizedDescription
         }

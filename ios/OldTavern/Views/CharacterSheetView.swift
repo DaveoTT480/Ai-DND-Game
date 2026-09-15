@@ -93,7 +93,7 @@ struct CharacterSheetView: View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader(text: title)
             FlowLayout(spacing: 6) {
-                ForEach(items, id: \.self) { item in
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                     Text(item)
                         .font(Theme.small)
                         .foregroundStyle(Theme.parchment)
@@ -113,7 +113,7 @@ struct CharacterSheetView: View {
                 Text("Empty pockets.").font(Theme.small).foregroundStyle(Theme.muted)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(game.inventory) { item in
+                    ForEach(Array(game.inventory.enumerated()), id: \.offset) { _, item in
                         HStack(alignment: .top) {
                             Text(item.quantity > 1 ? "\(item.name) x\(item.quantity)" : item.name)
                                 .font(Theme.body)
@@ -138,7 +138,7 @@ struct CharacterSheetView: View {
                 Text("Nothing written yet.").font(Theme.small).foregroundStyle(Theme.muted)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(game.quests, id: \.self) { quest in
+                    ForEach(Array(game.quests.enumerated()), id: \.offset) { _, quest in
                         Label(quest, systemImage: "scroll")
                             .font(Theme.body)
                             .foregroundStyle(Theme.parchment)
@@ -156,7 +156,7 @@ struct CharacterSheetView: View {
                 Text("No one yet.").font(Theme.small).foregroundStyle(Theme.muted)
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(game.npcsMet) { npc in
+                    ForEach(Array(game.npcsMet.enumerated()), id: \.offset) { _, npc in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
                                 Text(npc.name).font(Theme.display(16)).foregroundStyle(Theme.parchment)
@@ -226,7 +226,8 @@ struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
-        return CGSize(width: width == .infinity ? x : width, height: y + rowHeight)
+        let usedWidth = x > 0 ? x - spacing : 0
+        return CGSize(width: width == .infinity ? usedWidth : width, height: y + rowHeight)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {

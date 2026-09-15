@@ -9,16 +9,5 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Old Tavern connects to your game server on the local network while you develop.</string>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
 </dict>
 </plist>

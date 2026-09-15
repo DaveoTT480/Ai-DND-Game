@@ -189,6 +189,7 @@ struct ForgeCharacterView: View {
         }
     }
 
+    @MainActor
     private func forge() async {
         editorFocused = false
         isForging = true

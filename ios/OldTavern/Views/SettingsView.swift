@@ -21,7 +21,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Game server")
                 } footer: {
-                    Text("Run the server from the repo's server folder. In the iOS Simulator, http://localhost:8787 works. On a real iPhone, use your Mac's local network address, or the public URL where you deployed the server. The token must match GAME_API_TOKEN on the server if you set one.")
+                    Text("Run the server from the repo's server folder. In the iOS Simulator, http://localhost:8787 works. On a real iPhone, use your Mac's local network address (plain http is allowed on the local network). A server deployed elsewhere must use https. The token must match GAME_API_TOKEN on the server if you set one.")
                 }
 
                 Section {
@@ -64,6 +64,7 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
     }
 
+    @MainActor
     private func test() async {
         isTesting = true
         defer { isTesting = false }

@@ -66,7 +66,11 @@ struct APIClient {
     // MARK: - Plumbing
 
     private func makeRequest(path: String, method: String, body: [String: String?]?, timeout: TimeInterval) throws -> URLRequest {
-        guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
+        // Join so that a base with a path prefix (https://host/tavern) is preserved.
+        var base = baseURL.absoluteString
+        if !base.hasSuffix("/") { base += "/" }
+        let relative = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        guard let baseWithSlash = URL(string: base), let url = URL(string: relative, relativeTo: baseWithSlash)?.absoluteURL else {
             throw APIError(message: "Bad server URL. Check Settings.", status: 0)
         }
         var request = URLRequest(url: url, timeoutInterval: timeout)
@@ -86,13 +90,13 @@ struct APIClient {
     private func request<T: Decodable>(path: String, method: String = "GET", body: [String: String?]? = nil) async throws -> T {
         // Story turns can take a while: the Dungeon Master is thinking.
         let request = try makeRequest(path: path, method: method, body: body, timeout: 180)
-        let data: Data
-        let response: URLResponse
+        let result: (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            result = try await URLSession.shared.data(for: request)
         } catch {
             throw APIError(message: "Could not reach the tavern server. Is it running, and is the address right in Settings?", status: 0)
         }
+        let (data, response) = result
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
             let message = (try? JSONDecoder().decode(ErrorEnvelope.self, from: data))?.error ?? "Server error \(status)"

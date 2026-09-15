@@ -26,7 +26,10 @@ final class AppSettings {
     }
 
     var client: APIClient {
-        let trimmed = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty, !trimmed.lowercased().hasPrefix("http://"), !trimmed.lowercased().hasPrefix("https://") {
+            trimmed = "http://" + trimmed
+        }
         let url = URL(string: trimmed) ?? URL(string: Self.defaultServerURL)!
         return APIClient(baseURL: url, token: apiToken.trimmingCharacters(in: .whitespacesAndNewlines))
     }

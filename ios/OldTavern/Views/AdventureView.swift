@@ -314,7 +314,7 @@ struct SceneCard: View {
 
             if !scene.npcs.isEmpty {
                 FlowLayout(spacing: 6) {
-                    ForEach(scene.npcs) { npc in
+                    ForEach(Array(scene.npcs.enumerated()), id: \.offset) { _, npc in
                         HStack(spacing: 4) {
                             Circle().fill(Theme.color(for: npc.attitude)).frame(width: 6, height: 6)
                             Text("\(npc.name), \(npc.role)")
@@ -331,7 +331,7 @@ struct SceneCard: View {
 
             if !changeLines.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
-                    ForEach(changeLines, id: \.text) { line in
+                    ForEach(Array(changeLines.enumerated()), id: \.offset) { _, line in
                         Label(line.text, systemImage: line.icon)
                             .font(Theme.small)
                             .foregroundStyle(line.color)

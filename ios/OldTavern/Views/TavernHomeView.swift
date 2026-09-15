@@ -15,6 +15,7 @@ struct TavernHomeView: View {
     @State private var isLoading = false
     @State private var loadError: String?
     @State private var openError: String?
+    @State private var deleteError: String?
     @State private var showSettings = false
 
     var body: some View {
@@ -69,6 +70,11 @@ struct TavernHomeView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(openError ?? "")
+            }
+            .alert("Could not delete that tale", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(deleteError ?? "")
             }
         }
     }
@@ -133,6 +139,7 @@ struct TavernHomeView: View {
         }
     }
 
+    @MainActor
     private func load() async {
         isLoading = true
         defer { isLoading = false }
@@ -144,6 +151,7 @@ struct TavernHomeView: View {
         }
     }
 
+    @MainActor
     private func open(_ summary: GameSummary) async {
         do {
             let game = try await settings.client.getGame(id: summary.id)
@@ -153,12 +161,13 @@ struct TavernHomeView: View {
         }
     }
 
+    @MainActor
     private func delete(_ summary: GameSummary) async {
         do {
             try await settings.client.deleteGame(id: summary.id)
             games.removeAll { $0.id == summary.id }
         } catch {
-            openError = error.localizedDescription
+            deleteError = error.localizedDescription
         }
     }
 }
