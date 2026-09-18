@@ -105,6 +105,35 @@ struct NPC: Codable, Hashable, Identifiable {
     var role: String
     var description: String
     var attitude: Attitude
+    var real: Bool?
+
+    var isHistorical: Bool { real ?? false }
+}
+
+/// An era from the server's catalogue (GET /api/eras).
+struct Era: Codable, Hashable, Identifiable {
+    var id: String
+    var name: String
+    var when: String
+    var currency: String
+    var historical: Bool
+    var blurb: String
+    var examples: [String]
+}
+
+/// What a game remembers about its era.
+struct EraRef: Codable, Hashable {
+    var id: String
+    var name: String
+    var when: String
+    var currency: String
+    var historical: Bool
+    var custom: String?
+
+    static let classic = EraRef(id: "classic-fantasy", name: "Classic Fantasy", when: "An age of kingdoms and magic", currency: "gold", historical: false, custom: "")
+
+    /// "deben of copper" -> "deben", for tight status bars.
+    var shortCurrency: String { currency.components(separatedBy: " of ").first ?? currency }
 }
 
 struct DiceResult: Codable, Hashable {
@@ -186,6 +215,8 @@ struct GameSnapshot: Codable, Hashable, Identifiable {
     var tone: String
     var createdAt: String
     var updatedAt: String
+    var era: EraRef?
+    var research: [String]?
     var character: CharacterSheet
     var scenarios: [ScenarioOption]
     var scenario: ScenarioOption?
@@ -201,6 +232,8 @@ struct GameSnapshot: Codable, Hashable, Identifiable {
     var turns: [Turn]
 
     var latestScene: StoryScene? { turns.last?.scene }
+    var eraRef: EraRef { era ?? .classic }
+    var researchNotes: [String] { research ?? [] }
 }
 
 struct GameSummary: Codable, Hashable, Identifiable {
@@ -210,6 +243,7 @@ struct GameSummary: Codable, Hashable, Identifiable {
     var characterClass: String
     var race: String
     var level: Int
+    var eraName: String?
     var scenarioTitle: String?
     var location: String
     var turnCount: Int

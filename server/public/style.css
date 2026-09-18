@@ -65,6 +65,13 @@ textarea.field { min-height: 150px; resize: vertical; line-height: 1.45; }
 .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; font-size: 12px; margin: 4px 4px 0 0; }
 .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 
+.era-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 96px; color: var(--parchment); }
+.era.on { border-color: var(--ember); background: rgba(224,143,43,.14); }
+.era .nm { font-size: 18px; font-weight: 700; line-height: 1.1; }
+.era .wh { color: var(--ember); font-size: 12px; }
+.era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.hist { color: var(--gold); font-size: 11px; letter-spacing: .06em; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > * { flex: 1; }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

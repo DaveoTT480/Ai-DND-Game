@@ -26,6 +26,7 @@ The API key never leaves the server. The app only ever talks to the game server.
 |---|---|
 | `server/` | The game engine and AI Dungeon Master. Node 20+, TypeScript, Hono, the official Anthropic SDK. |
 | `server/src/prompts.ts` | The Dungeon Master's rules. Edit this to change how the game feels. |
+| `server/src/eras.ts` | The era catalogue and briefings: real people, places, events and currency per era. Add your own here. |
 | `server/src/schemas.ts` | The structured-output contract: character sheet, scenarios, scenes, choices, dice, state changes. |
 | `server/src/engine.ts` | Turn logic: server-side dice, hit points, inventory, quests, levelling, history trimming. |
 | `server/public/` | The mobile web app: play on iPhone with no Mac by adding it to the home screen. |
@@ -181,13 +182,24 @@ Notes:
 
 ## How a game plays
 
-1. **Who walks in?** Type a name (optional), a background in your own words, and pick a tone
+1. **When and who.** Pick an era first: Classic Fantasy, Ancient Egypt (1275 BC), Classical
+   Greece (431 BC), Imperial Rome (63 BC), the Viking Age (866), Sengoku Japan (1560), the
+   Golden Age of Piracy (1717), the Wild West (1878), Victorian London (1888), World War II
+   (occupied France, 1943), the Cold War (Berlin, 1961), a Game of Thrones-style Warring
+   Thrones world, or name your own time and place. Each era is pinned to one year and comes
+   with a briefing for the Keeper: the real rulers, spies, poets, outlaws and warlords alive
+   that year, the real places, the money, the technology, and how much of the supernatural is
+   allowed. Then type a name (optional), a background in your own words, and pick a tone
    (classic fantasy, grimdark, comedy, gothic horror, high seas, steampunk, or your own).
-2. **Forge.** One Claude call returns a full character sheet (race, class, ability scores, hit
-   points, skills, traits, gear, a polished backstory) and three scenarios: one grown from the
-   backstory, one open-world hook, one with a twist. You can also write your own scenario.
-3. **Play.** Each turn the Dungeon Master returns a scene: title, narration, any dice result,
-   newly met NPCs, a state change (hit points, gold, xp, items, quest log, location,
+2. **Forge.** One Claude call returns a full character sheet fitted to the era (period roles
+   instead of fantasy classes, period gear and money, a polished backstory), the Keeper's
+   research notes (four to six real people, places or events of that year and how they touch
+   this hero), and three scenarios that each draw on that research. You can also write your
+   own scenario.
+3. **Play.** The Dungeon Master is held to the era: at least one documented person from the
+   briefing appears within the first three turns, real figures are tagged as historical in
+   play, money is counted in the era's currency, and anachronisms are forbidden. Each turn
+   returns a scene: title, narration, any dice result, newly met NPCs, a state change (hit points, gold, xp, items, quest log, location,
    conditions), a one-line recap, a mood, and three or four choices. Pick one or type what you
    do instead.
 4. **Dice.** Choices can carry a skill check (ability, skill, DC). The server rolls a d20, adds
@@ -207,8 +219,9 @@ All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, 
 |---|---|---|---|
 | `GET` | `/health` | | `{ ok: true }` |
 | `GET` | `/api/usage` | | `{ used, limit }` model calls today |
+| `GET` | `/api/eras` | | `{ eras: [...] }` the era catalogue |
 | `GET` | `/api/games` | | `{ games: GameSummary[] }` |
-| `POST` | `/api/games` | `{ background, tone?, name? }` | `{ game }` with `status: "forged"`, character and scenarios |
+| `POST` | `/api/games` | `{ background, tone?, name?, eraId?, customEra? }` | `{ game }` with `status: "forged"`, character and scenarios |
 | `GET` | `/api/games/:id` | | `{ game }` |
 | `POST` | `/api/games/:id/start` | `{ scenarioId }` or `{ customScenario }` | `{ game, scene }` |
 | `POST` | `/api/games/:id/turn` | `{ choiceId }` or `{ freeText }` | `{ game, scene }` |

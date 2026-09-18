@@ -54,6 +54,16 @@ test("full play loop over HTTP", async () => {
   assert.equal((await app.request(`/api/games/${game.id}`)).status, 404);
 });
 
+test("GET /api/eras lists the catalogue without prompt text", async () => {
+  const app = makeApp();
+  const res = await app.request("/api/eras");
+  assert.equal(res.status, 200);
+  const { eras } = (await res.json()) as any;
+  assert.ok(eras.length >= 12);
+  assert.ok(eras.some((e: any) => e.id === "ww2" && e.currency === "francs"));
+  assert.equal(eras[0].briefing, undefined);
+});
+
 test("validation errors come back as 400 JSON", async () => {
   const app = makeApp();
   const res = await app.request("/api/games", json({ background: "no" }));

@@ -33,6 +33,11 @@ export class MockDungeonMaster implements DungeonMaster {
         backstory: `${name} grew up on the docks of Greyhallow, running errands for smugglers before learning that the best way out of debt is to be too useful to kill.\n\nThe locket is the only thing left from a mother who vanished on a ship that never came back.`,
         motivation: "Find the ship that took her mother, and settle a debt before it settles them.",
       },
+      research: [
+        "Old Mattock's ledger names half the harbour council; the harbourmaster's office keeps the only copy.",
+        "The Greyhallow fog hides the smugglers' cut at the north quay, where the ship that took her mother once moored.",
+        "Lady Vell's wedding is the social event of the season, and her ring is said to open a vault beneath the chapel.",
+      ],
       scenarios: [
         {
           id: "debt-of-ash",
@@ -105,7 +110,7 @@ export class MockDungeonMaster implements DungeonMaster {
         ? "Smoke hangs under the low beams of the Old Tavern's back room. Old Mattock counts coins without looking up. \"You know why you're here,\" he says."
         : `You act. ${diceResult ? diceResult.summary + "." : "The fate die shows " + fate + "."} The room holds its breath.`,
       diceResult,
-      npcs: isOpening ? [{ name: "Old Mattock", role: "moneylender", description: "A heavy man with delicate hands.", attitude: "suspicious" }] : [],
+      npcs: isOpening ? [{ name: "Old Mattock", role: "moneylender", description: "A heavy man with delicate hands.", attitude: "suspicious", real: false }] : [],
       choices: ending
         ? []
         : [

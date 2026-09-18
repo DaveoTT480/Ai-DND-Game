@@ -75,6 +75,14 @@
   .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 13px; margin: 4px 4px 0 0; }
   .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
 
+  .era-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 96px; }
+  .era.on { border-color: var(--ember); background: var(--ember-soft); }
+  .era .nm { font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .era .wh { color: var(--ember); font-size: 12px; }
+  .era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+  .era.on .bl { color: var(--parchment-dim); }
+  .hist { color: var(--gold); font-size: 11px; letter-spacing: .06em; }
   .icon-btn { background: none; border: 0; color: var(--muted); font-size: 24px; padding: 4px 6px; line-height: 1; }
 
   /* Saved tales */
@@ -177,6 +185,9 @@
   <div><button class="btn link" data-action="home">&#8249; Tavern</button></div>
   <h1>Who walks in?</h1>
   <p class="lead">Describe your character: their past, their trade, their flaws, what they carry. The Keeper turns it into a full character sheet and three adventures made for them.</p>
+  <div class="label">When does your tale take place?</div>
+  <div id="f-eras" class="era-grid"></div>
+  <input id="f-custom-era" class="field" placeholder="e.g. Florence in 1494, the Mughal court of Akbar, the Klondike gold rush" hidden>
   <div class="label">Name (optional)</div>
   <input id="f-name" class="field" placeholder="Leave blank and one will be chosen" autocomplete="off">
   <div class="label">Background</div>
@@ -301,9 +312,223 @@
   };
 
   // ------------------------------------------------------------------
+  // Eras. Each pins the tale to one year and briefs the Keeper on the real
+  // people, places and events of that moment, so the story is researched,
+  // not generic. `people` are documented historical figures alive and active
+  // in that year (or, for invented worlds, archetypes to build from).
+  // ------------------------------------------------------------------
+  const ERAS = [
+    {
+      id: "classic-fantasy", name: "Classic Fantasy", when: "An age of kingdoms and magic", currency: "gold", historical: false,
+      blurb: "Kingdoms, dungeons, dragons and spells. The tavern's home turf.",
+      briefing: "A high-fantasy world of your own invention: feudal kingdoms, guilds, wizards' towers, ancient ruins, orcs, elves and dragons. Magic is common and reliable. Invent people, places and history freely; keep them consistent once introduced.",
+      people: [],
+      examples: ["A dwarven blacksmith who lost his forge to a dragon and swore never to make another weapon. He carries a hammer anyway.", "A street magician who can do one real spell and pretends the rest are also real. Charming, broke, owes money to a tiefling loan shark."],
+    },
+    {
+      id: "egypt", name: "Ancient Egypt", when: "1275 BC, reign of Ramesses II", currency: "deben of copper", historical: true,
+      blurb: "The Nile in flood, Pharaoh's new capital rising, and the gods very close.",
+      briefing: "New Kingdom Egypt, 19th Dynasty, the year 1275 BC: the fifth year of Pharaoh Ramesses II, one year after his chariot battle against the Hittites at Kadesh, which he is having carved on every temple wall as a victory it barely was. Bronze tools and weapons, chariots, papyrus, linen, beer and emmer bread; no coinage (trade is by barter weighed in deben of copper or silver); scribes and priests hold the real power under Pharaoh. Amun's temple at Karnak in Thebes is the richest institution on earth. The tomb-builders of Deir el-Medina keep records of everything, including the first recorded labour strike a generation later. Beliefs are real in this tale: heka (magic), amulets, oaths sworn before the gods, the weighing of the heart. Keep magic mythic and priestly, never a fantasy fireball.",
+      people: [
+        "Ramesses II, Pharaoh, 28 years old, vain, vigorous, obsessed with monuments and his Kadesh 'victory'",
+        "Nefertari, Great Royal Wife, cultured and politically sharp, for whom Abu Simbel's smaller temple is being planned",
+        "Paser, Vizier of Upper Egypt, the most powerful administrator in the kingdom",
+        "Khaemwaset, the Pharaoh's young son, later High Priest of Ptah at Memphis and the first restorer of ancient monuments",
+        "Muwatalli II, Great King of the Hittites, Egypt's rival, whose spies watch the Delta",
+        "The tomb-workers of Deir el-Medina, foremen and scribes who know every secret of the Valley of the Kings",
+      ],
+      places: ["Pi-Ramesses, the new capital in the Delta, still being built", "Thebes (Waset) and the temple of Amun at Karnak", "Memphis and the temple of Ptah", "The Valley of the Kings and the workers' village of Deir el-Medina", "The Nile ferries, the Fayum, the Sinai turquoise mines"],
+      examples: ["A tomb-builder's daughter from Deir el-Medina who can read the sacred writing she is not supposed to know, and has seen what the foremen steal.", "A Nubian archer discharged from Pharaoh's army after Kadesh, carrying a Hittite dagger he should not have."],
+    },
+    {
+      id: "greece", name: "Classical Greece", when: "431 BC, the eve of the Peloponnesian War", currency: "drachmae", historical: true,
+      blurb: "Athens at its height, Sparta sharpening its spears, oracles that never lie plainly.",
+      briefing: "Greece in the spring of 431 BC. Athens under Pericles is the richest city in the Greek world, its Acropolis crowned by the new Parthenon, its empire held by triremes based at Piraeus. Sparta and its allies are about to invade Attica, opening the Peloponnesian War; next summer a plague will strike crowded Athens. Hoplites fight in bronze and linen, ships are triremes, money is silver drachmae stamped with Athena's owl. Citizens argue in the Agora and the Assembly; women, slaves and foreigners (metics) have no vote. The gods are real in this tale: Delphi's oracle speaks truly but slantwise, heroes' bones are relics, and creatures of myth linger at the edges of the map. Keep the supernatural at the level of myth and omen.",
+      people: [
+        "Pericles, first citizen of Athens, orator and strategos, about 64, building the empire's glory and leading it into war",
+        "Aspasia of Miletus, Pericles' partner, brilliant, mocked by comedians, host to philosophers",
+        "Socrates, about 38, stonemason's son, hoplite veteran, asking dangerous questions in the Agora",
+        "Sophocles and Euripides, rival tragedians staging plays at the Dionysia",
+        "Herodotus, the travelling historian, reading his Histories aloud in Athens",
+        "Phidias, sculptor of the Parthenon, lately accused by Pericles' enemies of embezzling gold",
+        "Alcibiades, about 19, Pericles' ward, beautiful, reckless, already talked about",
+        "King Archidamus II of Sparta, cautious, about to lead the invasion he argued against",
+      ],
+      places: ["The Acropolis and the Agora of Athens", "Piraeus and the Long Walls", "Delphi and its oracle", "Sparta, Corinth, Thebes, Olympia", "The islands of the Athenian empire"],
+      examples: ["A Spartan helot who fled to Athens and now rows a trireme for wages, hiding an accent that could get him killed by either side.", "A Delphic temple attendant who has heard an oracle meant for Pericles and cannot un-hear it."],
+    },
+    {
+      id: "rome", name: "Imperial Rome", when: "63 BC, the year of the Catiline conspiracy", currency: "denarii", historical: true,
+      blurb: "The Republic is rotting, the Forum seethes, and someone is planning to burn it all.",
+      briefing: "Rome in 63 BC, the late Republic. Cicero is consul; the bankrupt aristocrat Catiline, having lost the election, is gathering debtors, veterans and cut-throats to seize the city by fire and murder. Pompey is away conquering the East; Crassus is the richest man in Rome and funds everyone; Julius Caesar has just been elected Pontifex Maximus on borrowed money. The city is a million people of brick and timber tenements (the Subura), aqueducts, temples, gangs, moneylenders and slaves. Legions are iron and discipline; gladiators train at Capua; the Tullianum prison waits below the Capitol. Money is silver denarii, sestertii, bronze asses. Religion is omens, augurs, household gods and sworn oaths; keep the supernatural ambiguous and grounded unless the tone demands otherwise. In November Cicero will expose the plot in the Senate; on 5 December the conspirators will be strangled in the Tullianum.",
+      people: [
+        "Marcus Tullius Cicero, consul, brilliant orator, vain, brave when it counts, hunting the conspiracy",
+        "Lucius Sergius Catilina (Catiline), charismatic ruined patrician plotting revolution",
+        "Gaius Julius Caesar, 37, Pontifex Maximus, deep in debt, suspected by some of sympathy with Catiline",
+        "Marcus Licinius Crassus, richest man in Rome, patron of half the Senate, fire-brigade extortionist",
+        "Marcus Porcius Cato, incorruptible tribune-elect, the conscience of the Senate",
+        "Publius Clodius Pulcher, patrician gang leader and agitator",
+        "Fulvia, a noblewoman whose lover is a conspirator, who leaks the plot to Cicero",
+        "Servilia, Caesar's lover, Cato's half-sister, the sharpest political mind in the city",
+        "Marcus Antonius, 20, wild young nobleman, debts and duels",
+      ],
+      places: ["The Forum, the Senate House, the Rostra", "The Subura slums and the Palatine mansions", "The Campus Martius and the Tiber docks", "Ostia, Capua's gladiator schools, the Via Appia", "The Tullianum prison"],
+      examples: ["A Gaulish slave bought as a bodyguard by a senator, who has learned to read Latin in secret and now reads his master's letters.", "A retired centurion of Pompey's legions, back in Rome with a pension, a limp and an invitation from Catiline."],
+    },
+    {
+      id: "vikings", name: "The Viking Age", when: "AD 866, the Great Heathen Army lands", currency: "silver", historical: true,
+      blurb: "Longships on the Humber, kings with no answers, and gods who demand blood.",
+      briefing: "England and the North Sea world in the autumn of 866. A Danish fleet, the Great Heathen Army led by the sons of Ragnar, has landed in East Anglia, taken horses, and is marching on York, which falls on 1 November while Northumbria's two rival kings quarrel. Anglo-Saxon England is four kingdoms of thegns, monks and ealdormen; the Danes are shield walls, seax knives, pattern-welded swords for the rich, and payment in silver by weight (hacksilver, Arab dirhams). Longships raid, trade and carry news; skalds carry reputations. Christianity and the old gods coexist and clash: relics, runes, seiðr magic, the Norns; keep the supernatural at saga level, ambiguous and ominous.",
+      people: [
+        "Ivar the Boneless, cunning warlord, leader of the Danish army, whose legs may or may not work",
+        "Halfdan Ragnarsson and Ubba, his brothers, hungry for land and revenge",
+        "Ælla and Osberht, rival kings of Northumbria who will die at York in March 867",
+        "Edmund, young king of East Anglia, pious, who will be martyred by the Danes in 869",
+        "Æthelred, king of Wessex, and his 17-year-old brother Alfred, not yet Great",
+        "Wulfhere, Archbishop of York, a survivor who bends with the wind",
+      ],
+      places: ["York (Eoforwic, soon Jorvik)", "The Humber estuary and the Roman roads north", "Thetford and the East Anglian fens", "Lindisfarne and the holy islands", "Ribe and Hedeby, the Danish trading towns across the sea"],
+      examples: ["A Northumbrian monk who can copy the gospels beautifully and has just watched his abbey burn, carrying the one book he saved.", "A Danish shieldmaiden's younger brother, no good with an axe, very good with a story, who talks his way onto Ivar's ship."],
+    },
+    {
+      id: "samurai", name: "Sengoku Japan", when: "1560, the year of Okehazama", currency: "mon", historical: true,
+      blurb: "Warring provinces, a rising upstart lord, and the first guns in Japan.",
+      briefing: "Japan in 1560, the Warring States period. The Ashikaga shoguns rule nothing; every province is at war. In June, the young lord of Owari, Oda Nobunaga, will ambush and kill the far mightier Imagawa Yoshimoto at Okehazama in a thunderstorm, and the country's balance tips. Samurai fight with yari spears, bows and katana; matchlock guns (tanegashima) bought from Portuguese traders are changing everything. Ashigaru foot-soldiers, ninja from Iga and Kōga, warrior monks of Mount Hiei, Ikkō-ikki peasant leagues, Jesuit missionaries at Sakai. Money is copper mon on strings and rice measured in koku. Honour, debt and betrayal drive everything. Folk belief is real at the margins: yokai, onmyōji diviners, vengeful ghosts; keep it eerie and ambiguous.",
+      people: [
+        "Oda Nobunaga, 26, lord of Owari, called 'the fool of Owari', ruthless innovator, about to win Okehazama",
+        "Imagawa Yoshimoto, powerful lord of Suruga, marching on Kyoto with 25,000 men, fond of court refinement",
+        "Matsudaira Motoyasu (later Tokugawa Ieyasu), 17, Imagawa's hostage-vassal, patient and watchful",
+        "Kinoshita Tōkichirō (later Toyotomi Hideyoshi), Nobunaga's sandal-bearer, a peasant's son with a brilliant mind",
+        "Nōhime, Nobunaga's wife, daughter of the 'Viper of Mino', rumoured to be a spy",
+        "Takeda Shingen and Uesugi Kenshin, rival warlords locked in their long duel at Kawanakajima",
+        "The Portuguese traders and Jesuit priests at Sakai, selling guns and salvation",
+      ],
+      places: ["Kiyosu Castle and the plains of Owari", "Kyoto, the ruined capital", "Sakai, the free merchant port", "Mount Hiei's warrior monasteries", "The Tōkaidō road"],
+      examples: ["A rōnin whose lord was killed at Okehazama, now selling his sword by the day, sworn to a revenge he cannot afford.", "A Sakai gunsmith's apprentice who has stolen the secret of the tanegashima trigger and knows three lords who would kill for it."],
+    },
+    {
+      id: "pirates", name: "Golden Age of Piracy", when: "1717, the Caribbean", currency: "pieces of eight", historical: true,
+      blurb: "Nassau's pirate republic, the King's pardon on the table, and Blackbeard's flag on the horizon.",
+      briefing: "The Caribbean in 1717. Nassau on New Providence is a pirate republic run by captains and their crews, a year before Governor Woodes Rogers arrives to end it. The 1715 Spanish treasure fleet wrecked off Florida and salvage gold is still changing hands; in April, Sam Bellamy's Whydah went down off Cape Cod. King George's pardon is being offered to any pirate who surrenders. Ships are sloops and brigantines; weapons are flintlock pistols, cutlasses, swivel guns; crews vote on captains and sign articles; money is Spanish silver pieces of eight and gold doubloons. Slavery, sugar, the Royal Navy and the Spanish guarda costa are the powers of the sea. Superstition runs deep (Davy Jones, St Elmo's fire, cursed gold); keep it ambiguous.",
+      people: [
+        "Edward Teach, Blackbeard, newly captain of his own ship, cultivating a terrifying reputation with slow-burning fuses in his beard",
+        "Benjamin Hornigold, senior pirate of Nassau, who refuses to attack English ships and will soon take the pardon",
+        "Charles Vane, brutal, defiant, hates the idea of a pardon",
+        "Jack Rackham (Calico Jack), Vane's quartermaster, a dandy with ambitions",
+        "Stede Bonnet, the 'gentleman pirate', a Barbados planter who bought a ship out of boredom",
+        "Henry Jennings, who raided the Spanish salvage camps and made Nassau rich",
+        "Woodes Rogers, in London, planning to become Governor of the Bahamas and hang the holdouts",
+      ],
+      places: ["Nassau, New Providence, and its tent city of pirates", "Port Royal, Jamaica, and the Royal Navy station", "Havana and the Spanish Main", "Charles Town, Carolina", "The Florida wreck sites and the Bahama Banks"],
+      examples: ["A ship's surgeon pressed off a merchantman who has discovered he is rather good at piracy and rather bad at the guilt.", "A freed woman from Port Royal who keeps a tavern in Nassau and holds every captain's secrets and half their debts."],
+    },
+    {
+      id: "wild-west", name: "The Wild West", when: "1878, the American frontier", currency: "dollars", historical: true,
+      blurb: "Cattle towns, range wars, and lawmen who used to be outlaws.",
+      briefing: "The American West in 1878. Dodge City, Kansas, is the cattle capital, kept in uneasy order by assistant marshal Wyatt Earp and Ford County sheriff Bat Masterson; Doc Holliday is dealing faro nearby. In New Mexico, the Lincoln County War rages and a boy called Billy the Kid rides with the Regulators. Deadwood is a gold-rush boomtown two years after Wild Bill Hickok was shot there. The railroad, the telegraph, Colt revolvers, Winchester rifles, the Homestead Act, buffalo hunters, the Texas cattle trails, and the aftermath of the Indian Wars (Sitting Bull is in exile in Canada). Money is dollars, gold and silver coin. No magic; the frontier is dangerous enough. Treat Native nations, freedmen and immigrants as real people with their own aims, not scenery.",
+      people: [
+        "Wyatt Earp, assistant marshal of Dodge City, cold, ambitious, not yet a legend",
+        "Bat Masterson, 24, sheriff of Ford County, gambler, dandy, quick and clever",
+        "Doc Holliday, consumptive dentist, gambler, deadly and courteous",
+        "Billy the Kid (Henry McCarty), 18, fighting the Lincoln County War in New Mexico",
+        "John Chisum, cattle king of the Pecos, on the Kid's side of the war",
+        "Jesse James, still robbing trains in Missouri with a price on his head",
+        "Calamity Jane, scout, teamster and drunk in Deadwood",
+        "Buffalo Bill Cody, turning the frontier into a stage show",
+      ],
+      places: ["Dodge City and the Long Branch Saloon", "Deadwood, Dakota Territory", "Lincoln, New Mexico Territory", "The Santa Fe Trail and the Chisholm Trail", "Tombstone's silver camp, just being staked"],
+      examples: ["A Chinese railroad cook who buried a payroll in the Sierra and has finally come back for it, with a shotgun and no one to trust.", "A widowed homesteader who can outshoot the county and has been offered a deputy's badge nobody expects her to keep."],
+    },
+    {
+      id: "victorian", name: "Victorian London", when: "1888, the autumn of the Whitechapel murders", currency: "shillings", historical: true,
+      blurb: "Gaslight, fog, sensational newspapers, and something wrong in the East End.",
+      briefing: "London in the autumn of 1888, the largest city on earth. In Whitechapel an unknown killer the papers call Jack the Ripper is murdering women; Inspector Abberline leads the hunt while Commissioner Sir Charles Warren is pilloried. The match-girls' strike has just been won; the docks are on the edge of revolt; spiritualism, séances and the newly founded Hermetic Order of the Golden Dawn fascinate the respectable. Hansom cabs, gas lamps, the Underground, telegraphs, music halls, the Lyceum theatre, opium dens in Limehouse, workhouses and gin. Money is pounds, shillings and pence. Class is everything. The occult may be real at the edges of this tale, but never certain.",
+      people: [
+        "Inspector Frederick Abberline of Scotland Yard, dogged, decent, out of his depth",
+        "Sir Charles Warren, Metropolitan Police Commissioner, a soldier who does not understand the press",
+        "Annie Besant, socialist, journalist, who led the match-girls to victory in July",
+        "Arthur Conan Doyle, a Southsea doctor whose first Sherlock Holmes story appeared last year",
+        "Bram Stoker, managing the Lyceum for the actor Henry Irving, collecting strange lore",
+        "Oscar Wilde, wit of every drawing room, not yet notorious",
+        "Joseph Merrick, the 'Elephant Man', living quietly at the London Hospital, Whitechapel",
+        "William Booth, general of the Salvation Army, feeding the East End",
+      ],
+      places: ["Whitechapel, Spitalfields and Commercial Street", "Scotland Yard", "Limehouse docks and opium dens", "The Lyceum theatre and the Strand", "Mayfair drawing rooms and the Thames foreshore"],
+      examples: ["A former Pinkerton detective from Chicago, hired by a London newspaper to catch the Ripper before the police do, with a past of her own to hide.", "A Whitechapel pickpocket who lifted the wrong man's watch and found a letter that could hang a gentleman."],
+    },
+    {
+      id: "ww2", name: "World War II", when: "1943, occupied France", currency: "francs", historical: true,
+      blurb: "Résistance cells, SOE radios, the Gestapo, and a country deciding what it is.",
+      briefing: "Occupied France in the spring of 1943. Germany occupies the whole country; Vichy collaborates; the new forced-labour draft (STO) is driving young men into the Maquis in the hills. Britain's Special Operations Executive drops agents, radios and Sten guns by Lysander and parachute; the Gestapo and the French Milice hunt them. Jean Moulin is unifying the Resistance for de Gaulle and will be captured in Lyon in June and tortured by Klaus Barbie. Ration cards, curfews, forged papers, bicycle couriers, coded BBC messages, escape lines over the Pyrenees. Money is francs. No magic. The war is turning: Stalingrad has fallen to the Soviets, the Allies are winning in Tunisia and will land in Sicily in July. Courage here is quiet and costs everything.",
+      people: [
+        "Jean Moulin, de Gaulle's delegate, unifying the Resistance under a false name, months from betrayal",
+        "Klaus Barbie, Gestapo chief in Lyon, the 'Butcher of Lyon'",
+        "Nancy Wake, 'the White Mouse', Marseille socialite running an escape line with a five-million-franc price on her head",
+        "Virginia Hall, American SOE agent with a wooden leg, organising networks in Lyon before fleeing over the Pyrenees",
+        "Josephine Baker, entertainer and Free French courier carrying secrets in her sheet music",
+        "Rose Valland, Louvre curator secretly logging every artwork the Nazis loot",
+        "Pierre Laval, Vichy's prime minister, collaborating to the hilt",
+        "Charles de Gaulle, in London and Algiers, the voice on the BBC",
+      ],
+      places: ["Lyon, capital of the Resistance", "Paris under the swastika", "Marseille and the Vieux-Port, dynamited in January", "The Pyrenees escape routes into Spain", "The plateaus of the Vercors and the Maquis camps"],
+      examples: ["A village schoolteacher who runs the Resistance letterbox from her classroom and has just been asked to hide a wounded RAF navigator.", "A Lyon printer who forges ration cards and identity papers, and has noticed the same man watching his shop for three days."],
+    },
+    {
+      id: "cold-war", name: "The Cold War", when: "1961, Berlin, the summer the Wall goes up", currency: "marks", historical: true,
+      blurb: "Spies, defectors, a divided city, and the night the border closes.",
+      briefing: "Berlin in the summer of 1961. The city is the front line: four occupation sectors, thousands fleeing East to West every week, Khrushchev threatening, Kennedy fresh from the Bay of Pigs and a bruising Vienna summit. On the night of 12-13 August, East German troops seal the border with barbed wire; the Wall follows in concrete. The Stasi under Mielke and the HVA under Markus Wolf run informers and 'Romeo' agents; the CIA, MI6 and BND run theirs; the Soviets have Penkovsky leaking to the West without knowing it. Gagarin has just orbited the earth. Trabants and Mercedes, jazz clubs and Kontrolle, dead drops, microfilm, tunnels under Bernauer Strasse, Checkpoint Charlie, the Glienicke Bridge. Money is West and East marks. No magic; trust is the only currency that matters, and it is counterfeit.",
+      people: [
+        "Willy Brandt, mayor of West Berlin, furious at Allied inaction",
+        "Walter Ulbricht, East German leader, who said 'nobody intends to build a wall' in June",
+        "Erich Mielke, minister of State Security, and Markus Wolf, spymaster whose face the West has never seen",
+        "Oleg Penkovsky, Soviet colonel secretly passing missile secrets to MI6 and the CIA",
+        "George Blake, MI6 officer, arrested in April as a Soviet mole, jailed for 42 years",
+        "Kim Philby, in Beirut as a journalist, two years from defecting",
+        "General Lucius Clay, Kennedy's envoy, who will face Soviet tanks at Checkpoint Charlie in October",
+        "Conrad Schumann, the East German border guard who leaps the wire on 15 August",
+      ],
+      places: ["Checkpoint Charlie and Friedrichstrasse", "Bernauer Strasse, where the Wall runs through the houses", "The Glienicke Bridge of spies", "Tempelhof airport", "Stasi headquarters in Lichtenberg", "The Kurfürstendamm and its jazz clubs"],
+      examples: ["An East Berlin tram driver whose sister lives three streets away on the wrong side of a border that did not exist yesterday.", "A young West German journalist who has been handed an envelope by a stranger at the Glienicke Bridge and told to deliver it by midnight."],
+    },
+    {
+      id: "thrones", name: "Warring Thrones", when: "A Game of Thrones-style age of great houses", currency: "gold", historical: false,
+      blurb: "Great houses, a contested crown, winter coming, and knives in every smile.",
+      briefing: "An invented world in the spirit of A Game of Thrones: a continent of proud great houses sworn to a fragile crown, an ageing king, ambitious queens, exiled heirs across a narrow sea, a wall of ice in the north with something older behind it, and a long winter coming. Politics, debt, marriage alliances, betrayals and sudden brutal violence drive the story; dragons are a memory and magic is rare, half-believed and always costly. Invent your own houses, sigils, words, cities and characters; do not use names or characters from any published book or show. Keep it adult in stakes, PG-13 in depiction.",
+      people: [
+        "Archetypes to invent from: the ageing king who drinks; the queen from a rich house; the honourable lord summoned to court against his judgement; the clever dwarf or cripple nobody underestimates twice; the exiled heir across the sea with a claim and no army; the master of whisperers; the master of coin who owes more than the crown; the bastard on the Wall; the sellsword with a code",
+      ],
+      places: ["The capital and its throne room", "The great houses' seats, each with a sigil and words", "The Wall of ice and the wild lands beyond", "The Free Cities across the narrow sea", "Roadside inns, tourney grounds, septs and brothels"],
+      examples: ["A hedge knight with a borrowed name and a real sword, riding to a tourney where the prize is a place in a great house's guard.", "A master of coin's clerk who has found the page in the ledger that explains where the crown's gold actually went."],
+    },
+    {
+      id: "custom", name: "Custom era", when: "You decide", currency: "coin", historical: true,
+      blurb: "Name any time and place. The Keeper researches it.",
+      briefing: "",
+      people: [],
+      places: [],
+      examples: ["A person of that time and place with a trade, a secret and a debt."],
+    },
+  ];
+  const eraById = (id) => ERAS.find((e) => e.id === id) || ERAS[0];
+
+  /** The Keeper's briefing text for an era, ready to drop into a prompt. */
+  function eraBriefing(era) {
+    if (era.id === "custom") {
+      return `Era chosen by the player: ${era.custom}
+This is a real historical period unless the player's words make it fictional. Before writing, recall what you know of it: the exact years, the rulers and notable people alive then, the technology, money, food, laws, beliefs and daily life. Use REAL documented people, places and events of that period in the tale; name them; keep them accurate; avoid anachronism.`;
+    }
+    const lines = [`Era: ${era.name} - ${era.when}.`, era.briefing];
+    if (era.people.length) lines.push("", era.historical ? "Documented people alive and active in this year (use them as NPCs, keep them true to the record):" : "Cast to build from:", ...era.people.map((p) => `- ${p}`));
+    if (era.places?.length) lines.push("", "Places:", ...era.places.map((p) => `- ${p}`));
+    lines.push("", `Money is counted in ${era.currency}.`);
+    return lines.join("\n");
+  }
+
+  // ------------------------------------------------------------------
   // State
   // ------------------------------------------------------------------
   const games = new Map();
+  let eraId = "classic-fantasy";
   let sample = null;      // claude sample capability, or null
   let store = null;       // save store (db-backed or local)
   let busy = false;
@@ -397,18 +622,27 @@ How to build the character:
 - 2 to 4 proficient skills from: Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival.
 - Backstory: warm, vivid third-person prose, 2 to 3 short paragraphs. Keep the player's facts; add colour, not contradictions.
 
+The era: the character and everything about them must belong to the era briefed below. characterClass is a period role (legionary, hoplite, scribe, priest of Amun, hedge knight, SOE wireless operator, Stasi informant, cattle drover), never a fantasy class unless the era is fantasy. Gear, names, money and manners fit the time and place. Keep the D&D-style ability scores and skills regardless of era.
+
+Research: return "research", 4 to 6 short lines. Each names ONE real documented person, place or event from the briefing (or, for invented worlds, one invented house, place or event you commit to), says why it matters in that year, and how it could touch this hero. This is the Keeper showing their homework; the scenarios must draw on it.
+
 How to build the three scenarios, all in the requested tone:
 - Scenario 1 grows directly out of the backstory (an old debt, a lost friend, a rival).
 - Scenario 2 is an open-world hook that starts somewhere new and strange.
 - Scenario 3 has a twist or unusual premise (a heist, a mystery, a siege, a wedding gone wrong).
 - Each is playable in 20 to 30 turns with a central conflict and a clear stake. Titles are 2 to 5 words; taglines one line for a notice board.
+- Each scenario names at least one real person, place or event from the briefing in its synopsis.
 
 Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 {"character":{"name":string,"race":string,"characterClass":string,"level":int,"maxHp":int,"armorClass":int,"abilities":{"STR":int,"DEX":int,"CON":int,"INT":int,"WIS":int,"CHA":int},"proficientSkills":[string],"traits":[string],"inventory":[{"name":string,"quantity":int,"description":string}],"gold":int,"appearance":string,"backstory":string,"motivation":string},
+ "research":[string, ... 4 to 6],
  "scenarios":[{"id":"short-slug","title":string,"tagline":string,"synopsis":string,"setting":string,"tone":string,"openingLocation":string}, ... exactly 3]}`;
 
-  function forgePrompt(background, toneName, name) {
+  function forgePrompt(background, toneName, name, era) {
     return `${FORGE_RULES}
+
+## The era (briefing)
+${eraBriefing(era)}
 
 Tone requested: ${toneName}
 ${name ? `The player wants the character to be called: ${name}` : "The player did not choose a name - invent one that suits the description."}
@@ -470,6 +704,16 @@ Forge the character sheet and three scenarios. JSON only.`;
 - Experience: 10 to 50 xp for meaningful progress, 100 or more for a major victory.
 - recap is one past-tense sentence for the story log. npcs lists only characters introduced this scene or whose attitude changed. stateChange.location is the hero's current place in a few words; statusEffects is the FULL current list of conditions (empty when none).
 
+## The era (briefing)
+${eraBriefing(game.era)}
+
+## Historical faithfulness
+- You have been briefed on the era above. Use it. Real people, real places and real events of that exact year appear in the tale as characters and backdrop.
+- Feature at least one documented person from the briefing within the first three turns, in character and true to what is known of them, and keep bringing the era's people, customs, technology, food, law and belief into play as the story goes.
+- The Keeper's research notes for this hero: ${game.research.length ? game.research.map((r) => `\n- ${r}`).join("") : "(none)"}
+- No anachronisms: nothing exists in the tale that did not exist in that year and place, unless the tone explicitly asks for it. Money is counted in ${game.era.currency}.
+- In npcs, set real: true for a documented historical person and real: false for one you invented.
+
 ## The hero
 ${characterBlock(game.character)}
 
@@ -483,7 +727,7 @@ Opening location: ${s.openingLocation}
 ## Output
 Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 {"chapterTitle":string (max 40 chars),"narration":string (markdown),"diceResult":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int,"roll":int,"modifier":int,"total":int,"success":bool,"summary":string},
- "npcs":[{"name":string,"role":string,"description":string,"attitude":"friendly|neutral|suspicious|hostile"}],
+ "npcs":[{"name":string,"role":string,"description":string,"attitude":"friendly|neutral|suspicious|hostile","real":bool}],
  "choices":[{"id":"a","label":string,"hint":string,"check":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int}}],
  "stateChange":{"hpDelta":int,"goldDelta":int,"xpGained":int,"itemsGained":[{"name":string,"quantity":int,"description":string}],"itemsLost":[string],"questUpdates":[string],"location":string,"statusEffects":[string]},
  "recap":string,"mood":"calm|tense|mysterious|combat|triumphant|grim|festive","ending":null|{"victory":bool,"epilogue":string}}`;
@@ -494,7 +738,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     return [
       `Hit points: ${game.hp}/${game.character.maxHp}`,
       `Level ${game.level}, ${game.xp} xp`,
-      `Gold: ${game.gold}`,
+      `Money: ${game.gold} ${game.era.currency}`,
       `Inventory: ${inv}`,
       `Conditions: ${game.statusEffects.join(", ") || "none"}`,
       `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,
@@ -586,7 +830,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       chapterTitle: str(s.chapterTitle, "The Story Continues"),
       narration: str(s.narration, "The moment passes in silence."),
       diceResult: dr ? { ability: dr.ability, skill: dr.skill ? String(dr.skill) : null, dc: int(dr.dc), roll: int(dr.roll), modifier: int(dr.modifier), total: int(dr.total), success: Boolean(dr.success), summary: str(dr.summary) } : null,
-      npcs: arr(s.npcs).map((n) => ({ name: str(n?.name, "Stranger"), role: str(n?.role), description: str(n?.description), attitude: ATTITUDES.includes(n?.attitude) ? n.attitude : "neutral" })),
+      npcs: arr(s.npcs).map((n) => ({ name: str(n?.name, "Stranger"), role: str(n?.role), description: str(n?.description), attitude: ATTITUDES.includes(n?.attitude) ? n.attitude : "neutral", real: Boolean(n?.real) })),
       choices, stateChange: {
         hpDelta: int(sc.hpDelta), goldDelta: int(sc.goldDelta), xpGained: Math.max(0, int(sc.xpGained)),
         itemsGained: arr(sc.itemsGained).map(normItem), itemsLost: arr(sc.itemsLost).map(String), questUpdates: arr(sc.questUpdates).map(String),
@@ -612,15 +856,16 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     return sample.json(input, { modelTier: tier, cache: false, signal: controller.signal });
   }
 
-  async function createGame({ background, tone: toneName, name }) {
-    const forged = await askDM(forgePrompt(background, toneName, name));
+  async function createGame({ background, tone: toneName, name, era }) {
+    const forged = await askDM(forgePrompt(background, toneName, name, era));
     const character = normCharacter(forged?.character);
     const scenarios = arr(forged?.scenarios).slice(0, 3).map(normScenario);
     if (!scenarios.length) throw { code: "invalid_json", message: "no scenarios" };
+    const research = arr(forged?.research).map(String).filter(Boolean).slice(0, 6);
     const ts = now();
     const game = {
       id: uuid(), createdAt: ts, updatedAt: ts, status: "forged", tone: toneName, background,
-      character, scenarios, scenario: null,
+      era, research, character, scenarios, scenario: null,
       hp: character.maxHp, gold: character.gold, xp: 0, level: character.level,
       inventory: character.inventory.map((i) => ({ ...i })), quests: [], statusEffects: [], location: "", npcsMet: [], turns: [],
     };
@@ -715,9 +960,15 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   // ------------------------------------------------------------------
   function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
 
+  function upgrade(g) {
+    if (!g) return g;
+    if (!g.era) { const e = ERAS[0]; g.era = { id: e.id, name: e.name, when: e.when, currency: e.currency, historical: false }; }
+    if (!Array.isArray(g.research)) g.research = [];
+    return g;
+  }
   async function loadGame(id) {
     if (games.has(id)) return games.get(id);
-    const g = await store.get(id);
+    const g = upgrade(await store.get(id));
     if (g) games.set(id, g);
     return g;
   }
@@ -755,14 +1006,14 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       box.innerHTML = `<div class="card meta">No tales yet. The bard is waiting for a hero.</div>`;
       return;
     }
-    box.innerHTML = list.map((g) => {
+    box.innerHTML = list.map(upgrade).map((g) => {
       const glyph = g.status === "forged" ? "&#128220;" : g.status === "playing" ? "&#128214;" : "&#127941;";
       const where = g.status === "forged" ? "Ready to choose a tale"
         : g.status === "playing" ? `${esc(g.scenario?.title || "An adventure")} - ${esc(g.location)}, turn ${g.turns.length}`
         : `${esc(g.scenario?.title || "An adventure")} - concluded after ${g.turns.length} turns`;
       return `<div class="card stack" style="gap:6px"><button class="tale" data-action="open" data-id="${esc(g.id)}">
         <span class="glyph">${glyph}</span>
-        <span class="grow"><span class="name">${esc(g.character.name)}</span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level}</span><br><span class="where">${where}</span></span>
+        <span class="grow"><span class="name">${esc(g.character.name)}</span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level} &middot; ${esc(g.era?.name || "Classic Fantasy")}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <div><button class="btn link" data-action="delete" data-id="${esc(g.id)}">Delete</button></div></div>`;
     }).join("");
@@ -773,6 +1024,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   // ------------------------------------------------------------------
   function renderForge() {
     $("forge").hidden = false;
+    $("f-eras").innerHTML = ERAS.map((e) => `<button class="era ${eraId === e.id ? "on" : ""}" data-action="era" data-era="${e.id}"><span class="nm">${esc(e.name)}</span><span class="wh">${esc(e.when)}</span><span class="bl">${esc(e.blurb)}</span></button>`).join("");
+    $("f-custom-era").hidden = eraId !== "custom";
     $("f-tones").innerHTML = TONES.map(([v, l]) => `<button class="chip ${tone === v ? "on" : ""}" data-action="tone" data-tone="${v}">${l}</button>`).join("");
     $("f-custom-tone").hidden = tone !== "custom";
     $("f-error").hidden = true;
@@ -786,8 +1039,12 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (background.length < 10) return showError("f-error", "Describe your character in at least a sentence.");
     if (background.length > 4000) return showError("f-error", "Keep the description under 4000 characters.");
     if (!effectiveTone) return showError("f-error", "Name a tone for the tale.");
+    const base = eraById(eraId);
+    const customEra = $("f-custom-era").value.trim();
+    if (base.id === "custom" && customEra.length < 3) return showError("f-error", "Name the time and place of your tale.");
+    const era = { id: base.id, name: base.id === "custom" ? customEra.slice(0, 60) : base.name, when: base.id === "custom" ? "" : base.when, currency: base.currency, historical: base.historical, custom: base.id === "custom" ? customEra.slice(0, 300) : "" };
     await withBusy(FORGE_LINES, async () => {
-      const game = await createGame({ background, tone: effectiveTone, name: $("f-name").value.trim() });
+      const game = await createGame({ background, tone: effectiveTone, name: $("f-name").value.trim(), era });
       $("f-background").value = "";
       $("f-name").value = "";
       go(`#pick/${game.id}`);
@@ -808,6 +1065,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       <div class="narration quiet-text">${md(c.backstory)}</div>
       <div class="tagline">${esc(c.motivation)}</div>
     </div>`;
+    $("p-hero").innerHTML += game.research.length ? `<div class="card stack" style="gap:6px;margin-top:10px"><div class="label" style="margin:0">The Keeper's research &middot; ${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div>${game.research.map((r) => `<div class="quiet-text" style="font-size:15px">&#10022; ${esc(r)}</div>`).join("")}</div>` : "";
     $("p-scenarios").innerHTML = game.scenarios.map((s) => `<div class="card stack" style="gap:8px">
       <h3>${esc(s.title)}</h3>
       <div class="tagline">${esc(s.tagline)}</div>
@@ -835,7 +1093,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     const low = game.hp * 3 <= game.character.maxHp;
     $("s-hp").innerHTML = `&#9829; ${game.hp}/${game.character.maxHp}`;
     $("s-hp").classList.toggle("low", low);
-    $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold}`;
+    $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
 
@@ -844,7 +1102,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (game.scenario) parts.push(`<div><div class="tagline">${esc(game.scenario.tagline)}</div><div class="meta">${esc(game.scenario.setting)}</div></div>`);
     for (const t of game.turns) {
       if (t.action.kind !== "start") parts.push(`<div class="bubble">${esc(t.action.text)}</div>`);
-      parts.push(renderScene(t.scene));
+      parts.push(renderScene(t.scene, game));
     }
     if (busy) {
       parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span><button class="stop" data-action="stop">Stop</button></div>`);
@@ -866,11 +1124,13 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
   }
 
-  function renderScene(s) {
+  function shortCurrency(game) { const c = game.era?.currency || "gold"; return c.split(" of ")[0]; }
+  function renderScene(s, game) {
+    const cur = shortCurrency(game);
     const d = s.diceResult, ch = s.stateChange, lines = [];
     if (ch.hpDelta < 0) lines.push(`<div class="hurt">&#128148; ${ch.hpDelta} hit points</div>`);
     if (ch.hpDelta > 0) lines.push(`<div class="heal">&#10084; +${ch.hpDelta} hit points</div>`);
-    if (ch.goldDelta) lines.push(`<div class="gold">&#9679; ${ch.goldDelta > 0 ? "+" : ""}${ch.goldDelta} gold</div>`);
+    if (ch.goldDelta) lines.push(`<div class="gold">&#9679; ${ch.goldDelta > 0 ? "+" : ""}${ch.goldDelta} ${esc(cur)}</div>`);
     if (ch.xpGained > 0) lines.push(`<div class="xp">&#9733; +${ch.xpGained} xp</div>`);
     for (const i of ch.itemsGained) lines.push(`<div class="item">&#127890; Gained ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</div>`);
     for (const n of ch.itemsLost) lines.push(`<div class="quest">&#127890; Lost ${esc(n)}</div>`);
@@ -882,7 +1142,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
         <div class="verdict">${d.roll === 20 ? "Critical!" : d.roll === 1 ? "Fumble!" : d.success ? "Success" : "Failure"}</div></div>` : ""}
       <div class="narration">${md(s.narration)}</div>
-      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude]}"></span>${esc(n.name)}, ${esc(n.role)}</span>`).join("")}</div>` : ""}
+      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude]}"></span>${esc(n.name)}, ${esc(n.role)}${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}</span>`).join("")}</div>` : ""}
       ${lines.length ? `<div class="changes">${lines.join("")}</div>` : ""}
       ${s.ending ? `<div class="ending ${s.ending.victory ? "win" : "lose"}"><h4>${s.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(s.ending.epilogue)}</div></div>` : ""}
     </div>`;
@@ -951,11 +1211,11 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     const c = game.character;
     const chips = (items, color) => items.length ? items.map((t) => `<span class="tag" style="border-color:${color}">${esc(t)}</span>`).join("") : `<span class="meta">none</span>`;
     $("sheet-body").innerHTML = `
-      <div><h1 style="font-size:34px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(c.appearance)}</div></div>
+      <div><h1 style="font-size:34px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div><div class="meta">${esc(c.appearance)}</div></div>
       <div class="vitals">
         <div><b style="color:${game.hp * 3 <= c.maxHp ? "var(--blood)" : "var(--moss)"}">${game.hp}/${c.maxHp}</b><small>Hit points</small></div>
         <div><b>${c.armorClass}</b><small>Armour</small></div>
-        <div><b style="color:var(--gold)">${game.gold}</b><small>Gold</small></div>
+        <div><b style="color:var(--gold)">${game.gold}</b><small>${esc(shortCurrency(game))}</small></div>
         <div><b style="color:var(--ember)">${game.xp}</b><small>XP</small></div>
       </div>
       <div class="label">Abilities</div>
@@ -968,7 +1228,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       <div class="label">Quest log</div>
       <div class="card stack" style="gap:6px">${game.quests.length ? game.quests.map((q) => `<div>&#128220; ${esc(q)}</div>`).join("") : `<span class="meta">Nothing written yet.</span>`}</div>
       <div class="label">People met</div>
-      <div class="card stack" style="gap:8px">${game.npcsMet.length ? game.npcsMet.map((n) => `<div><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude]}">${esc(n.attitude)}</span><br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
+      <div class="card stack" style="gap:8px">${game.npcsMet.length ? game.npcsMet.map((n) => `<div><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude]}">${esc(n.attitude)}</span>${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}<br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
       <div class="label">Backstory</div>
       <div class="narration quiet-text">${md(c.backstory)}</div>
       <div class="tagline">${esc(c.motivation)}</div>`;
@@ -1010,7 +1270,12 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         if (!confirm("Delete this tale for good?")) return;
         try { await store.remove(el.dataset.id); games.delete(el.dataset.id); renderHome(); } catch (e) { toast(copyFor(e)); }
         break;
-      case "example": $("f-background").value = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]; break;
+      case "example": {
+        const pool = eraById(eraId).examples.concat(eraId === "classic-fantasy" ? EXAMPLES : []);
+        $("f-background").value = pool[Math.floor(Math.random() * pool.length)];
+        break;
+      }
+      case "era": eraId = el.dataset.era; renderForge(); break;
       case "tone": tone = el.dataset.tone; renderForge(); break;
       case "forge": forge(); break;
       case "start": start(games.get($("pick").dataset.id), { scenarioId: el.dataset.id }); break;

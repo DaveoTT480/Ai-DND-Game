@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { GameEngine, GameError, compactScene, levelForXp } from "../src/engine.js";
 import { MockDungeonMaster } from "../src/mockDM.js";
 import { MemoryStore } from "../src/store.js";
-import type { DungeonMaster, NarrateRequest } from "../src/dm.js";
+import type { DungeonMaster, ForgeRequest, NarrateRequest } from "../src/dm.js";
 
 function makeEngine(rolls: number[] = [], dm: DungeonMaster = new MockDungeonMaster()) {
   const queue = [...rolls];
@@ -134,6 +134,39 @@ test("older turns are folded into recaps so the prompt stays bounded", async () 
   assert.match(finalText, /Story so far/);
   assert.match(finalText, /Old Mattock called in the debt/);
   assert.equal(last.messages[0]!.role, "user");
+});
+
+test("eras: the chosen era briefs the forge and the Dungeon Master, and old saves default to fantasy", async () => {
+  const seen: { forge: ForgeRequest[]; narrate: NarrateRequest[] } = { forge: [], narrate: [] };
+  const dm = new MockDungeonMaster();
+  const of = dm.forge.bind(dm), on = dm.narrate.bind(dm);
+  dm.forge = async (r) => { seen.forge.push(r); return of(r); };
+  dm.narrate = async (r) => { seen.narrate.push(r); return on(r); };
+  const store = new MemoryStore();
+  const engine = new GameEngine({ dm, store });
+  const game = await engine.createGame({ background: "A Gaulish slave who reads his master's letters.", eraId: "rome" });
+  assert.equal(game.era.name, "Imperial Rome");
+  assert.equal(game.era.currency, "denarii");
+  assert.equal(game.research.length, 3);
+  assert.match(seen.forge[0]!.user, /Catiline/);
+  assert.match(seen.forge[0]!.user, /Cicero/);
+  await engine.startGame(game.id, { scenarioId: "debt-of-ash" });
+  assert.match(seen.narrate[0]!.system, /Historical faithfulness/);
+  assert.match(seen.narrate[0]!.system, /denarii/);
+  assert.match(seen.narrate[0]!.messages[0]!.content as string, /Money: \d+ denarii/);
+
+  const custom = await engine.createGame({ background: "A Medici bank clerk who knows too much.", eraId: "custom", customEra: "Florence in 1494" });
+  assert.equal(custom.era.name, "Florence in 1494");
+  assert.match(seen.forge[1]!.user, /Florence in 1494/);
+  await assert.rejects(engine.createGame({ background: "Someone somewhere sometime.", eraId: "custom", customEra: "" }), GameError);
+
+  const legacy = await engine.createGame({ background: "A plain old hero from before eras existed." });
+  delete (legacy as any).era;
+  delete (legacy as any).research;
+  await store.save(legacy);
+  const loaded = await engine.getGame(legacy.id);
+  assert.equal(loaded.era.id, "classic-fantasy");
+  assert.deepEqual(loaded.research, []);
 });
 
 test("compactScene keeps narration, dice and choices", () => {

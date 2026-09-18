@@ -48,6 +48,9 @@ struct CharacterSheetView: View {
             Text("\(c.race) \(c.characterClass), level \(game.level)")
                 .font(Theme.body)
                 .foregroundStyle(Theme.ember)
+            Text(game.eraRef.when.isEmpty ? game.eraRef.name : "\(game.eraRef.name), \(game.eraRef.when)")
+                .font(Theme.small)
+                .foregroundStyle(Theme.muted)
             Text(c.appearance)
                 .font(Theme.small)
                 .foregroundStyle(Theme.muted)
@@ -58,7 +61,7 @@ struct CharacterSheetView: View {
         HStack(spacing: 10) {
             VitalTile(title: "Hit points", value: "\(game.hp)/\(c.maxHp)", icon: "heart.fill", color: game.hp * 3 <= c.maxHp ? Theme.blood : Theme.moss)
             VitalTile(title: "Armour", value: "\(c.armorClass)", icon: "shield.fill", color: Theme.muted)
-            VitalTile(title: "Gold", value: "\(game.gold)", icon: "circle.hexagongrid.fill", color: Theme.gold)
+            VitalTile(title: game.eraRef.shortCurrency.capitalized, value: "\(game.gold)", icon: "circle.hexagongrid.fill", color: Theme.gold)
             VitalTile(title: "XP", value: "\(game.xp)", icon: "star.fill", color: Theme.ember)
         }
     }
@@ -163,6 +166,11 @@ struct CharacterSheetView: View {
                                 Text(npc.attitude.rawValue)
                                     .font(Theme.caption)
                                     .foregroundStyle(Theme.color(for: npc.attitude))
+                                if npc.isHistorical {
+                                    Text("\u{2726} historical")
+                                        .font(Theme.caption)
+                                        .foregroundStyle(Theme.gold)
+                                }
                             }
                             Text("\(npc.role). \(npc.description)")
                                 .font(Theme.small)

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DMMessage, DungeonMaster } from "./dm.js";
 import { DungeonMasterError } from "./dm.js";
 import { resolveCheck, rollDie, type RollFn } from "./dice.js";
+import { resolveEra } from "./eras.js";
 import { FORGE_SYSTEM, actionUserMessage, dmSystemPrompt, forgeUserMessage, openingUserMessage } from "./prompts.js";
 import type { GameState, Item, PlayerAction, Scene, ScenarioOption, Turn } from "./schemas.js";
 import type { GameStore } from "./store.js";
@@ -31,6 +32,8 @@ export interface NewGameInput {
   background: string;
   tone?: string;
   name?: string;
+  eraId?: string;
+  customEra?: string;
 }
 
 export interface StartInput {
@@ -100,7 +103,10 @@ export class GameEngine {
     const name = (input.name ?? "").trim() || null;
 
     await this.spendOneCall();
-    const forged = await this.dm.forge({ system: FORGE_SYSTEM, user: forgeUserMessage(background, tone, name) });
+    const era = resolveEra(input.eraId, input.customEra);
+    if (era.id === "custom" && era.custom.length < 3) throw new GameError("Name the time and place of your tale.");
+
+    const forged = await this.dm.forge({ system: FORGE_SYSTEM, user: forgeUserMessage(background, tone, name, era) });
     const character = forged.character;
     if (forged.scenarios.length === 0) throw new DungeonMasterError("The Dungeon Master offered no scenarios. Try again.");
     const ts = this.now().toISOString();
@@ -111,6 +117,8 @@ export class GameEngine {
       status: "forged",
       tone,
       background,
+      era,
+      research: forged.research.filter(Boolean).slice(0, 6),
       character,
       scenarios: forged.scenarios,
       scenario: null,
@@ -218,12 +226,15 @@ export class GameEngine {
   private async load(id: string): Promise<GameState> {
     const game = await this.store.get(id);
     if (!game) throw new GameError("No such adventure.", 404);
+    // Saves from before eras existed default to classic fantasy.
+    if (!game.era) game.era = resolveEra("classic-fantasy", "");
+    if (!Array.isArray(game.research)) game.research = [];
     return game;
   }
 
   private systemFor(game: GameState): string {
     if (!game.scenario) throw new GameError("No scenario chosen.", 409);
-    return dmSystemPrompt(game.character, game.scenario, game.tone);
+    return dmSystemPrompt(game.character, game.scenario, game.tone, game.era, game.research);
   }
 
   /**

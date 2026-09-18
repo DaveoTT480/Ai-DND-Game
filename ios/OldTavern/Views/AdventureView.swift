@@ -83,7 +83,7 @@ struct AdventureView: View {
                             ScenarioBanner(scenario: scenario)
                         }
                         ForEach(model.game.turns) { turn in
-                            TurnView(turn: turn)
+                            TurnView(turn: turn, currency: model.game.eraRef.shortCurrency)
                                 .id(turn.id)
                         }
                         if model.isBusy {
@@ -150,6 +150,8 @@ struct AdventureView: View {
             HStack(spacing: 5) {
                 Image(systemName: "circle.hexagongrid.fill").foregroundStyle(Theme.gold)
                 Text("\(game.gold)")
+                Text(game.eraRef.shortCurrency)
+                    .foregroundStyle(Theme.muted)
             }
             Text("Lv \(game.level)")
                 .foregroundStyle(Theme.muted)
@@ -256,13 +258,14 @@ struct ScenarioBanner: View {
 
 struct TurnView: View {
     let turn: Turn
+    var currency: String = "gold"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if turn.action.kind != .start {
                 PlayerBubble(action: turn.action)
             }
-            SceneCard(scene: turn.scene)
+            SceneCard(scene: turn.scene, currency: currency)
         }
     }
 }
@@ -291,6 +294,7 @@ struct PlayerBubble: View {
 
 struct SceneCard: View {
     let scene: StoryScene
+    var currency: String = "gold"
 
     private var moodColor: Color { Theme.color(for: scene.mood) }
 
@@ -318,6 +322,10 @@ struct SceneCard: View {
                         HStack(spacing: 4) {
                             Circle().fill(Theme.color(for: npc.attitude)).frame(width: 6, height: 6)
                             Text("\(npc.name), \(npc.role)")
+                            if npc.isHistorical {
+                                Text("\u{2726} historical")
+                                    .foregroundStyle(Theme.gold)
+                            }
                         }
                         .font(Theme.caption)
                         .foregroundStyle(Theme.parchment)
@@ -362,7 +370,7 @@ struct SceneCard: View {
         if change.hpDelta < 0 { lines.append(.init(text: "\(change.hpDelta) hit points", icon: "heart.slash", color: Theme.blood)) }
         if change.hpDelta > 0 { lines.append(.init(text: "+\(change.hpDelta) hit points", icon: "heart.fill", color: Theme.moss)) }
         if change.goldDelta != 0 {
-            lines.append(.init(text: "\(change.goldDelta > 0 ? "+" : "")\(change.goldDelta) gold", icon: "circle.hexagongrid.fill", color: Theme.gold))
+            lines.append(.init(text: "\(change.goldDelta > 0 ? "+" : "")\(change.goldDelta) \(currency)", icon: "circle.hexagongrid.fill", color: Theme.gold))
         }
         if change.xpGained > 0 { lines.append(.init(text: "+\(change.xpGained) xp", icon: "star.fill", color: Theme.ember)) }
         for item in change.itemsGained {

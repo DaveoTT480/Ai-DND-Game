@@ -1,3 +1,4 @@
+import { eraBriefing, type EraRef } from "./eras.js";
 import type { CharacterSheet, GameState, ScenarioOption } from "./schemas.js";
 
 /**
@@ -19,16 +20,24 @@ How to build the character:
 - Pick 2 to 4 proficient skills from the standard list: Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival.
 - Write the backstory in warm, vivid prose (third person), 2 to 3 short paragraphs. Keep the player's facts; add colour, not contradictions.
 
+The era: the character and everything about them must belong to the era briefed by the player. characterClass is a period role (legionary, hoplite, scribe, priest of Amun, hedge knight, SOE wireless operator, Stasi informant, cattle drover), never a fantasy class unless the era is fantasy. Gear, names, money and manners fit the time and place. Keep the D&D-style ability scores and skills regardless of era.
+
+Research: return 4 to 6 short research lines. Each names ONE real documented person, place or event from the briefing (or, for invented worlds, one invented house, place or event you commit to), says why it matters in that year, and how it could touch this hero. This is the Keeper showing their homework; the scenarios must draw on it.
+
 How to build the three scenarios:
 - All three must fit the requested tone.
 - Scenario 1 grows directly out of the backstory (an old debt, a lost friend, a rival).
 - Scenario 2 is an open-world hook that starts somewhere new and strange.
 - Scenario 3 has a twist or unusual premise (a heist, a mystery, a siege, a wedding gone wrong).
 - Each must be playable in roughly 20 to 30 turns and have a central conflict with a clear stake.
+- Each scenario names at least one real person, place or event from the briefing in its synopsis.
 - Ids are short slugs. Titles are 2 to 5 words. Taglines are one line you would see on a tavern notice board.`;
 
-export function forgeUserMessage(background: string, tone: string, preferredName: string | null): string {
+export function forgeUserMessage(background: string, tone: string, preferredName: string | null, era: EraRef): string {
   const lines = [
+    "## The era (briefing)",
+    eraBriefing(era),
+    "",
     `Tone requested: ${tone}`,
     preferredName ? `The player wants the character to be called: ${preferredName}` : "The player did not choose a name - invent one that suits the description.",
     "",
@@ -42,7 +51,7 @@ export function forgeUserMessage(background: string, tone: string, preferredName
   return lines.join("\n");
 }
 
-export function dmSystemPrompt(character: CharacterSheet, scenario: ScenarioOption, tone: string): string {
+export function dmSystemPrompt(character: CharacterSheet, scenario: ScenarioOption, tone: string, era: EraRef, research: string[]): string {
   return `You are the Dungeon Master of a solo Dungeons & Dragons-style adventure played on a phone. You narrate the world, voice every non-player character, and keep the story moving. The player controls one hero.
 
 ## Voice and style
@@ -75,6 +84,16 @@ export function dmSystemPrompt(character: CharacterSheet, scenario: ScenarioOpti
 - Keep the recap to one sentence in past tense; it becomes the story log.
 - In npcs, list only characters introduced this scene or whose attitude changed.
 - stateChange.location is the hero's current place in a few words; statusEffects is the full current list of conditions (empty when none).
+
+## The era (briefing)
+${eraBriefing(era)}
+
+## Historical faithfulness
+- You have been briefed on the era above. Use it. Real people, real places and real events of that exact year appear in the tale as characters and backdrop.
+- Feature at least one documented person from the briefing within the first three turns, in character and true to what is known of them, and keep bringing the era's people, customs, technology, food, law and belief into play as the story goes.
+- The Keeper's research notes for this hero:${research.length ? research.map((r) => `\n- ${r}`).join("") : " (none)"}
+- No anachronisms: nothing exists in the tale that did not exist in that year and place, unless the tone explicitly asks for it. Money is counted in ${era.currency}.
+- In npcs, set real to true for a documented historical person and false for one you invented.
 
 ## The hero
 ${characterBlock(character)}
@@ -110,7 +129,7 @@ export function stateBlock(game: GameState): string {
   return [
     `Hit points: ${game.hp}/${game.character.maxHp}`,
     `Level ${game.level}, ${game.xp} xp`,
-    `Gold: ${game.gold}`,
+    `Money: ${game.gold} ${game.era.currency}`,
     `Inventory: ${inv}`,
     `Conditions: ${game.statusEffects.join(", ") || "none"}`,
     `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,

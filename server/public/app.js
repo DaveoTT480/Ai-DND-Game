@@ -6,6 +6,10 @@
   const games = new Map();           // id -> latest snapshot
   let busy = false;
   let tone = "classic fantasy";
+  let eras = [];
+  let eraId = "classic-fantasy";
+  const eraById = (id) => eras.find((e) => e.id === id) || eras[0] || { id: "classic-fantasy", examples: [] };
+  const shortCurrency = (g) => (g.era?.currency || "gold").split(" of ")[0];
 
   const TONES = [
     ["classic fantasy", "Classic fantasy"], ["grimdark", "Grimdark"], ["lighthearted comedy", "Comedy"],
@@ -124,15 +128,20 @@
         : `${esc(g.scenarioTitle || "An adventure")} - concluded after ${g.turnCount} turns`;
       return `<div class="card" style="padding:0"><button class="tale card" style="margin:0;border:0;background:none" data-action="open" data-id="${g.id}">
         <span class="glyph">${glyph}</span>
-        <span style="flex:1"><span class="name">${esc(g.characterName)}</span><br><span class="sub">${esc(g.race)} ${esc(g.characterClass)}, level ${g.level}</span><br><span class="where">${where}</span></span>
+        <span style="flex:1"><span class="name">${esc(g.characterName)}</span><br><span class="sub">${esc(g.race)} ${esc(g.characterClass)}, level ${g.level}${g.eraName ? ` &middot; ${esc(g.eraName)}` : ""}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <button class="btn link" style="padding:0 14px 10px" data-action="delete" data-id="${g.id}">Delete</button></div>`;
     }).join("");
   }
 
   // ---------- forge ----------
-  function renderForge() {
+  async function renderForge() {
     $("forge").classList.remove("hidden");
+    if (!eras.length) {
+      try { eras = (await api("/api/eras")).eras; } catch (e) { toast(e.message); }
+    }
+    $("f-eras").innerHTML = eras.map((e) => `<button class="era ${eraId === e.id ? "on" : ""}" data-action="era" data-era="${e.id}"><span class="nm">${esc(e.name)}</span><span class="wh">${esc(e.when)}</span><span class="bl">${esc(e.blurb)}</span></button>`).join("");
+    $("f-custom-era").classList.toggle("hidden", eraId !== "custom");
     $("f-tones").innerHTML = TONES.map(([v, l]) => `<button class="chip ${tone === v ? "on" : ""}" data-action="tone" data-tone="${v}">${l}</button>`).join("");
     $("f-custom-tone").classList.toggle("hidden", tone !== "custom");
     $("f-error").classList.add("hidden");
@@ -143,8 +152,10 @@
     const effectiveTone = tone === "custom" ? $("f-custom-tone").value.trim() : tone;
     if (background.length < 10) return showError("f-error", "Describe your character in at least a sentence.");
     if (!effectiveTone) return showError("f-error", "Name a tone for the tale.");
+    const customEra = $("f-custom-era").value.trim();
+    if (eraId === "custom" && customEra.length < 3) return showError("f-error", "Name the time and place of your tale.");
     await withBusy(FORGE_LINES, async () => {
-      const { game } = await api("/api/games", "POST", { background, tone: effectiveTone, name: $("f-name").value.trim() });
+      const { game } = await api("/api/games", "POST", { background, tone: effectiveTone, name: $("f-name").value.trim(), eraId, customEra });
       remember(game);
       $("f-background").value = "";
       $("f-name").value = "";
@@ -171,6 +182,7 @@
       <div class="narration" style="color:var(--parchment-dim)">${md(c.backstory)}</div>
       <div class="tagline">${esc(c.motivation)}</div>
     </div>`;
+    $("p-hero").innerHTML += (game.research || []).length ? `<div class="card"><div class="section-label" style="margin:0 0 6px">The Keeper's research &middot; ${esc(game.era?.name || "")}${game.era?.when ? `, ${esc(game.era.when)}` : ""}</div>${game.research.map((r) => `<div style="font-size:15px;color:var(--parchment)">&#10022; ${esc(r)}</div>`).join("")}</div>` : "";
     $("p-scenarios").innerHTML = game.scenarios.map((s) => `<div class="card">
       <h3>${esc(s.title)}</h3>
       <div class="tagline">${esc(s.tagline)}</div>
@@ -197,7 +209,7 @@
     const low = game.hp * 3 <= game.character.maxHp;
     $("s-hp").innerHTML = `&#9829; ${game.hp}/${game.character.maxHp}`;
     $("s-hp").classList.toggle("low", low);
-    $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold}`;
+    $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
 
@@ -206,7 +218,7 @@
     if (game.scenario) parts.push(`<div class="tagline">${esc(game.scenario.tagline)}</div><div class="meta" style="margin-bottom:6px">${esc(game.scenario.setting)}</div>`);
     for (const t of game.turns) {
       if (t.action.kind !== "start") parts.push(`<div class="bubble">${esc(t.action.text)}</div>`);
-      parts.push(renderScene(t.scene));
+      parts.push(renderScene(t.scene, game));
     }
     if (busy) {
       parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span></div>`);
@@ -228,13 +240,14 @@
     requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
   }
 
-  function renderScene(s) {
+  function renderScene(s, game) {
+    const cur = shortCurrency(game);
     const d = s.diceResult;
     const ch = s.stateChange;
     const lines = [];
     if (ch.hpDelta < 0) lines.push(`<div class="hurt">&#128148; ${ch.hpDelta} hit points</div>`);
     if (ch.hpDelta > 0) lines.push(`<div class="heal">&#10084; +${ch.hpDelta} hit points</div>`);
-    if (ch.goldDelta) lines.push(`<div class="gold">&#9679; ${ch.goldDelta > 0 ? "+" : ""}${ch.goldDelta} gold</div>`);
+    if (ch.goldDelta) lines.push(`<div class="gold">&#9679; ${ch.goldDelta > 0 ? "+" : ""}${ch.goldDelta} ${esc(cur)}</div>`);
     if (ch.xpGained > 0) lines.push(`<div class="xp">&#9733; +${ch.xpGained} xp</div>`);
     for (const i of ch.itemsGained) lines.push(`<div class="item">&#127890; Gained ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</div>`);
     for (const n of ch.itemsLost) lines.push(`<div class="quest">&#127890; Lost ${esc(n)}</div>`);
@@ -245,7 +258,7 @@
         <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
         <div class="verdict">${d.roll === 20 ? "Critical!" : d.roll === 1 ? "Fumble!" : d.success ? "Success" : "Failure"}</div></div>` : ""}
       <div class="narration">${md(s.narration)}</div>
-      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude] || "var(--muted)"}"></span>${esc(n.name)}, ${esc(n.role)}</span>`).join("")}</div>` : ""}
+      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude] || "var(--muted)"}"></span>${esc(n.name)}, ${esc(n.role)}${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}</span>`).join("")}</div>` : ""}
       ${lines.length ? `<div class="changes">${lines.join("")}</div>` : ""}
       ${s.ending ? `<div class="ending ${s.ending.victory ? "win" : "lose"}"><h4>${s.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(s.ending.epilogue)}</div></div>` : ""}
     </div>`;
@@ -313,11 +326,12 @@
     $("sheet-body").innerHTML = `
       <h1 style="margin-top:12px">${esc(c.name)}</h1>
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div>
+      <div class="meta">${esc(game.era?.name || "")}${game.era?.when ? `, ${esc(game.era.when)}` : ""}</div>
       <div class="meta">${esc(c.appearance)}</div>
       <div class="vitals">
         <div><b style="color:${game.hp * 3 <= c.maxHp ? "var(--blood)" : "var(--moss)"}">${game.hp}/${c.maxHp}</b><small>Hit points</small></div>
         <div><b>${c.armorClass}</b><small>Armour</small></div>
-        <div><b style="color:var(--gold)">${game.gold}</b><small>Gold</small></div>
+        <div><b style="color:var(--gold)">${game.gold}</b><small>${esc(shortCurrency(game))}</small></div>
         <div><b style="color:var(--ember)">${game.xp}</b><small>XP</small></div>
       </div>
       <div class="section-label">Abilities</div>
@@ -330,7 +344,7 @@
       <div class="section-label">Quest log</div>
       <div class="card">${game.quests.length ? game.quests.map((q) => `<div>&#128220; ${esc(q)}</div>`).join("") : `<span class="meta">Nothing written yet.</span>`}</div>
       <div class="section-label">People met</div>
-      <div class="card">${game.npcsMet.length ? game.npcsMet.map((n) => `<div style="margin:6px 0"><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude] || "var(--muted)"}">${esc(n.attitude)}</span><br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
+      <div class="card">${game.npcsMet.length ? game.npcsMet.map((n) => `<div style="margin:6px 0"><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude] || "var(--muted)"}">${esc(n.attitude)}</span>${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}<br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
       <div class="section-label">Backstory</div>
       <div class="narration" style="color:var(--parchment-dim)">${md(c.backstory)}</div>
       <div class="tagline">${esc(c.motivation)}</div>`;
@@ -366,7 +380,12 @@
         if (!confirm("Delete this tale for good?")) return;
         try { await api(`/api/games/${el.dataset.id}`, "DELETE"); games.delete(el.dataset.id); renderHome(); } catch (e) { toast(e.message); }
         break;
-      case "example": $("f-background").value = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]; break;
+      case "example": {
+        const pool = (eraById(eraId).examples || []).concat(eraId === "classic-fantasy" ? EXAMPLES : []);
+        $("f-background").value = pool[Math.floor(Math.random() * pool.length)] || EXAMPLES[0];
+        break;
+      }
+      case "era": eraId = el.dataset.era; renderForge(); break;
       case "tone": tone = el.dataset.tone; renderForge(); break;
       case "forge": forge(); break;
       case "start": start($("pick").dataset.id, { scenarioId: el.dataset.id }); break;

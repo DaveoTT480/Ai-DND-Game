@@ -14,6 +14,7 @@ struct APIClient {
 
     private struct GameEnvelope: Decodable { let game: GameSnapshot }
     private struct ListEnvelope: Decodable { let games: [GameSummary] }
+    private struct ErasEnvelope: Decodable { let eras: [Era] }
     private struct ErrorEnvelope: Decodable { let error: String }
 
     func health() async throws -> Bool {
@@ -31,11 +32,16 @@ struct APIClient {
         return envelope.game
     }
 
-    func createGame(background: String, tone: String, name: String) async throws -> GameSnapshot {
+    func listEras() async throws -> [Era] {
+        let envelope: ErasEnvelope = try await request(path: "/api/eras")
+        return envelope.eras
+    }
+
+    func createGame(background: String, tone: String, name: String, eraId: String, customEra: String) async throws -> GameSnapshot {
         let envelope: GameEnvelope = try await request(
             path: "/api/games",
             method: "POST",
-            body: ["background": background, "tone": tone, "name": name]
+            body: ["background": background, "tone": tone, "name": name, "eraId": eraId, "customEra": customEra]
         )
         return envelope.game
     }

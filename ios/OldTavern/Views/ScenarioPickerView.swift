@@ -18,6 +18,9 @@ struct ScenarioPickerView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     heroCard
+                    if !game.researchNotes.isEmpty {
+                        researchCard
+                    }
 
                     VStack(alignment: .leading, spacing: 10) {
                         SectionHeader(text: "Choose your tale")
@@ -114,6 +117,22 @@ struct ScenarioPickerView: View {
                 .foregroundStyle(Theme.ember)
         }
         .tavernCard(accent: Theme.ember.opacity(0.6))
+    }
+
+    @MainActor
+    private var researchCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(text: "The Keeper's research \u{00B7} \(game.eraRef.name)\(game.eraRef.when.isEmpty ? "" : ", \(game.eraRef.when)")")
+            ForEach(Array(game.researchNotes.enumerated()), id: \.offset) { _, note in
+                HStack(alignment: .top, spacing: 8) {
+                    Text("\u{2726}").foregroundStyle(Theme.gold)
+                    Text(note)
+                        .font(Theme.small)
+                        .foregroundStyle(Theme.parchment.opacity(0.9))
+                }
+            }
+        }
+        .tavernCard()
     }
 
     @MainActor

@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { DungeonMasterError } from "./dm.js";
+import { eraCatalogue } from "./eras.js";
 import { GameEngine, GameError } from "./engine.js";
 import { toSnapshot, toSummary } from "./schemas.js";
 
@@ -45,6 +46,8 @@ export function createApp({ engine, apiToken, requireToken = false }: AppOptions
 
   api.get("/usage", async (c) => c.json(await engine.usageToday()));
 
+  api.get("/eras", (c) => c.json({ eras: eraCatalogue() }));
+
   api.get("/games", async (c) => {
     const games = await engine.listGames();
     return c.json({ games: games.map(toSummary) });
@@ -56,6 +59,8 @@ export function createApp({ engine, apiToken, requireToken = false }: AppOptions
       background: str(body.background) ?? "",
       tone: str(body.tone),
       name: str(body.name),
+      eraId: str(body.eraId),
+      customEra: str(body.customEra),
     });
     return c.json({ game: toSnapshot(game) }, 201);
   });

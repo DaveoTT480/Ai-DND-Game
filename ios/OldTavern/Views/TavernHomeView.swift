@@ -185,7 +185,7 @@ struct SavedGameRow: View {
                 Text(game.characterName)
                     .font(Theme.display(18))
                     .foregroundStyle(Theme.parchment)
-                Text("\(game.race) \(game.characterClass), level \(game.level)")
+                Text(game.eraName.map { "\(game.race) \(game.characterClass), level \(game.level) \u{00B7} \($0)" } ?? "\(game.race) \(game.characterClass), level \(game.level)")
                     .font(Theme.small)
                     .foregroundStyle(Theme.muted)
                 Text(subtitle)

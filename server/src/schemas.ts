@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { EraRef } from "./eras.js";
 
 /**
  * Structured-output schemas shared between the Dungeon Master (Claude) and the
@@ -59,6 +60,7 @@ export type ScenarioOption = z.infer<typeof ScenarioOption>;
 
 export const ForgeResult = z.object({
   character: CharacterSheet,
+  research: z.array(z.string()).describe("4 to 6 lines: one real person, place or event of the era each, why it matters that year, how it could touch this hero"),
   scenarios: z.array(ScenarioOption).describe("Exactly three distinct starting scenarios"),
 });
 export type ForgeResult = z.infer<typeof ForgeResult>;
@@ -85,6 +87,7 @@ export const NPC = z.object({
   role: z.string().describe("e.g. 'one-eyed innkeeper'"),
   description: z.string().describe("One sentence"),
   attitude: Attitude,
+  real: z.boolean().describe("true when this is a documented historical person, false when invented"),
 });
 export type NPC = z.infer<typeof NPC>;
 
@@ -162,6 +165,8 @@ export interface GameState {
   status: GameStatus;
   tone: string;
   background: string;
+  era: EraRef;
+  research: string[];
   character: CharacterSheet;
   scenarios: ScenarioOption[];
   scenario: ScenarioOption | null;
@@ -184,6 +189,8 @@ export interface GameSnapshot {
   tone: string;
   createdAt: string;
   updatedAt: string;
+  era: EraRef;
+  research: string[];
   character: CharacterSheet;
   scenarios: ScenarioOption[];
   scenario: ScenarioOption | null;
@@ -206,6 +213,7 @@ export interface GameSummary {
   characterClass: string;
   race: string;
   level: number;
+  eraName: string;
   scenarioTitle: string | null;
   location: string;
   turnCount: number;
@@ -225,6 +233,7 @@ export function toSummary(game: GameState): GameSummary {
     characterClass: game.character.characterClass,
     race: game.character.race,
     level: game.level,
+    eraName: game.era.name,
     scenarioTitle: game.scenario?.title ?? null,
     location: game.location,
     turnCount: game.turns.length,
