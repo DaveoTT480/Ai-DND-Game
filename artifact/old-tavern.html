@@ -179,11 +179,11 @@
   .stop { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; margin-left: auto; }
 
   /* Overlays */
-  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .66); display: grid; place-items: center; padding: 24px; z-index: 20; }
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .66); display: grid; place-items: start center; padding: min(28vh, 160px) 24px 24px; z-index: 20; }
   .overlay .card { max-width: 380px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 10px; }
-  .sheet-panel { position: fixed; inset: 0; z-index: 15; background: var(--wood) radial-gradient(ellipse 120% 70% at 50% -10%, #3a2718 0%, var(--wood) 55%, var(--wood-deep) 100%); overflow-y: auto; }
+  .sheet-panel { position: relative; min-height: 100vh; background: var(--wood-deep) radial-gradient(ellipse 120% 60% at 50% 0%, #3a2718 0%, var(--wood) 45%, var(--wood-deep) 100%) no-repeat; }
   .toast.ok { background: #1f2e1c; border-color: var(--moss); color: #cfe8c6; }
-  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 10px 14px; z-index: 30; font-size: 15px; }
+  .toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 10px 14px; z-index: 30; font-size: 15px; }
   .notice { border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--muted); }
   .notice b { color: var(--parchment); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
@@ -1323,7 +1323,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 
   async function render() {
     const [route, id] = location.hash.replace(/^#\/?/, "").split("/");
-    for (const s of ["home", "forge", "pick", "play", "sheet"]) $(s).hidden = true;
+    panelStack.length = 0;
+    for (const s of SCREENS) $(s).hidden = true;
     try {
       if (route === "forge") renderForge();
       else if (route === "pick" && id) {
@@ -1464,6 +1465,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (busy) {
       parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span><button class="stop" data-action="stop">Stop</button></div>`);
     } else {
+      if (lastError) parts.push(`<div class="card error">${esc(lastError)}</div>`);
       const last = game.turns[game.turns.length - 1];
       if (last && last.scene.choices.length) {
         parts.push(`<div class="choices"><div class="label">What do you do?</div>${last.scene.choices.map((c) => `
@@ -1480,7 +1482,11 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     animateDice();
     const firstShow = renderPlay.lastId !== game.id;
     renderPlay.lastId = game.id;
-    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: firstShow ? "auto" : "smooth" }));
+    requestAnimationFrame(() => {
+      const last = $("log").lastElementChild;
+      if (last) last.scrollIntoView({ block: "end", behavior: firstShow ? "auto" : "smooth" });
+      else window.scrollTo({ top: document.body.scrollHeight, behavior: firstShow ? "auto" : "smooth" });
+    });
   }
 
   function shortCurrency(game) { const c = game.era?.currency || "gold"; return c.split(" of ")[0]; }
@@ -1524,9 +1530,11 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     }, 70);
   }
 
+  let lastError = "";
   async function act(game, body) {
     if (busy) return;
     busy = true;
+    lastError = "";
     renderPlay(game);
     const ticker = rotate("think-line", THINK_LINES, 4000);
     try {
@@ -1535,7 +1543,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       $("free").style.height = "auto";
       if (navigator.vibrate) navigator.vibrate(15);
     } catch (e) {
-      toast(copyFor(e), 6000);
+      lastError = copyFor(e);
+      toast(lastError, 6000);
     } finally {
       clearInterval(ticker);
       busy = false;
@@ -1605,8 +1614,41 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       <div class="label">Chronicle${game.scenario ? ` &middot; ${esc(game.scenario.title)}` : ""}</div>
       <div class="meta" style="margin-bottom:4px">Every chapter so far. Tap one to reread it.</div>
       <div>${chronicle}</div>`;
-    $("sheet").hidden = false;
-    $("sheet").scrollTop = 0;
+    openPanel("sheet");
+  }
+
+  // ------------------------------------------------------------------
+  // Panels (sheet, inventory, portrait) swap in for the current screen
+  // and swap back out, restoring the scroll position. No fixed layers:
+  // the viewer's frame handles those unpredictably.
+  // ------------------------------------------------------------------
+  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint"];
+  const panelStack = [];
+  function openPanel(id) {
+    const from = SCREENS.filter((k) => !$(k).hidden);
+    panelStack.push({ from, scroll: window.scrollY });
+    for (const k of from) $(k).hidden = true;
+    $(id).hidden = false;
+    window.scrollTo(0, 0);
+    $(id).scrollIntoView({ block: "start" });
+  }
+  function closePanel(id) {
+    $(id).hidden = true;
+    const prev = panelStack.pop();
+    if (prev) {
+      for (const k of prev.from) $(k).hidden = false;
+      window.scrollTo(0, prev.scroll);
+    } else {
+      render();
+    }
+  }
+  function closeAllPanels() {
+    while (panelStack.length) {
+      const prev = panelStack.pop();
+      for (const k of ["sheet", "inventory", "paint"]) $(k).hidden = true;
+      for (const k of prev.from) $(k).hidden = false;
+      if (!panelStack.length) window.scrollTo(0, prev.scroll);
+    }
   }
 
   // ------------------------------------------------------------------
@@ -1628,8 +1670,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
           <button data-action="examine-item" data-name="${esc(i.name)}">Examine</button>
           <button class="drop" data-action="drop-item" data-name="${esc(i.name)}">Drop</button></div>`}
       </div>`).join("") : `<span class="meta">Empty pockets. Things you pick up in the world appear here.</span>`}</div>`;
-    $("inventory").hidden = false;
-    $("inventory").scrollTop = 0;
+    openPanel("inventory");
   }
 
   // ------------------------------------------------------------------
@@ -1643,8 +1684,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("paint-file").disabled = !assets;
     $("paint-preview").innerHTML = game.portraitAssetId ? `<img src="/_blob/${esc(game.portraitAssetId)}" width="160" height="160" alt="portrait">` : "";
     $("paint-remove").hidden = !game.portraitAssetId;
-    $("paint").hidden = false;
-    $("paint").scrollTop = 0;
+    openPanel("paint");
   }
 
   /** Shrink to a 512px square JPEG so uploads stay small and load fast. */
@@ -1787,10 +1827,10 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       }
       case "stop": controller?.abort(); break;
       case "sheet": if (current) openSheet(current); break;
-      case "close-sheet": $("sheet").hidden = true; break;
+      case "close-sheet": closePanel("sheet"); break;
       case "inventory": if (current) openInventory(current); break;
       case "paint": if (current) openPaint(current); break;
-      case "close-paint": $("paint").hidden = true; break;
+      case "close-paint": closePanel("paint"); break;
       case "copy-prompt": {
         const box = $("paint-prompt");
         box.focus(); box.select();
@@ -1801,13 +1841,13 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         break;
       }
       case "remove-paint": removePortrait(); break;
-      case "close-inventory": $("inventory").hidden = true; break;
+      case "close-inventory": closePanel("inventory"); break;
       case "take": case "use-item": case "examine-item": case "drop-item": {
         const game = games.get($("play").dataset.id);
         if (!game) break;
         const name = el.dataset.name;
         const text = action === "take" ? `I pick up the ${name}.` : action === "use-item" ? `I use my ${name}.` : action === "examine-item" ? `I take a closer look at my ${name}.` : `I drop my ${name} and leave it behind.`;
-        $("inventory").hidden = true;
+        closeAllPanels();
         act(game, { freeText: text });
         break;
       }
