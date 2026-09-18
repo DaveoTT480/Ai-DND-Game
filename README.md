@@ -250,6 +250,24 @@ portrait anyway:
   into any image generator, save the result, and upload it on the same screen. The upload
   is stored with the artifact and replaces the drawn portrait everywhere.
 
+## The map (artifact)
+
+When a tale begins, the Keeper makes one extra "cartographer" call and the hero receives a
+map as an inventory item. Tap it (or the map button beside the pack) to unroll it.
+
+- **Historical eras draw on real geography.** Coastlines, rivers, lakes and borders come from
+  Natural Earth (public domain) and real places of the period are pinned: Rome's roads and
+  Ostia, the Aegean, the Nile valley, Sengoku Japan, the Spanish Main, the frontier trails,
+  Victorian London with the Thames, occupied France with the old demarcation line, Berlin
+  with the Wall. The Keeper adds 6 to 10 story places with real latitude and longitude, some
+  hidden until the tale reveals them. `artifact/geo/extract.py` rebuilds the region data.
+- **Invented eras get an invented land.** Classic Fantasy, Warring Thrones and custom eras
+  ask the Keeper for a land on a 100 by 100 grid: a sea side, terrain (mountains, forest,
+  hills, lakes, marsh, desert), places and routes, drawn in a hand-inked parchment style.
+- **The map lives.** Each turn the Dungeon Master reports where the hero is (`mapAt`) and any
+  newly learned places (`mapReveal`); the pin moves and places appear. Tap a place for what
+  you know of it and "Set out for" it. Older saves get a "Chart this land" button in the pack.
+
 ## API
 
 All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, send
