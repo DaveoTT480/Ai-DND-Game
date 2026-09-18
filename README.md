@@ -104,20 +104,49 @@ If you want the native app on a phone without owning a Mac, the remaining routes
 Mac build service (Xcode Cloud, Codemagic, Bitrise) delivering through TestFlight, which needs
 an Apple Developer account, or renting a cloud Mac. The web app is the practical answer.
 
-## 2b. Run the iPhone app from Xcode
+## 2b. Sideload the iPhone app from Xcode (no API keys needed)
 
-1. Open `ios/OldTavern.xcodeproj` in Xcode 16 or newer (the project uses Xcode 16's
-   folder-synchronised groups, so any Swift file you add under `ios/OldTavern` is picked up
-   automatically). If you prefer, `ios/project.yml` regenerates the same project with
-   [XcodeGen](https://github.com/yonaskolb/XcodeGen).
-2. Select the OldTavern target, set your team under Signing & Capabilities, and run on the
-   simulator or your iPhone.
-3. In the app, tap the gear and set the server address:
-   - Simulator: `http://localhost:8787` (the default).
-   - A real iPhone on the same Wi-Fi: `http://<your Mac's LAN IP>:8787`. `Info.plist` already
-     allows local-network HTTP for development.
-   - Anywhere else: deploy to Vercel (next section) or any HTTPS host, and set
-     `GAME_API_TOKEN` on both sides.
+The app has two modes, chosen under Settings in the app. **Play in Claude** (the default)
+wraps the published tavern artifact in a full-screen web view: you sign in to claude.ai once
+inside the app and play on your own Claude subscription, with saves, maps, portraits and
+inventory exactly as in the browser. **Own game server** is the native SwiftUI client for the
+repo's server and needs an Anthropic API key on that server.
+
+Which Xcode: open the Mac App Store and install the newest Xcode it offers for your macOS
+(it hides versions your macOS cannot run). As a guide: macOS 26 Tahoe runs Xcode 26; macOS 15
+Sequoia runs Xcode 16.x and, from 15.6, Xcode 26; macOS 14 Sonoma runs Xcode 15.4 and 16.x.
+The project needs Xcode 16 or newer. Your iPhone's iOS version must not be newer than the
+iOS SDK in that Xcode (iOS 26 needs Xcode 26), or Xcode will refuse to install.
+
+1. Clone the repo on the Mac and open `ios/OldTavern.xcodeproj`. Any Swift file under
+   `ios/OldTavern` is picked up automatically (folder-synchronised groups). `ios/project.yml`
+   regenerates the same project with [XcodeGen](https://github.com/yonaskolb/XcodeGen) if
+   ever needed.
+2. Xcode > Settings > Accounts: add your Apple ID. A free Apple ID is enough; it gives you a
+   "Personal Team".
+3. Click the OldTavern project, select the OldTavern target, open Signing & Capabilities,
+   tick "Automatically manage signing", pick your Personal Team, and change the bundle
+   identifier to something unique to you (for example `com.yourname.oldtavern`).
+4. On the iPhone: Settings > Privacy & Security > Developer Mode > on (the phone restarts).
+   Plug the phone into the Mac with a cable and tap Trust on the phone.
+5. In Xcode's toolbar choose your iPhone as the run destination and press Run. The first
+   build takes a few minutes.
+6. The first launch is blocked until you trust yourself: on the iPhone, Settings > General >
+   VPN & Device Management > your Apple ID > Trust. Then open Old Tavern from the home screen.
+7. In the app, sign in to claude.ai. If you sign in with Google and the page refuses the
+   embedded browser, use the "Open in Safari" menu item, or sign in with an email code.
+
+A free Personal Team signs the app for 7 days; after that it stops opening until you press
+Run in Xcode again (the phone can be plugged in or on the same Wi-Fi). A paid Apple
+Developer account extends this to a year. Free teams can have three sideloaded apps at a
+time.
+
+To use the native client instead, switch Settings to "Own game server" and set the address:
+- Simulator: `http://localhost:8787` (the default).
+- A real iPhone on the same Wi-Fi: `http://<your Mac's LAN IP>:8787`. `Info.plist` already
+  allows local-network HTTP for development.
+- Anywhere else: deploy to Vercel (next section) or any HTTPS host, and set
+  `GAME_API_TOKEN` on both sides.
 
 ## 3. Deploy the server to Vercel
 

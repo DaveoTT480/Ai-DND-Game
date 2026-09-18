@@ -11,6 +11,27 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    Picker("Play through", selection: $settings.playMode) {
+                        ForEach(PlayMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    if settings.playMode == .claude {
+                        TextField(AppSettings.defaultArtifactURL, text: $settings.artifactURL)
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                } header: {
+                    Text("Dungeon Master")
+                } footer: {
+                    Text(settings.playMode == .claude
+                         ? "Plays the tavern inside Claude on your own subscription. Sign in to claude.ai once inside the app; no API key is needed. The link is the published tavern artifact."
+                         : "Plays through your own game server, which needs an Anthropic API key.")
+                }
+
+                Section {
                     TextField("http://192.168.1.20:8787", text: $settings.serverURL)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
@@ -58,6 +79,8 @@ struct SettingsView: View {
                     }
                 }
             }
+            .onChange(of: settings.playMode) { _, _ in settings.save() }
+            .onChange(of: settings.artifactURL) { _, _ in settings.save() }
             .onChange(of: settings.serverURL) { _, _ in settings.save() }
             .onChange(of: settings.apiToken) { _, _ in settings.save() }
         }
