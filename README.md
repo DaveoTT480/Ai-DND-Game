@@ -232,7 +232,9 @@ portrait anyway:
   description. It costs a few cents per hero, is stored beside the save (on disk locally, in
   Vercel Blob when deployed) and served at `GET /api/games/:id/portrait`. The web app and iOS
   app show it in place of the drawn bust. `IMAGE_MODEL` and `IMAGE_QUALITY` (`low`, `medium`,
-  `high`) tune it; `IMAGE_PROVIDER=none` turns it off. Other providers can be added in
+  `high`) tune it; `IMAGE_PROVIDER=none` turns it off. A hero forged before the key was set,
+  or whose painting failed, has a "Paint a portrait" button on the tale screen
+  (`POST /api/games/:id/portrait`). In mock mode a placeholder image stands in. Other providers can be added in
   `server/src/images.ts`; the interface is one function that returns JPEG bytes.
 - **Artifact route (manual).** The claude.ai Artifact cannot reach an image model, so its
   "Get a painted portrait" button gives you a ready-made prompt in the same style. Paste it

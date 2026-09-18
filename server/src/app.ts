@@ -76,6 +76,13 @@ export function createApp({ engine, apiToken, requireToken = false }: AppOptions
     return new Response(new Uint8Array(bytes), { headers: { "content-type": "image/jpeg", "cache-control": "private, max-age=86400" } });
   });
 
+  api.post("/games/:id/portrait", async (c) => {
+    const painted = await engine.paintPortrait(c.req.param("id"));
+    if (!painted) return c.json({ error: "No painter is available. Set OPENAI_API_KEY on the server, or try again later." }, 503);
+    const game = await engine.getGame(c.req.param("id"));
+    return c.json({ game: toSnapshot(game) });
+  });
+
   api.post("/games/:id/reroll", async (c) => {
     const game = await engine.rerollScenarios(c.req.param("id"));
     return c.json({ game: toSnapshot(game) });

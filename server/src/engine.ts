@@ -151,6 +151,18 @@ export class GameEngine {
     return game;
   }
 
+  /** Paint (or repaint) the portrait now. Returns false when no image provider is configured or it failed. */
+  async paintPortrait(id: string): Promise<boolean> {
+    const game = await this.load(id);
+    const bytes = await this.images.generate(portraitPrompt(game.character, game.era));
+    if (!bytes) return false;
+    await this.store.putImage(game.id, bytes);
+    game.portraitImage = true;
+    game.updatedAt = this.now().toISOString();
+    await this.store.save(game);
+    return true;
+  }
+
   /** Painted portrait bytes for a game, or null. */
   async portraitImage(id: string): Promise<Buffer | null> {
     const game = await this.load(id);

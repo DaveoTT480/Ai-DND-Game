@@ -71,6 +71,14 @@ test("GET /api/games/:id/portrait serves the painted portrait or 404", async () 
   assert.equal(img.headers.get("content-type"), "image/jpeg");
   assert.equal((await img.arrayBuffer()).byteLength, 3);
   assert.equal((await app.request(`/api/games/nope/portrait`)).status, 404);
+
+  const plain = createApp({ engine: new GameEngine({ dm: new MockDungeonMaster(), store: new MemoryStore() }) });
+  const c2 = await app.request("/api/games", json({ background: "A monk who has forgotten her vows." }));
+  const g2 = ((await c2.json()) as any).game;
+  assert.equal((await app.request(`/api/games/${g2.id}/portrait`, json({}))).status, 200, "repaint works with a painter");
+  const c3 = await plain.request("/api/games", json({ background: "A monk who has forgotten her vows." }));
+  const g3 = ((await c3.json()) as any).game;
+  assert.equal((await plain.request(`/api/games/${g3.id}/portrait`, json({}))).status, 503, "no painter configured");
 });
 
 test("GET /api/eras lists the catalogue without prompt text", async () => {

@@ -40,6 +40,7 @@
     "A street magician from the capital who can do one real spell and pretends the rest are also real. Charming, broke, owes money to a tiefling loan shark.",
     "An old knight, once famous, now forgotten, looking for one last deed worth a song. Her armour still fits. Mostly.",
   ];
+  const PAINT_LINES = ["Mixing the paints...", "The painter squints at your hero...", "Adding the ember glow..."];
   const FORGE_LINES = ["The Keeper sharpens a quill...", "Rolling for your strengths...", "Consulting the notice board...", "Writing your name in the ledger...", "Three tales are being chosen for you..."];
   const REROLL_LINES = ["The Keeper flips through the notice board...", "Tearing down the old notices...", "Three new tales are being chosen for you..."];
   const THINK_LINES = ["The Dungeon Master is thinking...", "Dice clatter behind the screen...", "Somewhere, a plot thickens...", "The candle gutters. The story turns..."];
@@ -175,6 +176,7 @@
     if (eraId === "custom" && customEra.length < 3) return showError("f-error", "Name the time and place of your tale.");
     await withBusy(FORGE_LINES, async () => {
       const { game } = await api("/api/games", "POST", { background, tone: effectiveTone, name: $("f-name").value.trim(), eraId, customEra });
+      if (game.portraitImage) await loadPortrait(game.id);
       remember(game);
       $("f-background").value = "";
       $("f-name").value = "";
@@ -193,8 +195,11 @@
     $("pick").classList.remove("hidden");
     $("pick").dataset.id = game.id;
     const c = game.character;
+    const painted = game.portraitImage && portraitUrls.get(game.id);
     $("p-hero").innerHTML = `<div class="card accent">
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game.id, game.portraitImage, c, 84, "#e08f2b")}</span><div style="flex:1"><h3 style="font-size:26px">${esc(c.name)}</h3></div></div>
+      ${painted ? `<div class="portrait big" style="display:flex;justify-content:center;margin-bottom:12px"><img src="${portraitUrls.get(game.id)}" width="220" height="220" alt="portrait"></div><h3 style="font-size:26px;text-align:center">${esc(c.name)}</h3>`
+        : `<div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game.id, game.portraitImage, c, 84, "#e08f2b")}</span><div style="flex:1"><h3 style="font-size:26px">${esc(c.name)}</h3></div></div>`}
+      ${game.portraitImage ? "" : `<button class="btn link" data-action="paint" style="margin:4px 0 0">&#127912; Paint a portrait</button>`}
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p style="margin:6px 0">${esc(c.appearance)}</p>
@@ -436,6 +441,17 @@
       case "tone": tone = el.dataset.tone; renderForge(); break;
       case "forge": forge(); break;
       case "start": start($("pick").dataset.id, { scenarioId: el.dataset.id }); break;
+      case "paint": {
+        const id = $("pick").dataset.id;
+        await withBusy(PAINT_LINES, async () => {
+          const d = await api(`/api/games/${id}/portrait`, "POST", {});
+          portraitUrls.delete(id);
+          remember(d.game);
+          await loadPortrait(id);
+          renderPick(d.game);
+        }, (e) => showError("p-error", e.message));
+        break;
+      }
       case "reroll":
         await withBusy(REROLL_LINES, async () => {
           const d = await api(`/api/games/${$("pick").dataset.id}/reroll`, "POST", {});

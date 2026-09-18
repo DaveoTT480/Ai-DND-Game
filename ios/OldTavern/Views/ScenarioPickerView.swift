@@ -6,6 +6,7 @@ struct ScenarioPickerView: View {
     @State private var game: GameSnapshot
     @Binding var path: [Route]
     @State private var isRerolling = false
+    @State private var isPainting = false
 
     @State private var customScenario = ""
     @State private var isStarting = false
@@ -107,6 +108,21 @@ struct ScenarioPickerView: View {
                 }
             }
 
+            if game.portraitImage != true {
+                Button {
+                    Task { await paint() }
+                } label: {
+                    if isPainting {
+                        HStack { ProgressView().tint(Theme.ember); Text("Painting...").font(Theme.small).foregroundStyle(Theme.muted) }
+                    } else {
+                        Label("Paint a portrait", systemImage: "paintbrush.pointed")
+                            .font(Theme.small)
+                            .foregroundStyle(Theme.ember)
+                    }
+                }
+                .disabled(isPainting)
+            }
+
             HStack(spacing: 6) {
                 ForEach(Ability.allCases, id: \.self) { ability in
                     VStack(spacing: 2) {
@@ -151,6 +167,18 @@ struct ScenarioPickerView: View {
             }
         }
         .tavernCard()
+    }
+
+    @MainActor
+    private func paint() async {
+        isPainting = true
+        errorMessage = nil
+        defer { isPainting = false }
+        do {
+            game = try await settings.client.paintPortrait(id: game.id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     @MainActor

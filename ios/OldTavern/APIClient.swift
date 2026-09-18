@@ -53,6 +53,12 @@ struct APIClient {
         return envelope.game
     }
 
+    /// Ask the server to paint (or repaint) the portrait now.
+    func paintPortrait(id: String) async throws -> GameSnapshot {
+        let envelope: GameEnvelope = try await request(path: "/api/games/\(id)/portrait", method: "POST", body: [:])
+        return envelope.game
+    }
+
     func rerollScenarios(id: String) async throws -> GameSnapshot {
         let envelope: GameEnvelope = try await request(path: "/api/games/\(id)/reroll", method: "POST", body: [:])
         return envelope.game

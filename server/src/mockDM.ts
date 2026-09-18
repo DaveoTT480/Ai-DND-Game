@@ -1,4 +1,12 @@
 import type { DungeonMaster, ForgeRequest, NarrateRequest } from "./dm.js";
+import type { ImageProvider } from "./images.js";
+
+/** A one-pixel JPEG so mock mode exercises the whole portrait pipeline without an image key. */
+export const mockImages: ImageProvider = {
+  async generate() {
+    return Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=", "base64");
+  },
+};
 import type { ForgeResult, ScenarioList, Scene } from "./schemas.js";
 
 /**
