@@ -125,8 +125,8 @@ iOS SDK in that Xcode (iOS 26 needs Xcode 26), or Xcode will refuse to install.
 2. Xcode > Settings > Accounts: add your Apple ID. A free Apple ID is enough; it gives you a
    "Personal Team".
 3. Click the OldTavern project, select the OldTavern target, open Signing & Capabilities,
-   tick "Automatically manage signing", pick your Personal Team, and change the bundle
-   identifier to something unique to you (for example `com.yourname.oldtavern`).
+   tick "Automatically manage signing" and pick your Personal Team. The bundle identifier is
+   `com.daveott480.oldtavern`; if Xcode says it is taken, change it to anything unique.
 4. On the iPhone: Settings > Privacy & Security > Developer Mode > on (the phone restarts).
    Plug the phone into the Mac with a cable and tap Trust on the phone.
 5. In Xcode's toolbar choose your iPhone as the run destination and press Run. The first
