@@ -26,7 +26,13 @@ test("full play loop over HTTP", async () => {
   assert.equal(game.background, undefined, "raw background is not echoed to clients");
   assert.equal(game.scenarios.length, 3);
 
-  const started = await app.request(`/api/games/${game.id}/start`, json({ scenarioId: game.scenarios[1].id }));
+  const rerolled = await app.request(`/api/games/${game.id}/reroll`, json({}));
+  assert.equal(rerolled.status, 200);
+  const rerolledGame = (await rerolled.json() as any).game;
+  assert.equal(rerolledGame.scenarios.length, 3);
+  assert.equal(rerolledGame.passedScenarios.length, 3);
+
+  const started = await app.request(`/api/games/${game.id}/start`, json({ scenarioId: rerolledGame.scenarios[1].id }));
   assert.equal(started.status, 200);
   const startBody = await started.json() as any;
   assert.equal(startBody.game.status, "playing");

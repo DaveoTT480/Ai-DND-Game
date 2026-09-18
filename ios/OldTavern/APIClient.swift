@@ -46,6 +46,11 @@ struct APIClient {
         return envelope.game
     }
 
+    func rerollScenarios(id: String) async throws -> GameSnapshot {
+        let envelope: GameEnvelope = try await request(path: "/api/games/\(id)/reroll", method: "POST", body: [:])
+        return envelope.game
+    }
+
     func startGame(id: String, scenarioId: String?, customScenario: String?) async throws -> GameSnapshot {
         let envelope: GameEnvelope = try await request(
             path: "/api/games/\(id)/start",

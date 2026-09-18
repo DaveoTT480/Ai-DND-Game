@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { ForgeResult, Scene } from "./schemas.js";
+import { ForgeResult, ScenarioList, Scene } from "./schemas.js";
 
 /** One conversational turn handed to the Dungeon Master. */
 export type DMMessage = Anthropic.Beta.BetaMessageParam;
@@ -18,6 +18,8 @@ export interface NarrateRequest {
 /** Anything that can play Dungeon Master: Claude in production, a script in tests. */
 export interface DungeonMaster {
   forge(req: ForgeRequest): Promise<ForgeResult>;
+  /** Three fresh scenarios for an already-forged hero. */
+  reroll(req: ForgeRequest): Promise<ScenarioList>;
   narrate(req: NarrateRequest): Promise<Scene>;
 }
 
@@ -52,6 +54,14 @@ export class ClaudeDungeonMaster implements DungeonMaster {
       [{ type: "text", text: req.system, cache_control: { type: "ephemeral" } }],
       [{ role: "user", content: req.user }],
       betaZodOutputFormat(ForgeResult),
+    );
+  }
+
+  async reroll(req: ForgeRequest): Promise<ScenarioList> {
+    return this.call<ScenarioList>(
+      [{ type: "text", text: req.system, cache_control: { type: "ephemeral" } }],
+      [{ role: "user", content: req.user }],
+      betaZodOutputFormat(ScenarioList),
     );
   }
 

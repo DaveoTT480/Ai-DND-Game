@@ -219,6 +219,7 @@ struct GameSnapshot: Codable, Hashable, Identifiable {
     var research: [String]?
     var character: CharacterSheet
     var scenarios: [ScenarioOption]
+    var passedScenarios: [String]?
     var scenario: ScenarioOption?
     var hp: Int
     var gold: Int

@@ -195,7 +195,8 @@ Notes:
    instead of fantasy classes, period gear and money, a polished backstory), the Keeper's
    research notes (four to six real people, places or events of that year and how they touch
    this hero), and three scenarios that each draw on that research. You can also write your
-   own scenario.
+   own scenario. Not feeling any of the three? "Show me three other tales" asks the Keeper for
+   three new ones, told which premises you passed on so it never repeats them.
 3. **Play.** The Dungeon Master is held to the era: at least one documented person from the
    briefing appears within the first three turns, real figures are tagged as historical in
    play, money is counted in the era's currency, and anachronisms are forbidden. Each turn
@@ -223,6 +224,7 @@ All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, 
 | `GET` | `/api/games` | | `{ games: GameSummary[] }` |
 | `POST` | `/api/games` | `{ background, tone?, name?, eraId?, customEra? }` | `{ game }` with `status: "forged"`, character and scenarios |
 | `GET` | `/api/games/:id` | | `{ game }` |
+| `POST` | `/api/games/:id/reroll` | | `{ game }` with three new scenarios |
 | `POST` | `/api/games/:id/start` | `{ scenarioId }` or `{ customScenario }` | `{ game, scene }` |
 | `POST` | `/api/games/:id/turn` | `{ choiceId }` or `{ freeText }` | `{ game, scene }` |
 | `DELETE` | `/api/games/:id` | | `{ ok: true }` |

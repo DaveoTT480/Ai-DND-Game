@@ -23,6 +23,7 @@
     "An old knight, once famous, now forgotten, looking for one last deed worth a song. Her armour still fits. Mostly.",
   ];
   const FORGE_LINES = ["The Keeper sharpens a quill...", "Rolling for your strengths...", "Consulting the notice board...", "Writing your name in the ledger...", "Three tales are being chosen for you..."];
+  const REROLL_LINES = ["The Keeper flips through the notice board...", "Tearing down the old notices...", "Three new tales are being chosen for you..."];
   const THINK_LINES = ["The Dungeon Master is thinking...", "Dice clatter behind the screen...", "Somewhere, a plot thickens...", "The candle gutters. The story turns..."];
   const ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
   const LONG = { STR: "Strength", DEX: "Dexterity", CON: "Constitution", INT: "Intelligence", WIS: "Wisdom", CHA: "Charisma" };
@@ -389,6 +390,14 @@
       case "tone": tone = el.dataset.tone; renderForge(); break;
       case "forge": forge(); break;
       case "start": start($("pick").dataset.id, { scenarioId: el.dataset.id }); break;
+      case "reroll":
+        await withBusy(REROLL_LINES, async () => {
+          const d = await api(`/api/games/${$("pick").dataset.id}/reroll`, "POST", {});
+          remember(d.game);
+          renderPick(d.game);
+          $("p-scenarios").scrollIntoView({ behavior: "smooth", block: "start" });
+        }, (e) => showError("p-error", e.message));
+        break;
       case "start-custom": {
         const text = $("p-custom").value.trim();
         if (text.length < 10) return showError("p-error", "Give your tale at least a sentence.");

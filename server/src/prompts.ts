@@ -106,6 +106,37 @@ Setting: ${scenario.setting}
 Opening location: ${scenario.openingLocation}`;
 }
 
+export const REROLL_SYSTEM = `You are the Keeper of the Old Tavern, a veteran Dungeon Master. A hero is already forged; the player has looked at the adventures on offer and wants three DIFFERENT ones.
+
+How to build the three new scenarios, all in the requested tone:
+- Scenario 1 grows directly out of the backstory (a different thread of it than before).
+- Scenario 2 is an open-world hook that starts somewhere new and strange.
+- Scenario 3 has a twist or unusual premise (a heist, a mystery, a siege, a wedding gone wrong, a trial, a voyage, a haunting).
+- Each is playable in 20 to 30 turns with a central conflict and a clear stake, and names at least one real person, place or event from the briefing in its synopsis.
+- Never repeat a premise, villain, location or hook the player has already passed on. Vary the genre of conflict: if those were about debt and theft, try war, love, faith, exile, revenge, discovery.
+- Ids are short slugs, unique. Titles are 2 to 5 words; taglines one line for a notice board.`;
+
+export function rerollUserMessage(game: GameState): string {
+  const passed = game.passedScenarios.length ? game.passedScenarios.map((t) => `- ${t}`).join("\n") : "(none yet)";
+  return [
+    "## The era (briefing)",
+    eraBriefing(game.era),
+    "",
+    "## The hero",
+    characterBlock(game.character),
+    "",
+    "## The Keeper's research notes",
+    game.research.length ? game.research.map((r) => `- ${r}`).join("\n") : "(none)",
+    "",
+    `Tone requested: ${game.tone}`,
+    "",
+    "## Tales the player has already passed on",
+    passed,
+    "",
+    "Offer three new scenarios.",
+  ].join("\n");
+}
+
 export function characterBlock(c: CharacterSheet): string {
   const a = c.abilities;
   const fmt = (v: number) => `${v} (${v >= 10 ? "+" : ""}${Math.floor((v - 10) / 2)})`;

@@ -70,6 +70,11 @@ export function createApp({ engine, apiToken, requireToken = false }: AppOptions
     return c.json({ game: toSnapshot(game) });
   });
 
+  api.post("/games/:id/reroll", async (c) => {
+    const game = await engine.rerollScenarios(c.req.param("id"));
+    return c.json({ game: toSnapshot(game) });
+  });
+
   api.post("/games/:id/start", async (c) => {
     const body = await readJson(c.req.raw);
     const game = await engine.startGame(c.req.param("id"), {

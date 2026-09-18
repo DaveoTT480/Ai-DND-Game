@@ -3,14 +3,20 @@ import SwiftUI
 /// Meet the hero the Keeper forged, then choose (or write) the tale.
 struct ScenarioPickerView: View {
     @Environment(AppSettings.self) private var settings
-    let game: GameSnapshot
+    @State private var game: GameSnapshot
     @Binding var path: [Route]
+    @State private var isRerolling = false
 
     @State private var customScenario = ""
     @State private var isStarting = false
     @State private var startingId: String?
     @State private var errorMessage: String?
     @State private var showSheet = false
+
+    init(game: GameSnapshot, path: Binding<[Route]>) {
+        _game = State(initialValue: game)
+        _path = path
+    }
 
     var body: some View {
         ZStack {
@@ -30,6 +36,17 @@ struct ScenarioPickerView: View {
                             }
                             .disabled(isStarting)
                         }
+                        Button {
+                            Task { await reroll() }
+                        } label: {
+                            if isRerolling {
+                                ProgressView().tint(Theme.parchment)
+                            } else {
+                                Label("Show me three other tales", systemImage: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(QuietButtonStyle())
+                        .disabled(isStarting || isRerolling)
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
@@ -133,6 +150,18 @@ struct ScenarioPickerView: View {
             }
         }
         .tavernCard()
+    }
+
+    @MainActor
+    private func reroll() async {
+        isRerolling = true
+        errorMessage = nil
+        defer { isRerolling = false }
+        do {
+            game = try await settings.client.rerollScenarios(id: game.id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     @MainActor

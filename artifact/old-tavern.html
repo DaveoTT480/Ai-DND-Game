@@ -209,6 +209,7 @@
   <div id="p-hero"></div>
   <div class="label">Choose your tale</div>
   <div id="p-scenarios" class="stack"></div>
+  <button id="p-reroll" class="btn quiet" data-action="reroll">&#8635; Show me three other tales</button>
   <div class="label">Or write your own</div>
   <textarea id="p-custom" class="field" placeholder="I wake in a burning library with no memory of how I got here..." style="min-height:100px"></textarea>
   <button class="btn quiet" data-action="start-custom">Begin my own tale</button>
@@ -657,6 +658,38 @@ ${background}
 Forge the character sheet and three scenarios. JSON only.`;
   }
 
+  const REROLL_LINES = ["The Keeper flips through the notice board...", "Tearing down the old notices...", "Three new tales are being chosen for you..."];
+
+  function rerollPrompt(game) {
+    const passed = game.passedScenarios.length ? game.passedScenarios.map((t) => `- ${t}`).join("\n") : "(none yet)";
+    return `You are the Keeper of the Old Tavern, a veteran Dungeon Master. A hero is already forged; the player has looked at the adventures on offer and wants three DIFFERENT ones.
+
+## The era (briefing)
+${eraBriefing(game.era)}
+
+## The hero
+${characterBlock(game.character)}
+
+## The Keeper's research notes
+${game.research.length ? game.research.map((r) => `- ${r}`).join("\n") : "(none)"}
+
+Tone requested: ${game.tone}
+
+## Tales the player has already passed on (do not repeat these premises, villains, locations or hooks)
+${passed}
+
+How to build the three new scenarios, all in the requested tone:
+- Scenario 1 grows directly out of the backstory (a different thread of it than before).
+- Scenario 2 is an open-world hook that starts somewhere new and strange.
+- Scenario 3 has a twist or unusual premise (a heist, a mystery, a siege, a wedding gone wrong, a trial, a voyage, a haunting).
+- Each is playable in 20 to 30 turns with a central conflict and a clear stake, and names at least one real person, place or event from the briefing in its synopsis.
+- Vary the genre of conflict from what was passed on: if those were about debt and theft, try war, love, faith, exile, revenge, discovery.
+- Ids are short slugs, unique. Titles are 2 to 5 words; taglines one line for a notice board.
+
+Reply with ONLY a JSON object, no prose before or after, exactly this shape:
+{"scenarios":[{"id":"short-slug","title":string,"tagline":string,"synopsis":string,"setting":string,"tone":string,"openingLocation":string}, ... exactly 3]}`;
+  }
+
   function characterBlock(c) {
     const a = c.abilities;
     const f = (v) => `${v} (${fmtMod(mod(v))})`;
@@ -867,11 +900,26 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     const ts = now();
     const game = {
       id: uuid(), createdAt: ts, updatedAt: ts, status: "forged", tone: toneName, background,
-      era, research, character, scenarios, scenario: null,
+      era, research, character, scenarios, passedScenarios: [], scenario: null,
       hp: character.maxHp, gold: character.gold, xp: 0, level: character.level,
       inventory: character.inventory.map((i) => ({ ...i })), quests: [], statusEffects: [], location: "", npcsMet: [], turns: [],
     };
     games.set(game.id, game);
+    await store.save(game);
+    return game;
+  }
+
+  async function rerollScenarios(game) {
+    const passed = game.scenarios.map((sc) => `${sc.title}: ${sc.tagline}`);
+    game.passedScenarios = game.passedScenarios.concat(passed).slice(-12);
+    const result = await askDM(rerollPrompt(game));
+    const scenarios = arr(result?.scenarios).slice(0, 3).map(normScenario);
+    if (!scenarios.length) throw { code: "invalid_json", message: "no scenarios" };
+    // Fresh ids so a stale tap can never start an old tale.
+    const stamp = Date.now().toString(36).slice(-4);
+    for (const sc of scenarios) sc.id = `${sc.id}-${stamp}`;
+    game.scenarios = scenarios;
+    game.updatedAt = now();
     await store.save(game);
     return game;
   }
@@ -966,6 +1014,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (!g) return g;
     if (!g.era) { const e = ERAS[0]; g.era = { id: e.id, name: e.name, when: e.when, currency: e.currency, historical: false }; }
     if (!Array.isArray(g.research)) g.research = [];
+    if (!Array.isArray(g.passedScenarios)) g.passedScenarios = [];
     return g;
   }
   async function loadGame(id) {
@@ -1281,6 +1330,16 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       case "tone": tone = el.dataset.tone; renderForge(); break;
       case "forge": forge(); break;
       case "start": start(games.get($("pick").dataset.id), { scenarioId: el.dataset.id }); break;
+      case "reroll": {
+        const game = games.get($("pick").dataset.id);
+        if (!game) break;
+        await withBusy(REROLL_LINES, async () => {
+          await rerollScenarios(game);
+          renderPick(game);
+          $("p-scenarios").scrollIntoView({ behavior: "smooth", block: "start" });
+        }, (e) => showError("p-error", copyFor(e)));
+        break;
+      }
       case "start-custom": {
         const text = $("p-custom").value.trim();
         if (text.length < 10) return showError("p-error", "Give your tale at least a sentence.");

@@ -58,6 +58,11 @@ export const ScenarioOption = z.object({
 });
 export type ScenarioOption = z.infer<typeof ScenarioOption>;
 
+export const ScenarioList = z.object({
+  scenarios: z.array(ScenarioOption).describe("Exactly three new, distinct starting scenarios"),
+});
+export type ScenarioList = z.infer<typeof ScenarioList>;
+
 export const ForgeResult = z.object({
   character: CharacterSheet,
   research: z.array(z.string()).describe("4 to 6 lines: one real person, place or event of the era each, why it matters that year, how it could touch this hero"),
@@ -169,6 +174,8 @@ export interface GameState {
   research: string[];
   character: CharacterSheet;
   scenarios: ScenarioOption[];
+  /** Titles and taglines the player passed on, so rerolls stay fresh. */
+  passedScenarios: string[];
   scenario: ScenarioOption | null;
   hp: number;
   gold: number;

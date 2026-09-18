@@ -1,5 +1,5 @@
 import type { DungeonMaster, ForgeRequest, NarrateRequest } from "./dm.js";
-import type { ForgeResult, Scene } from "./schemas.js";
+import type { ForgeResult, ScenarioList, Scene } from "./schemas.js";
 
 /**
  * A scripted Dungeon Master for tests and for running the app without an API
@@ -66,6 +66,20 @@ export class MockDungeonMaster implements DungeonMaster {
           tone: "classic fantasy",
           openingLocation: "the chapel steps as the bells begin",
         },
+      ],
+    };
+  }
+
+  rerolls = 0;
+
+  async reroll(_req: ForgeRequest): Promise<ScenarioList> {
+    this.rerolls += 1;
+    const n = this.rerolls;
+    return {
+      scenarios: [
+        { id: `salt-and-iron-${n}`, title: `Salt and Iron ${n}`, tagline: "The garrison is hiring, and not asking questions.", synopsis: "A border fort needs hands before the thaw. Its captain needs someone deniable.", setting: "the Kestrel Pass", tone: "classic fantasy", openingLocation: "the fort's muster yard" },
+        { id: `the-drowned-choir-${n}`, title: `The Drowned Choir ${n}`, tagline: "Something sings under the harbour at low tide.", synopsis: "Fishermen have stopped going out. The harbourmaster is paying for answers.", setting: "Greyhallow's harbour", tone: "classic fantasy", openingLocation: "the harbour steps at dawn" },
+        { id: `a-name-for-sale-${n}`, title: `A Name for Sale ${n}`, tagline: "A dead noble's heir is needed. You'll do.", synopsis: "A lawyer wants an impostor for one week and one funeral.", setting: "the hill-town of Ostermere", tone: "classic fantasy", openingLocation: "a lawyer's office above a bakery" },
       ],
     };
   }

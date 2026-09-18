@@ -169,6 +169,30 @@ test("eras: the chosen era briefs the forge and the Dungeon Master, and old save
   assert.deepEqual(loaded.research, []);
 });
 
+test("rerolling scenarios offers three new tales and remembers the ones passed on", async () => {
+  const seen: ForgeRequest[] = [];
+  const dm = new MockDungeonMaster();
+  const orig = dm.reroll.bind(dm);
+  dm.reroll = async (r) => { seen.push(r); return orig(r); };
+  const engine = makeEngine([], dm);
+  const created = await engine.createGame({ background: "A dock rat with a silver locket and a debt.", eraId: "rome" });
+  const firstIds = created.scenarios.map((s) => s.id);
+  const once = await engine.rerollScenarios(created.id);
+  assert.equal(once.scenarios.length, 3);
+  assert.ok(once.scenarios.every((s) => !firstIds.includes(s.id)));
+  assert.equal(once.passedScenarios.length, 3);
+  assert.match(once.passedScenarios[0]!, /Debt of Ash/);
+  assert.match(seen[0]!.user, /Debt of Ash/);
+  assert.match(seen[0]!.user, /Cicero/);
+  const twice = await engine.rerollScenarios(created.id);
+  assert.equal(twice.passedScenarios.length, 6);
+  assert.match(seen[1]!.user, /Salt and Iron 1/);
+  // The new tales can be started.
+  const started = await engine.startGame(created.id, { scenarioId: twice.scenarios[0]!.id });
+  assert.equal(started.status, "playing");
+  await assert.rejects(engine.rerollScenarios(created.id), (e: GameError) => e.status === 409);
+});
+
 test("compactScene keeps narration, dice and choices", () => {
   const text = compactScene({
     chapterTitle: "T", narration: "N", diceResult: null, npcs: [],

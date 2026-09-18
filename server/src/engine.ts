@@ -3,7 +3,7 @@ import type { DMMessage, DungeonMaster } from "./dm.js";
 import { DungeonMasterError } from "./dm.js";
 import { resolveCheck, rollDie, type RollFn } from "./dice.js";
 import { resolveEra } from "./eras.js";
-import { FORGE_SYSTEM, actionUserMessage, dmSystemPrompt, forgeUserMessage, openingUserMessage } from "./prompts.js";
+import { FORGE_SYSTEM, REROLL_SYSTEM, actionUserMessage, dmSystemPrompt, forgeUserMessage, openingUserMessage, rerollUserMessage } from "./prompts.js";
 import type { GameState, Item, PlayerAction, Scene, ScenarioOption, Turn } from "./schemas.js";
 import type { GameStore } from "./store.js";
 
@@ -121,6 +121,7 @@ export class GameEngine {
       research: forged.research.filter(Boolean).slice(0, 6),
       character,
       scenarios: forged.scenarios,
+      passedScenarios: [],
       scenario: null,
       hp: character.maxHp,
       gold: character.gold,
@@ -133,6 +134,23 @@ export class GameEngine {
       npcsMet: [],
       turns: [],
     };
+    await this.store.save(game);
+    return game;
+  }
+
+  /** Replace the three offered scenarios with three new ones the player has not seen. */
+  async rerollScenarios(id: string): Promise<GameState> {
+    const game = await this.load(id);
+    if (game.status !== "forged") throw new GameError("This adventure has already begun.", 409);
+    const passed = game.scenarios.map((s) => `${s.title}: ${s.tagline}`);
+    game.passedScenarios = game.passedScenarios.concat(passed).slice(-12);
+    await this.spendOneCall();
+    const result = await this.dm.reroll({ system: REROLL_SYSTEM, user: rerollUserMessage(game) });
+    if (result.scenarios.length === 0) throw new DungeonMasterError("The Dungeon Master offered no scenarios. Try again.");
+    // Fresh ids so a stale tap can never start an old tale.
+    const stamp = Date.now().toString(36).slice(-4);
+    game.scenarios = result.scenarios.slice(0, 3).map((s) => ({ ...s, id: `${s.id}-${stamp}` }));
+    game.updatedAt = this.now().toISOString();
     await this.store.save(game);
     return game;
   }
@@ -229,6 +247,7 @@ export class GameEngine {
     // Saves from before eras existed default to classic fantasy.
     if (!game.era) game.era = resolveEra("classic-fantasy", "");
     if (!Array.isArray(game.research)) game.research = [];
+    if (!Array.isArray(game.passedScenarios)) game.passedScenarios = [];
     return game;
   }
 
