@@ -395,6 +395,15 @@
 </div>
 
 <!-- Busy -->
+<div id="loot" class="overlay" hidden>
+  <div class="card accent" style="text-align:left">
+    <div class="label" style="margin:0">Something worth taking</div>
+    <div class="row" style="align-items:center;gap:12px"><span id="loot-sprite" class="item-hero" style="padding:8px;flex:0 0 auto"></span><div class="grow"><b id="loot-name" style="font-family:var(--display);font-size:20px;line-height:1.15"></b><div id="loot-desc" class="meta"></div></div></div>
+    <div id="loot-count" class="meta" style="font-size:11px"></div>
+    <div class="row" style="gap:8px"><button class="btn quiet" data-action="loot-leave">Leave it</button><button class="btn ember" data-action="loot-take">Take it</button></div>
+  </div>
+</div>
+
 <div id="busy" class="overlay" hidden>
   <div class="card accent">
     <div class="spinner" style="margin:0 auto"></div>
@@ -1103,7 +1112,7 @@ This is a real historical period unless the player's words make it fictional. Be
   function toast(msg, ms = 4500) {
     if (!msg) return;
     const t = $("toast");
-    t.classList.toggle("ok", /(deleted|equipped|unequipped)\.$/.test(msg));
+    t.classList.toggle("ok", /(deleted|equipped|unequipped|goes into your pack)\.$/.test(msg));
     t.textContent = msg;
     t.hidden = false;
     clearTimeout(toast.timer);
@@ -1279,7 +1288,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 - The player acts by picking one of your choices or by typing their own idea. Treat their own ideas generously: let clever plans work, let reckless ones carry consequences, and if something is impossible narrate the attempt failing believably rather than refusing.
 - Dice are rolled by the game, not by you. Each turn you receive a "fate die" (a d20). If the player's action carries real risk, decide the ability, skill and DC (10 easy, 13 moderate, 16 hard, 20 very hard), add the hero's modifier (ability modifier, plus proficiency bonus ${2 + Math.floor((game.level - 1) / 4)} if proficient in the skill), compare to the DC, narrate the outcome, and report it in diceResult. If the game already resolved a check for the chosen option, you MUST honour that result exactly. Natural 20 is a critical success, natural 1 a critical failure. Routine actions need no check.
 - The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange.
-- Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost.
+- Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. The tavern moves listed loot into the pack itself and tells you between turns; do not repeat those items in itemsGained. Use itemsGained only for things given, bought or won in the narration. When the player uses or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost.
 - Every item in loot and itemsGained is a SHORT object: ITEM = {"name":string,"quantity":int,"description":string (one line, what it looks like)}. The tavern appraises details later; do not add other fields.
 - The state lists what the hero has equipped (worn or wielded). Narrate with that gear: an unequipped sword is in the pack, not in hand.
 - Wear: when a weapon or armour is used hard (a fight, a forced lock, a fall), report it in stateChange.wear as {"name":string,"durabilityDelta":int} with small negative numbers (-3 to -15). An item at 0 durability is broken and no longer works; say so if it happens. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
@@ -1951,6 +1960,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     const older = game.turns.slice(0, Math.max(0, game.turns.length - VERBATIM_TURNS)).map((t) => t.scene.recap);
     const parts = [];
     if (older.length) parts.push("Story so far (earlier turns, oldest first):", ...older.map((r) => `- ${r}`), "");
+    if (game.pendingNotes && game.pendingNotes.length) { parts.push(`Between turns: ${game.pendingNotes.join(" ")}`, ""); game.pendingNotes = []; }
     parts.push(action.kind === "choice" ? `The player chooses: ${action.text}` : `The player says: "${action.text}"`, "");
     parts.push(resolved ? `The game already rolled for this choice: ${resolved}. Honour this result exactly and include it in diceResult.` : `Fate die for this turn: ${fateRoll}. Use it only if the action calls for a check.`);
     parts.push("", "Current state:", stateBlock(game), "", "Narrate what happens next and offer new choices. JSON only.");
@@ -2189,6 +2199,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
       try { await forgeWorld(game); }
       catch (e) { if (copyFor(e)) toast("The map could not be drawn just now. Chart the land later from your pack.", 5000); }
       go(`#play/${game.id}`);
+      setTimeout(() => promptLoot(game), 400);
     }, (e) => showError("p-error", copyFor(e)));
   }
 
@@ -2286,10 +2297,59 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   }
 
   let lastError = "";
+  /** Move a listed loot item into the pack without asking the Dungeon Master. */
+  async function takeLocal(game, name) {
+    const last = game.turns[game.turns.length - 1];
+    const loot = last && last.scene.loot || [];
+    const idx = loot.findIndex((i) => i.name === name);
+    if (idx === -1) return null;
+    const item = loot.splice(idx, 1)[0];
+    const ex = game.inventory.find((i) => i.name.toLowerCase() === item.name.toLowerCase());
+    if (ex) ex.quantity += item.quantity; else game.inventory.push({ ...item, declined: undefined });
+    game.pendingNotes = [...(game.pendingNotes || []), `The hero picked up the ${item.name}.`];
+    game.updatedAt = now();
+    await store.save(game);
+    return item;
+  }
+
+  let lootCtx = null; // { game, queue }
+  function promptLoot(game) {
+    if (game.status !== "playing") return;
+    const last = game.turns[game.turns.length - 1];
+    const queue = (last && last.scene.loot || []).filter((i) => !i.declined);
+    if (!queue.length) { $("loot").hidden = true; lootCtx = null; return; }
+    lootCtx = { game, queue };
+    showLoot();
+  }
+  function showLoot() {
+    if (!lootCtx || !lootCtx.queue.length) { $("loot").hidden = true; lootCtx = null; return; }
+    const item = lootCtx.queue[0];
+    $("loot-sprite").innerHTML = spriteSVG(item.sprite, item.tint, 48);
+    $("loot-name").textContent = item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name;
+    $("loot-desc").textContent = item.description || "";
+    $("loot-count").textContent = lootCtx.queue.length > 1 ? `${lootCtx.queue.length - 1} more thing${lootCtx.queue.length > 2 ? "s" : ""} to decide on after this.` : "";
+    $("loot").hidden = false;
+  }
+  async function answerLoot(take) {
+    if (!lootCtx) return;
+    const { game } = lootCtx;
+    const item = lootCtx.queue.shift();
+    if (take) {
+      const got = await takeLocal(game, item.name);
+      if (got) toast(`${got.name} goes into your pack.`, 1800);
+    } else {
+      item.declined = true;
+      await store.save(game);
+    }
+    if (!$("play").hidden) renderPlay(game);
+    showLoot();
+  }
+
   async function act(game, body) {
     if (busy) return;
     busy = true;
     lastError = "";
+    let taken = false;
     renderPlay(game);
     const ticker = rotate("think-line", THINK_LINES, 4000);
     try {
@@ -2297,6 +2357,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
       $("free").value = "";
       $("free").style.height = "auto";
       if (navigator.vibrate) navigator.vibrate(15);
+      taken = true;
     } catch (e) {
       lastError = copyFor(e);
       toast(lastError, 6000);
@@ -2305,6 +2366,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
       busy = false;
       controller = null;
       renderPlay(game);
+      if (taken) promptLoot(game);
     }
   }
 
@@ -2750,11 +2812,23 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
         break;
       }
       case "slot-hint": toast(`Nothing equipped here. Tap an item in your backpack to equip it.`, 2500); break;
-      case "take": case "use-item": case "drop-item": {
+      case "loot-take": await answerLoot(true); break;
+      case "loot-leave": await answerLoot(false); break;
+      case "take": {
+        const game = games.get($("play").dataset.id);
+        if (!game) break;
+        const got = await takeLocal(game, el.dataset.name);
+        itemCtx = null;
+        closeAllPanels();
+        renderPlay(game);
+        toast(got ? `${got.name} goes into your pack.` : "That is no longer here.", 1800);
+        break;
+      }
+      case "use-item": case "drop-item": {
         const game = games.get($("play").dataset.id);
         if (!game) break;
         const name = el.dataset.name;
-        const text = action === "take" ? `I pick up the ${name}.` : action === "use-item" ? `I use my ${name}.` : `I drop my ${name} and leave it behind.`;
+        const text = action === "use-item" ? `I use my ${name}.` : `I drop my ${name} and leave it behind.`;
         itemCtx = null;
         closeAllPanels();
         act(game, { freeText: text });
