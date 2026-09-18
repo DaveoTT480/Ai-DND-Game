@@ -18,10 +18,10 @@ jobs:
       - name: Select Xcode
         run: |
           ls /Applications | grep -i xcode || true
-          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -n 1)"
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
           xcodebuild -version
       - name: Build unsigned .ipa
-        run: sh ios/make-ipa.sh
+        run: bash ios/make-ipa.sh
       - name: Upload OldTavern.ipa
         uses: actions/upload-artifact@v4
         with:
