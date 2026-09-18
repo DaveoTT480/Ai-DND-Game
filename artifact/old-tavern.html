@@ -574,10 +574,16 @@ This is a real historical period unless the player's words make it fictional. Be
       const uid = user ? await user.id() : null;
       if (db && uid) {
         const col = db.collection("data/users/" + uid);
+        // Snapshots come back frozen; the game engine mutates its state, so thaw a copy.
+        const thaw = (v) => (v == null ? null : JSON.parse(JSON.stringify(v)));
         return {
           kind: "cloud",
-          async list() { const snap = await col.orderBy("updatedAt", "desc").limit(200).get(); return snap.docs.map((d) => d.data()); },
-          async get(id) { const snap = await col.doc(id).get(); return snap.exists ? snap.data() : null; },
+          async list() {
+            const snap = await col.limit(500).get();
+            return snap.docs.filter((d) => d.exists).map((d) => thaw(d.data())).filter((g) => g && g.id && g.character)
+              .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+          },
+          async get(id) { const snap = await col.doc(id).get(); return snap.exists ? thaw(snap.data()) : null; },
           async save(game) { await col.doc(game.id).set(compactForSave(game)); },
           async remove(id) { await col.doc(id).delete(); },
         };
@@ -1012,6 +1018,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 
   function upgrade(g) {
     if (!g) return g;
+    if (Object.isFrozen(g)) g = JSON.parse(JSON.stringify(g));
     if (!g.era) { const e = ERAS[0]; g.era = { id: e.id, name: e.name, when: e.when, currency: e.currency, historical: false }; }
     if (!Array.isArray(g.research)) g.research = [];
     if (!Array.isArray(g.passedScenarios)) g.passedScenarios = [];
@@ -1052,12 +1059,17 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("home").hidden = false;
     const box = $("tales");
     let list = [];
-    try { list = await store.list(); } catch (e) { toast("Could not read the ledger: " + (e.message || e.code || "unknown")); }
-    if (!list.length) {
-      box.innerHTML = `<div class="card meta">No tales yet. The bard is waiting for a hero.</div>`;
+    try {
+      list = (await store.list()).map(upgrade);
+    } catch (e) {
+      box.innerHTML = `<div class="card error">Could not read the ledger (${esc(e.code || "")} ${esc(e.message || "")}). Reload to try again.</div>`;
       return;
     }
-    box.innerHTML = list.map(upgrade).map((g) => {
+    if (!list.length) {
+      box.innerHTML = `<div class="card meta">No tales yet. The bard is waiting for a hero.${store.kind === "cloud" ? "" : " Saves in this browser only."}</div>`;
+      return;
+    }
+    box.innerHTML = list.map((g) => {
       const glyph = g.status === "forged" ? "&#128220;" : g.status === "playing" ? "&#128214;" : "&#127941;";
       const where = g.status === "forged" ? "Ready to choose a tale"
         : g.status === "playing" ? `${esc(g.scenario?.title || "An adventure")} - ${esc(g.location)}, turn ${g.turns.length}`
@@ -1293,8 +1305,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   function renderSettings() {
     for (const b of $("tier-seg").querySelectorAll("button")) b.classList.toggle("on", b.dataset.tier === tier);
     $("storage-note").textContent = store?.kind === "cloud"
-      ? "Saved tales live in your private Claude storage and follow you between devices."
-      : "Saved tales live in this browser only.";
+      ? `Saved tales live in your private Claude storage and follow you between devices. ${games.size} loaded this visit.`
+      : "Saved tales live in this browser only (private storage was not available on this visit).";
   }
 
   // ------------------------------------------------------------------
