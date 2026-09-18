@@ -215,7 +215,12 @@ Notes:
    card instead of a story turn: an 8-bit sprite (a hand-drawn set of 39, tinted per item),
    rarity, type, worth in the era's money, damage and a durability bar for weapons and armour,
    and a line of lore. Fights and hard use wear weapons down; at zero they break. Items from
-   before this feature are appraised on the spot with a quick call. The character sheet
+   before this feature are appraised on the spot with a quick call. The inventory itself is a
+   paper doll in the Baldur's Gate style: equipment slots around the portrait (head, chest,
+   cloak, hands, feet, amulet, two rings, main hand, off hand, ranged), an armour class,
+   hit-point, level-and-XP and money strip, then a scrollable grid of sprite tiles for the
+   backpack and anything nearby. Items equip and unequip from their card, forged heroes start
+   dressed, and the Dungeon Master is told what is worn and wielded. The character sheet
    ends with a chronicle of every chapter so far, each one expandable to reread in full.
 5. **Dice.** Choices can carry a skill check (ability, skill, DC). The server rolls a d20, adds
    the hero's modifier and proficiency, and tells the Dungeon Master the result, which it must

@@ -108,6 +108,33 @@
   .bar { height: 8px; border-radius: 999px; background: var(--wood); border: 1px solid var(--border); overflow: hidden; margin-top: 6px; }
   .bar i { display: block; height: 100%; }
   .lore { font-style: italic; color: var(--parchment-dim); }
+  .doll { display: grid; grid-template-columns: 58px 1fr 58px; gap: 8px; align-items: start; }
+  .slots { display: flex; flex-direction: column; gap: 6px; }
+  .slot { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; color: var(--muted); }
+  .slot .box { width: 56px; height: 56px; border-radius: 9px; background: var(--wood); border: 1px solid var(--border); display: grid; place-items: center; box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
+  .slot.filled .box { border-color: var(--ember); background: #2a1d14; }
+  .slot.empty .box svg { opacity: .28; }
+  .slot small { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+  .doll-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 6px; }
+  .doll-mid .portrait img, .doll-mid .portrait svg { display: block; }
+  .doll-mid .who { text-align: center; font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.15; }
+  .doll-mid .cls { color: var(--ember); font-size: 12px; text-align: center; }
+  .ac { width: 54px; height: 60px; display: grid; place-items: center; background: var(--wood); border: 1.5px solid var(--gold); border-radius: 8px 8px 26px 26px; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--parchment); }
+  .ac small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .08em; text-align: center; font-family: var(--body); }
+  .strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .strip div { background: var(--wood-light); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+  .strip small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .strip b { font-family: var(--display); font-size: 18px; font-variant-numeric: tabular-nums; }
+  .xp { height: 6px; border-radius: 999px; background: var(--wood); border: 1px solid var(--border); overflow: hidden; margin-top: 4px; }
+  .xp i { display: block; height: 100%; background: var(--ember); }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .tile { aspect-ratio: 1; background: var(--wood); border: 1px solid var(--border); border-radius: 8px; display: grid; place-items: center; position: relative; padding: 0; box-shadow: inset 0 2px 6px rgba(0,0,0,.45); }
+  .tile.uncommon { border-color: var(--moss); } .tile.rare { border-color: #6aa5e8; } .tile.legendary { border-color: var(--gold); box-shadow: inset 0 2px 6px rgba(0,0,0,.45), 0 0 10px rgba(237,194,82,.25); }
+  .tile.broken { opacity: .55; }
+  .tile .q { position: absolute; right: 3px; bottom: 2px; font-size: 11px; color: var(--parchment); background: rgba(0,0,0,.65); border-radius: 6px; padding: 0 4px; font-variant-numeric: tabular-nums; }
+  .tile .dur { position: absolute; left: 4px; right: 4px; bottom: 3px; height: 3px; border-radius: 2px; background: rgba(0,0,0,.5); }
+  .tile .dur i { display: block; height: 100%; border-radius: 2px; }
+  .tile.nearby { border-style: dashed; border-color: var(--gold); }
   .inv-item:last-child { border-bottom: 0; }
   .inv-actions { display: flex; gap: 6px; }
   .inv-actions button { flex: 1; background: var(--wood); border: 1px solid var(--border); color: var(--parchment); border-radius: 8px; padding: 8px; font-size: 13px; }
@@ -1051,7 +1078,7 @@ This is a real historical period unless the player's words make it fictional. Be
   function toast(msg, ms = 4500) {
     if (!msg) return;
     const t = $("toast");
-    t.classList.toggle("ok", /deleted\.$/.test(msg));
+    t.classList.toggle("ok", /(deleted|equipped|unequipped)\.$/.test(msg));
     t.textContent = msg;
     t.hidden = false;
     clearTimeout(toast.timer);
@@ -1112,7 +1139,7 @@ This is a real historical period unless the player's words make it fictional. Be
   // ------------------------------------------------------------------
   // Prompts (the Dungeon Master's rules)
   // ------------------------------------------------------------------
-  const ITEM_SHAPE = `{"name":string,"quantity":int,"description":string (one line, what it looks like),"kind":"weapon|armor|tool|consumable|treasure|document|key|clothing|curio","sprite":"${SPRITE_NAMES.join("|")}","tint":"#rrggbb (the item's main colour)","rarity":"common|uncommon|rare|legendary","value":int (worth in the era's money),"damage":string|null (weapons only, e.g. "1d4 piercing"),"durability":int|null (0-100, weapons and armour only; 100 is new),"lore":string (1-2 sentences of history, maker or use)}`;
+  const ITEM_SHAPE = `{"name":string,"quantity":int,"description":string (one line, what it looks like),"kind":"weapon|armor|tool|consumable|treasure|document|key|clothing|curio","sprite":"${SPRITE_NAMES.join("|")}","tint":"#rrggbb (the item's main colour)","rarity":"common|uncommon|rare|legendary","value":int (worth in the era's money),"damage":string|null (weapons only, e.g. "1d4 piercing"),"durability":int|null (0-100, weapons and armour only; 100 is new),"lore":string (1-2 sentences of history, maker or use),"slot":"head|chest|cloak|hands|feet|amulet|ring|mainhand|offhand|ranged"|null (where it is worn or wielded; null for anything not equippable)}`;
 
   const FORGE_RULES = `You are the Keeper of the Old Tavern, a veteran Dungeon Master who turns a few sentences about a character into a complete, playable hero and three tempting adventures.
 
@@ -1229,6 +1256,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 - The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange.
 - Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost.
 - Every item in loot and itemsGained is a full item object: ${ITEM_SHAPE}
+- The state lists what the hero has equipped (worn or wielded). Narrate with that gear: an unequipped sword is in the pack, not in hand.
 - Wear: when a weapon or armour is used hard (a fight, a forced lock, a fall), report it in stateChange.wear as {"name":string,"durabilityDelta":int} with small negative numbers (-3 to -15). An item at 0 durability is broken and no longer works; say so if it happens. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
 - Hero at 0 hit points = death: set ending with victory false and a fitting epilogue. Death is rare and earned, never arbitrary.
 - Combat is theatre of the mind: describe blows, positioning and stakes; resolve a whole exchange per turn; offer tactical choices.
@@ -1283,6 +1311,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       `Level ${game.level}, ${game.xp} xp`,
       `Money: ${game.gold} ${game.era.currency}`,
       `Inventory: ${inv}`,
+      `Equipped: ${equippedList(game).join("; ") || "nothing"}`,
       `Conditions: ${game.statusEffects.join(", ") || "none"}`,
       `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,
       `Location: ${game.location || "unknown"}`,
@@ -1363,6 +1392,16 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     [/skull|bone/i, "skull"], [/herb|flower|leaf|root|plant|garlic|moss/i, "herb"], [/mask/i, "mask"], [/hourglass|clock|watch/i, "hourglass"], [/candle|taper/i, "candle"],
   ];
   const guessSprite = (name) => (SPRITE_GUESS.find(([re]) => re.test(name || "")) || [null, "curio"])[1];
+  const SLOTS = ["head", "chest", "cloak", "hands", "feet", "amulet", "ring", "mainhand", "offhand", "ranged"];
+  const SLOT_SPRITE = { head: "helmet", chest: "armor", cloak: "cloak", hands: "tools", feet: "boots", amulet: "amulet", ring: "ring", mainhand: "sword", offhand: "shield", ranged: "bow" };
+  const SLOT_LABEL = { head: "Head", chest: "Chest", cloak: "Cloak", hands: "Hands", feet: "Feet", amulet: "Amulet", ring1: "Ring", ring2: "Ring", mainhand: "Main", offhand: "Off", ranged: "Ranged" };
+  const EQUIP_KEYS = ["head", "chest", "cloak", "hands", "feet", "amulet", "ring1", "ring2", "mainhand", "offhand", "ranged"];
+  function slotForSprite(sprite, kind) {
+    const m = { helmet: "head", crown: "head", mask: "head", armor: "chest", cloak: "cloak", boots: "feet", amulet: "amulet", ring: "ring", shield: "offhand", dagger: "mainhand", sword: "mainhand", axe: "mainhand", spear: "mainhand", bow: "ranged", pistol: "ranged", rifle: "ranged", torch: "offhand", lantern: "offhand" };
+    if (m[sprite]) return m[sprite];
+    if (kind === "clothing") return "chest";
+    return null;
+  }
   const normItem = (i) => {
     if (typeof i === "string") i = { name: i };
     i = i && typeof i === "object" ? i : {};
@@ -1375,6 +1414,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       value: Math.max(0, int(i.value, 0)), damage: i.damage ? String(i.damage) : null,
       durability: typeof i.durability === "number" && Number.isFinite(i.durability) ? Math.max(0, Math.min(100, Math.round(i.durability))) : null,
       lore: str(i.lore), appraised,
+      slot: SLOTS.includes(i.slot) ? i.slot : slotForSprite(SPRITES[i.sprite] ? i.sprite : guessSprite(name), i.kind),
     };
   };
   function normScenario(s, i) {
@@ -1437,7 +1477,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     const ts = now();
     const game = {
       id: uuid(), createdAt: ts, updatedAt: ts, status: "forged", tone: toneName, background,
-      era, research, character, scenarios, passedScenarios: [], scenario: null,
+      era, research, character, scenarios, passedScenarios: [], scenario: null, equipment: autoEquip(character.inventory.map((i) => ({ ...i }))),
       hp: character.maxHp, gold: character.gold, xp: 0, level: character.level,
       inventory: character.inventory.map((i) => ({ ...i })), quests: [], statusEffects: [], location: "", npcsMet: [], turns: [],
     };
@@ -1521,6 +1561,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       if (ex) { ex.quantity += item.quantity; if (!ex.appraised && item.appraised) Object.assign(ex, item, { quantity: ex.quantity }); }
       else game.inventory.push({ ...item });
     }
+    pruneEquipment(game);
     for (const w of ch.wear || []) {
       const it = game.inventory.find((i) => i.name.toLowerCase() === w.name.toLowerCase());
       if (it && typeof it.durability === "number") it.durability = Math.max(0, Math.min(100, it.durability + w.durabilityDelta));
@@ -1552,6 +1593,31 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   // ------------------------------------------------------------------
   function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
 
+  function emptyEquipment() { return Object.fromEntries(EQUIP_KEYS.map((k) => [k, null])); }
+  /** First fitting item into each empty slot: forged heroes start dressed. */
+  function autoEquip(inventory, equipment = emptyEquipment()) {
+    for (const item of inventory) {
+      if (!item.slot) continue;
+      const keys = item.slot === "ring" ? ["ring1", "ring2"] : [item.slot];
+      const already = EQUIP_KEYS.some((k) => equipment[k] === item.name);
+      if (already) continue;
+      const free = keys.find((k) => !equipment[k]);
+      if (free) equipment[free] = item.name;
+    }
+    return equipment;
+  }
+  function equippedKey(game, name) { return EQUIP_KEYS.find((k) => game.equipment[k] === name) || null; }
+  function equipItem(game, item) {
+    if (!item.slot) return false;
+    const keys = item.slot === "ring" ? ["ring1", "ring2"] : [item.slot];
+    const key = keys.find((k) => !game.equipment[k]) || keys[0];
+    game.equipment[key] = item.name;
+    return true;
+  }
+  function unequipItem(game, name) { for (const k of EQUIP_KEYS) if (game.equipment[k] === name) game.equipment[k] = null; }
+  function pruneEquipment(game) { for (const k of EQUIP_KEYS) if (game.equipment[k] && !game.inventory.some((i) => i.name === game.equipment[k])) game.equipment[k] = null; }
+  function equippedList(game) { return EQUIP_KEYS.filter((k) => game.equipment[k]).map((k) => `${SLOT_LABEL[k].toLowerCase()}: ${game.equipment[k]}`); }
+
   function upgrade(g) {
     if (!g) return g;
     if (Object.isFrozen(g)) g = JSON.parse(JSON.stringify(g));
@@ -1563,6 +1629,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (g.character && Array.isArray(g.character.inventory)) g.character.inventory = g.character.inventory.map(normItem);
     for (const t of g.turns || []) if (t.scene && Array.isArray(t.scene.loot)) t.scene.loot = t.scene.loot.map(normItem);
     for (const t of g.turns || []) if (t.scene && !Array.isArray(t.scene.loot)) t.scene.loot = [];
+    if (!g.equipment || typeof g.equipment !== "object") g.equipment = autoEquip(g.inventory || []);
+    for (const k of EQUIP_KEYS) if (!(k in g.equipment)) g.equipment[k] = null;
     return g;
   }
   async function loadGame(id) {
@@ -1945,9 +2013,11 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       ${dur !== null ? `<div class="card" style="padding:10px 14px"><div class="spread"><small class="meta">Durability</small><b style="color:${durColor}">${dur}/100</b></div><div class="bar"><i style="width:${dur}%;background:${durColor}"></i></div></div>` : ""}
       ${item.description ? `<p>${esc(item.description)}</p>` : ""}
       ${item.lore ? `<p class="lore">${esc(item.lore)}</p>` : ""}
+      ${where === "carried" && equippedKey(game, item.name) ? `<div class="meta" style="text-align:center">Equipped: ${SLOT_LABEL[equippedKey(game, item.name)]}</div>` : ""}
       ${over ? "" : where === "nearby"
         ? `<button class="btn ember" data-action="take" data-name="${esc(item.name)}">Take it</button>`
-        : `<div class="row"><button class="btn quiet" data-action="use-item" data-name="${esc(item.name)}">Use</button><button class="btn quiet" style="color:#ff9d94" data-action="drop-item" data-name="${esc(item.name)}">Drop</button></div>`}`;
+        : `${item.slot ? (equippedKey(game, item.name) ? `<button class="btn quiet" data-action="unequip" data-name="${esc(item.name)}">Unequip</button>` : `<button class="btn ember" data-action="equip" data-name="${esc(item.name)}">Equip</button>`) : ""}
+           <div class="row"><button class="btn quiet" data-action="use-item" data-name="${esc(item.name)}">Use</button><button class="btn quiet" style="color:#ff9d94" data-action="drop-item" data-name="${esc(item.name)}">Drop</button></div>`}`;
   }
 
   async function openItemCard(game, name, where) {
@@ -1966,7 +2036,52 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
   // ------------------------------------------------------------------
   // Inventory (while playing)
   // ------------------------------------------------------------------
+  function renderInventory(game) {
+    const over = game.status === "ended";
+    const last = game.turns[game.turns.length - 1];
+    const loot = last && !over ? last.scene.loot || [] : [];
+    const items = game.inventory;
+    const c = game.character;
+    const tile = (i, where) => `<button class="tile ${i.rarity} ${where}${typeof i.durability === "number" && i.durability <= 0 ? " broken" : ""}" data-action="${where === "nearby" ? "examine-loot" : "examine-item"}" data-name="${esc(i.name)}" title="${esc(i.name)}">${spriteSVG(i.sprite, i.tint, 44)}${i.quantity > 1 ? `<span class="q">${i.quantity}</span>` : ""}${typeof i.durability === "number" ? `<span class="dur"><i style="width:${i.durability}%;background:${i.durability > 60 ? "var(--moss)" : i.durability > 25 ? "var(--ember)" : "var(--blood)"}"></i></span>` : ""}</button>`;
+    const slot = (key) => {
+      const name = game.equipment[key];
+      const it = name ? items.find((i) => i.name === name) : null;
+      const base = key.startsWith("ring") ? "ring" : key;
+      return `<button class="slot ${it ? "filled" : "empty"}" data-action="${it ? "examine-item" : "slot-hint"}" data-name="${esc(it ? it.name : SLOT_LABEL[key])}"><span class="box">${spriteSVG(it ? it.sprite : SLOT_SPRITE[base], it ? it.tint : null, 40)}</span><small>${SLOT_LABEL[key]}</small></button>`;
+    };
+    const packed = items.filter((i) => !equippedKey(game, i.name));
+    const startXp = xpForLevel(c.level);
+    const curFloor = xpForLevel(game.level) - startXp, next = xpForLevel(game.level + 1) - startXp;
+    const pct = Math.max(0, Math.min(100, Math.round(((game.xp - curFloor) / Math.max(1, next - curFloor)) * 100)));
+    const low = game.hp * 3 <= c.maxHp;
+    $("inv-body").innerHTML = `
+      <div class="doll">
+        <div class="slots">${["head", "chest", "cloak", "hands", "feet"].map(slot).join("")}</div>
+        <div class="doll-mid">
+          <span class="portrait">${heroPortrait(game, 118, "#e08f2b")}</span>
+          <div class="who">${esc(c.name)}</div>
+          <div class="cls">${esc(c.race)} ${esc(c.characterClass)}</div>
+          <div class="ac"><span>${c.armorClass}<small>armour</small></span></div>
+        </div>
+        <div class="slots">${["amulet", "ring1", "ring2", "mainhand", "offhand", "ranged"].map(slot).join("")}</div>
+      </div>
+      <div class="strip">
+        <div><small>Hit points</small><b style="color:${low ? "var(--blood)" : "var(--moss)"}">${game.hp}/${c.maxHp}</b></div>
+        <div><small>Level ${game.level}</small><b>${game.xp} xp</b><div class="xp"><i style="width:${pct}%"></i></div></div>
+        <div><small>${esc(shortCurrency(game))}</small><b style="color:var(--gold)">${game.gold}</b></div>
+      </div>
+      <div class="label">Backpack &middot; ${packed.reduce((n, i) => n + (i.quantity || 1), 0)} things</div>
+      ${packed.length ? `<div class="grid">${packed.map((i) => tile(i, "carried")).join("")}</div>` : `<div class="meta">Nothing packed. Everything you own is equipped, or your pockets are empty.</div>`}
+      ${loot.length ? `<div class="label">Nearby &middot; tap to inspect, then take</div><div class="grid">${loot.map((i) => tile(i, "nearby")).join("")}</div>` : ""}
+      <div class="meta" style="margin-top:6px">Tap any item for its card. Equip and unequip from there.</div>`;
+  }
+
   function openInventory(game) {
+    renderInventory(game);
+    openPanel("inventory");
+  }
+
+  function openInventoryLegacy(game) {
     const over = game.status === "ended";
     const last = game.turns[game.turns.length - 1];
     const loot = last && !over ? last.scene.loot || [] : [];
@@ -1985,7 +2100,6 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
           <button data-action="use-item" data-name="${esc(i.name)}">Use</button>
           <button class="drop" data-action="drop-item" data-name="${esc(i.name)}">Drop</button></div>`}
       </div>`).join("") : `<span class="meta">Empty pockets. Things you pick up in the world appear here.</span>`}</div>`;
-    openPanel("inventory");
   }
 
   // ------------------------------------------------------------------
@@ -2163,6 +2277,18 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
         break;
       }
       case "close-item": itemCtx = null; closePanel("item"); break;
+      case "equip": case "unequip": {
+        const game = games.get($("play").dataset.id);
+        const item = game && game.inventory.find((i) => i.name === el.dataset.name);
+        if (!item) break;
+        if (action === "equip") equipItem(game, item); else unequipItem(game, item.name);
+        await store.save(game);
+        renderInventory(game);
+        if (itemCtx) renderItemCard(itemCtx, "");
+        toast(action === "equip" ? `${item.name} equipped.` : `${item.name} unequipped.`, 1800);
+        break;
+      }
+      case "slot-hint": toast(`Nothing equipped here. Tap an item in your backpack to equip it.`, 2500); break;
       case "take": case "use-item": case "drop-item": {
         const game = games.get($("play").dataset.id);
         if (!game) break;
