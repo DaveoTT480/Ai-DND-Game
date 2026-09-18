@@ -23,6 +23,7 @@ struct CharacterSheetView: View {
                         quests
                         people
                         backstory
+                        chronicle
                     }
                     .padding(20)
                 }
@@ -41,7 +42,9 @@ struct CharacterSheetView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: 14) {
+            PortraitView(portrait: c.look, size: 96)
+            VStack(alignment: .leading, spacing: 4) {
             Text(c.name)
                 .font(Theme.display(30, weight: .bold))
                 .foregroundStyle(Theme.parchment)
@@ -54,6 +57,51 @@ struct CharacterSheetView: View {
             Text(c.appearance)
                 .font(Theme.small)
                 .foregroundStyle(Theme.muted)
+            }
+        }
+    }
+
+    private var chronicle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(text: game.scenario.map { "Chronicle \u{00B7} \($0.title)" } ?? "Chronicle")
+            if game.turns.isEmpty {
+                Text("The tale has not begun.").font(Theme.small).foregroundStyle(Theme.muted)
+            } else {
+                Text("Every chapter so far. Tap one to reread it.")
+                    .font(Theme.small)
+                    .foregroundStyle(Theme.muted)
+                ForEach(game.turns) { turn in
+                    DisclosureGroup {
+                        VStack(alignment: .leading, spacing: 8) {
+                            if turn.action.kind != .start {
+                                Text(turn.action.text)
+                                    .font(Theme.body.italic())
+                                    .foregroundStyle(Theme.ember)
+                            }
+                            NarrationText(markdown: turn.scene.narration)
+                            if let ending = turn.scene.ending {
+                                Text(ending.victory ? "Victory" : "The End")
+                                    .font(Theme.display(22, weight: .bold))
+                                    .foregroundStyle(ending.victory ? Theme.gold : Theme.muted)
+                                NarrationText(markdown: ending.epilogue)
+                            }
+                        }
+                        .padding(.top, 6)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(turn.index + 1). \(turn.scene.chapterTitle)")
+                                .font(Theme.display(18))
+                                .foregroundStyle(Theme.parchment)
+                            Text(turn.scene.recap)
+                                .font(Theme.small)
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .tint(Theme.ember)
+                    .padding(.vertical, 4)
+                    Divider().overlay(Theme.woodBorder)
+                }
+            }
         }
     }
 

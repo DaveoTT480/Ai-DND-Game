@@ -10,6 +10,7 @@
   let eraId = "classic-fantasy";
   const eraById = (id) => eras.find((e) => e.id === id) || eras[0] || { id: "classic-fantasy", examples: [] };
   const shortCurrency = (g) => (g.era?.currency || "gold").split(" of ")[0];
+  const portrait = (c, size, ring) => window.Portrait ? window.Portrait.portraitSVG(c.portrait || {}, size, ring) : "";
 
   const TONES = [
     ["classic fantasy", "Classic fantasy"], ["grimdark", "Grimdark"], ["lighthearted comedy", "Comedy"],
@@ -128,7 +129,7 @@
         : g.status === "playing" ? `${esc(g.scenarioTitle || "An adventure")} - ${esc(g.location)}, turn ${g.turnCount}`
         : `${esc(g.scenarioTitle || "An adventure")} - concluded after ${g.turnCount} turns`;
       return `<div class="card" style="padding:0"><button class="tale card" style="margin:0;border:0;background:none" data-action="open" data-id="${g.id}">
-        <span class="glyph">${glyph}</span>
+        <span class="portrait">${g.portrait ? window.Portrait.portraitSVG(g.portrait, 48, g.status === "ended" ? "#edc252" : "#e08f2b") : glyph}</span>
         <span style="flex:1"><span class="name">${esc(g.characterName)}</span><br><span class="sub">${esc(g.race)} ${esc(g.characterClass)}, level ${g.level}${g.eraName ? ` &middot; ${esc(g.eraName)}` : ""}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <button class="btn link" style="padding:0 14px 10px" data-action="delete" data-id="${g.id}">Delete</button></div>`;
@@ -176,7 +177,7 @@
     $("pick").dataset.id = game.id;
     const c = game.character;
     $("p-hero").innerHTML = `<div class="card accent">
-      <h3 style="font-size:26px">${esc(c.name)}</h3>
+      <div class="row" style="align-items:center"><span class="portrait">${portrait(c, 84, "#e08f2b")}</span><div style="flex:1"><h3 style="font-size:26px">${esc(c.name)}</h3></div></div>
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p style="margin:6px 0">${esc(c.appearance)}</p>
@@ -213,14 +214,18 @@
     $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
+    $("s-portrait").innerHTML = portrait(game.character, 28, low ? "#c9443a" : "#e08f2b");
+    const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
+    $("pack-n").textContent = String(packCount);
+    $("pack-n").hidden = packCount === 0;
 
     const over = game.status === "ended";
     const parts = [];
     if (game.scenario) parts.push(`<div class="tagline">${esc(game.scenario.tagline)}</div><div class="meta" style="margin-bottom:6px">${esc(game.scenario.setting)}</div>`);
-    for (const t of game.turns) {
+    game.turns.forEach((t, i) => {
       if (t.action.kind !== "start") parts.push(`<div class="bubble">${esc(t.action.text)}</div>`);
-      parts.push(renderScene(t.scene, game));
-    }
+      parts.push(renderScene(t.scene, game, i === game.turns.length - 1 && !busy && !over));
+    });
     if (busy) {
       parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span></div>`);
     } else {
@@ -241,8 +246,11 @@
     requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
   }
 
-  function renderScene(s, game) {
+  function renderScene(s, game, latest = false) {
     const cur = shortCurrency(game);
+    const loot = latest && (s.loot || []).length
+      ? `<div class="section-label" style="margin:8px 0 6px">Things you could take</div><div class="loot">${s.loot.map((i) => `<button class="take" data-action="take" data-name="${esc(i.name)}"><b>&#43;</b> ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</button>`).join("")}</div>`
+      : "";
     const d = s.diceResult;
     const ch = s.stateChange;
     const lines = [];
@@ -261,6 +269,7 @@
       <div class="narration">${md(s.narration)}</div>
       ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude] || "var(--muted)"}"></span>${esc(n.name)}, ${esc(n.role)}${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}</span>`).join("")}</div>` : ""}
       ${lines.length ? `<div class="changes">${lines.join("")}</div>` : ""}
+      ${loot}
       ${s.ending ? `<div class="ending ${s.ending.victory ? "win" : "lose"}"><h4>${s.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(s.ending.epilogue)}</div></div>` : ""}
     </div>`;
   }
@@ -320,12 +329,29 @@
     }
   }
 
+  // ---------- inventory ----------
+  function openInventory(game) {
+    const over = game.status === "ended";
+    const last = game.turns.at(-1);
+    const loot = last && !over ? last.scene.loot || [] : [];
+    const items = game.inventory;
+    $("inv-body").innerHTML = `
+      <div class="stat">${esc(game.character.name)} carries ${items.reduce((n, i) => n + (i.quantity || 1), 0)} thing${items.length === 1 ? "" : "s"} and ${game.gold} ${esc(shortCurrency(game))}.</div>
+      ${loot.length ? `<div class="section-label">Nearby</div><div class="card"><div class="loot">${loot.map((i) => `<button class="take" data-action="take" data-name="${esc(i.name)}"><b>&#43;</b> ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</button>`).join("")}</div></div>` : ""}
+      <div class="section-label">Carried</div>
+      <div class="card">${items.length ? items.map((i) => `<div class="inv-item"><div><b>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</b>${i.description ? `<div class="stat">${esc(i.description)}</div>` : ""}</div>
+        ${over ? "" : `<div class="inv-actions"><button data-action="use-item" data-name="${esc(i.name)}">Use</button><button data-action="examine-item" data-name="${esc(i.name)}">Examine</button><button class="drop" data-action="drop-item" data-name="${esc(i.name)}">Drop</button></div>`}</div>`).join("") : `<span class="stat">Empty pockets. Things you pick up in the world appear here.</span>`}</div>`;
+    $("inventory").classList.remove("hidden");
+    $("inventory").scrollTop = 0;
+  }
+
   // ---------- character sheet ----------
   function openSheet(game) {
     const c = game.character;
+    const chronicle = game.turns.length ? game.turns.map((t, i) => `<details class="chapter"${i === game.turns.length - 1 ? " open" : ""}><summary><span class="n">${i + 1}</span><span class="t">${esc(t.scene.chapterTitle)}</span></summary><div class="r">${esc(t.scene.recap)}</div><div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0"><em>${esc(t.action.text)}</em></div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div></details>`).join("") : `<span class="stat">The tale has not begun.</span>`;
     const chips = (items, color) => items.length ? items.map((t) => `<span class="tag" style="border-color:${color}">${esc(t)}</span>`).join("") : `<span class="meta">none</span>`;
     $("sheet-body").innerHTML = `
-      <h1 style="margin-top:12px">${esc(c.name)}</h1>
+      <div class="row" style="align-items:center;margin-top:12px"><span class="portrait">${portrait(c, 104, "#e08f2b")}</span><h1 style="margin:0;flex:1">${esc(c.name)}</h1></div>
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div>
       <div class="meta">${esc(game.era?.name || "")}${game.era?.when ? `, ${esc(game.era.when)}` : ""}</div>
       <div class="meta">${esc(c.appearance)}</div>
@@ -348,7 +374,10 @@
       <div class="card">${game.npcsMet.length ? game.npcsMet.map((n) => `<div style="margin:6px 0"><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude] || "var(--muted)"}">${esc(n.attitude)}</span>${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}<br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
       <div class="section-label">Backstory</div>
       <div class="narration" style="color:var(--parchment-dim)">${md(c.backstory)}</div>
-      <div class="tagline">${esc(c.motivation)}</div>`;
+      <div class="tagline">${esc(c.motivation)}</div>
+      <div class="section-label">Chronicle${game.scenario ? ` &middot; ${esc(game.scenario.title)}` : ""}</div>
+      <div class="stat" style="margin-bottom:4px">Every chapter so far. Tap one to reread it.</div>
+      <div>${chronicle}</div>`;
     $("sheet").classList.remove("hidden");
     $("sheet").scrollTop = 0;
   }
@@ -416,6 +445,15 @@
         break;
       }
       case "close-sheet": $("sheet").classList.add("hidden"); break;
+      case "inventory": { const g = games.get(gameId); if (g) openInventory(g); break; }
+      case "close-inventory": $("inventory").classList.add("hidden"); break;
+      case "take": case "use-item": case "examine-item": case "drop-item": {
+        const name = el.dataset.name;
+        const text = action === "take" ? `I pick up the ${name}.` : action === "use-item" ? `I use my ${name}.` : action === "examine-item" ? `I take a closer look at my ${name}.` : `I drop my ${name} and leave it behind.`;
+        $("inventory").classList.add("hidden");
+        act($("play").dataset.id, { freeText: text });
+        break;
+      }
     }
   });
 

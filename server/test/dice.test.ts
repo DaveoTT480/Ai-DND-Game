@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { abilityModifier, checkModifier, proficiencyBonus, resolveCheck } from "../src/dice.js";
-import type { CharacterSheet } from "../src/schemas.js";
+import { DEFAULT_PORTRAIT, type CharacterSheet } from "../src/schemas.js";
 
 const hero: CharacterSheet = {
   name: "Test", race: "Elf", characterClass: "Ranger", level: 1, maxHp: 11, armorClass: 14,
   abilities: { STR: 8, DEX: 16, CON: 12, INT: 10, WIS: 14, CHA: 9 },
   proficientSkills: ["Stealth", "Survival"], traits: [], inventory: [], gold: 0,
-  appearance: "", backstory: "", motivation: "",
+  appearance: "", portrait: DEFAULT_PORTRAIT, backstory: "", motivation: "",
 };
 
 test("ability modifiers follow 5e", () => {

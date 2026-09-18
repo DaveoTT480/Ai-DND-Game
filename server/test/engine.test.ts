@@ -26,6 +26,14 @@ test("createGame rejects empty or oversized backgrounds", async () => {
   await assert.rejects(engine.createGame({ background: "x".repeat(5000) }), GameError);
 });
 
+test("the forge carries a portrait and scenes carry loot", async () => {
+  const engine = makeEngine();
+  const created = await engine.createGame({ background: "A dock rat with a silver locket and a debt." });
+  assert.equal(created.character.portrait.headwear, "hood");
+  const game = await engine.startGame(created.id, { scenarioId: "debt-of-ash" });
+  assert.equal(game.turns[0]!.scene.loot[0]!.name, "Mattock's ledger");
+});
+
 test("startGame opens the first scene and applies its state change", async () => {
   const engine = makeEngine();
   const created = await engine.createGame({ background: "A dock rat with a silver locket and a debt." });
@@ -163,10 +171,12 @@ test("eras: the chosen era briefs the forge and the Dungeon Master, and old save
   const legacy = await engine.createGame({ background: "A plain old hero from before eras existed." });
   delete (legacy as any).era;
   delete (legacy as any).research;
+  delete (legacy as any).character.portrait;
   await store.save(legacy);
   const loaded = await engine.getGame(legacy.id);
   assert.equal(loaded.era.id, "classic-fantasy");
   assert.deepEqual(loaded.research, []);
+  assert.equal(loaded.character.portrait.symbol, "\u2694\uFE0F");
 });
 
 test("rerolling scenarios offers three new tales and remembers the ones passed on", async () => {
@@ -198,7 +208,7 @@ test("compactScene keeps narration, dice and choices", () => {
     chapterTitle: "T", narration: "N", diceResult: null, npcs: [],
     choices: [{ id: "a", label: "Go", hint: "", check: null }],
     stateChange: { hpDelta: 0, goldDelta: 0, xpGained: 0, itemsGained: [], itemsLost: [], questUpdates: [], location: "", statusEffects: [] },
-    recap: "r", mood: "calm", ending: null,
+    loot: [], recap: "r", mood: "calm", ending: null,
   });
   assert.match(text, /\[T\]/);
   assert.match(text, /a\) Go/);

@@ -88,6 +88,7 @@ struct ScenarioPickerView: View {
         let c = game.character
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
+                PortraitView(portrait: c.look, size: 72)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(c.name)
                         .font(Theme.display(28, weight: .bold))

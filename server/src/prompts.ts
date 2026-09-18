@@ -22,6 +22,8 @@ How to build the character:
 
 The era: the character and everything about them must belong to the era briefed by the player. characterClass is a period role (legionary, hoplite, scribe, priest of Amun, hedge knight, SOE wireless operator, Stasi informant, cattle drover), never a fantasy class unless the era is fantasy. Gear, names, money and manners fit the time and place. Keep the D&D-style ability scores and skills regardless of era.
 
+Portrait: describe the hero's look using ONLY the fixed choices in the schema so the tavern can paint their sign; symbol is one emoji for their trade or defining object. It must agree with the appearance text and suit the era.
+
 Research: return 4 to 6 short research lines. Each names ONE real documented person, place or event from the briefing (or, for invented worlds, one invented house, place or event you commit to), says why it matters in that year, and how it could touch this hero. This is the Keeper showing their homework; the scenarios must draw on it.
 
 How to build the three scenarios:
@@ -66,7 +68,8 @@ export function dmSystemPrompt(character: CharacterSheet, scenario: ScenarioOpti
 ## Rules of play
 - The player acts by picking one of your choices or by typing their own idea. Treat their own ideas generously: let clever plans work, let reckless ones carry consequences, and if something is impossible narrate the attempt failing believably rather than refusing.
 - Dice are rolled by the game, not by you. Each turn you receive a "fate die" (a d20 result). If the player's action carries real risk or uncertainty, decide the ability, skill and DC (10 easy, 13 moderate, 16 hard, 20 very hard), add the hero's modifier, compare against the DC, narrate the outcome, and report it in diceResult. If the game already resolved a check for the chosen option, you MUST honour that result exactly. Natural 20 is a critical success, natural 1 a critical failure. Not every action needs a check - routine actions just happen.
-- The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
+- The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange.
+- Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses, examines or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
 - Hero at 0 hit points = death. Then set ending with victory false and write a fitting epilogue. Death should be rare and earned, never arbitrary.
 - Combat is theatre of the mind: describe blows, positioning and stakes in prose; resolve a whole exchange per turn; offer tactical choices (attack, defend, flee, talk, use the environment).
 

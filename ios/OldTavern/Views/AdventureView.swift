@@ -24,6 +24,12 @@ final class AdventureModel {
     }
 
     @MainActor
+    func act(text: String, using client: APIClient) async {
+        let id = game.id
+        await perform { try await client.takeTurn(id: id, choiceId: nil, freeText: text) }
+    }
+
+    @MainActor
     func act(using client: APIClient) async {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
@@ -62,6 +68,7 @@ struct AdventureView: View {
     @Binding var path: [Route]
     @State private var model: AdventureModel
     @State private var showSheet = false
+    @State private var showInventory = false
     @FocusState private var inputFocused: Bool
 
     init(game: GameSnapshot, path: Binding<[Route]>) {
@@ -85,6 +92,9 @@ struct AdventureView: View {
                         ForEach(model.game.turns) { turn in
                             TurnView(turn: turn, currency: model.game.eraRef.shortCurrency)
                                 .id(turn.id)
+                        }
+                        if !model.isBusy && !model.isOver, let loot = model.latestScene?.lootItems, !loot.isEmpty {
+                            lootBlock(loot)
                         }
                         if model.isBusy {
                             ThinkingCard()
@@ -127,6 +137,13 @@ struct AdventureView: View {
         .sheet(isPresented: $showSheet) {
             CharacterSheetView(game: model.game)
         }
+        .sheet(isPresented: $showInventory) {
+            InventoryView(game: model.game) { text in
+                showInventory = false
+                model.draft = ""
+                Task { await model.act(text: text, using: settings.client) }
+            }
+        }
         .alert("The Dungeon Master frowns", isPresented: Binding(
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
@@ -143,6 +160,7 @@ struct AdventureView: View {
         let game = model.game
         let lowHp = game.hp * 3 <= game.character.maxHp
         return HStack(spacing: 14) {
+            PortraitView(portrait: game.character.look, size: 28, ring: lowHp ? Theme.blood : Theme.ember)
             HStack(spacing: 5) {
                 Image(systemName: "heart.fill").foregroundStyle(lowHp ? Theme.blood : Theme.moss)
                 Text("\(game.hp)/\(game.character.maxHp)")
@@ -177,6 +195,29 @@ struct AdventureView: View {
 
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: 8) {
+            Button {
+                showInventory = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bag.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Theme.parchment)
+                        .frame(width: 44, height: 44)
+                        .background(Theme.woodLight, in: Circle())
+                        .overlay(Circle().stroke(Theme.woodBorder, lineWidth: 1))
+                    let count = model.game.inventory.reduce(0) { $0 + max(1, $1.quantity) }
+                    if count > 0 {
+                        Text("\(count)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(Theme.wood)
+                            .padding(.horizontal, 5)
+                            .frame(minWidth: 18, minHeight: 18)
+                            .background(Theme.ember, in: Capsule())
+                            .offset(x: 4, y: -4)
+                    }
+                }
+            }
+            .padding(.bottom, 1)
             TextField(model.isOver ? "The tale has ended" : "Or do something else...", text: $model.draft, axis: .vertical)
                 .lineLimit(1...4)
                 .font(Theme.body)
@@ -214,6 +255,32 @@ struct AdventureView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+    private func lootBlock(_ loot: [Item]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(text: "Things you could take")
+            FlowLayout(spacing: 6) {
+                ForEach(Array(loot.enumerated()), id: \.offset) { _, item in
+                    Button {
+                        inputFocused = false
+                        Task { await model.act(text: "I pick up the \(item.name).", using: settings.client) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("+").foregroundStyle(Theme.gold).fontWeight(.bold)
+                            Text(item.quantity > 1 ? "\(item.name) x\(item.quantity)" : item.name)
+                        }
+                        .font(Theme.small)
+                        .foregroundStyle(Theme.parchment)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Theme.wood, in: Capsule())
+                        .overlay(Capsule().stroke(Theme.gold, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     private var endBlock: some View {
@@ -501,5 +568,102 @@ struct ThinkingCard: View {
                 withAnimation { line = ThinkingCard.lines[index] }
             }
         }
+    }
+}
+
+/// What the hero carries, what lies nearby, and what to do with it.
+struct InventoryView: View {
+    let game: GameSnapshot
+    let onAction: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private var loot: [Item] { game.status == .ended ? [] : (game.latestScene?.lootItems ?? []) }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                TavernBackground()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("\(game.character.name) carries \(game.inventory.reduce(0) { $0 + max(1, $1.quantity) }) things and \(game.gold) \(game.eraRef.shortCurrency).")
+                            .font(Theme.small)
+                            .foregroundStyle(Theme.muted)
+                        if !loot.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                SectionHeader(text: "Nearby")
+                                ForEach(Array(loot.enumerated()), id: \.offset) { _, item in
+                                    HStack(alignment: .top) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(item.quantity > 1 ? "\(item.name) x\(item.quantity)" : item.name)
+                                                .font(Theme.body)
+                                                .foregroundStyle(Theme.parchment)
+                                            if !item.description.isEmpty {
+                                                Text(item.description).font(Theme.small).foregroundStyle(Theme.muted)
+                                            }
+                                        }
+                                        Spacer()
+                                        Button("Take") { onAction("I pick up the \(item.name).") }
+                                            .font(Theme.small)
+                                            .foregroundStyle(Theme.gold)
+                                    }
+                                }
+                            }
+                            .tavernCard(accent: Theme.gold.opacity(0.6))
+                        }
+                        VStack(alignment: .leading, spacing: 10) {
+                            SectionHeader(text: "Carried")
+                            if game.inventory.isEmpty {
+                                Text("Empty pockets. Things you pick up in the world appear here.")
+                                    .font(Theme.small)
+                                    .foregroundStyle(Theme.muted)
+                            }
+                            ForEach(Array(game.inventory.enumerated()), id: \.offset) { _, item in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(item.quantity > 1 ? "\(item.name) x\(item.quantity)" : item.name)
+                                        .font(Theme.display(18))
+                                        .foregroundStyle(Theme.parchment)
+                                    if !item.description.isEmpty {
+                                        Text(item.description).font(Theme.small).foregroundStyle(Theme.muted)
+                                    }
+                                    if game.status != .ended {
+                                        HStack(spacing: 6) {
+                                            inventoryButton("Use") { onAction("I use my \(item.name).") }
+                                            inventoryButton("Examine") { onAction("I take a closer look at my \(item.name).") }
+                                            inventoryButton("Drop", color: Theme.blood) { onAction("I drop my \(item.name) and leave it behind.") }
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                                Divider().overlay(Theme.woodBorder)
+                            }
+                        }
+                        .tavernCard()
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Inventory")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }.foregroundStyle(Theme.ember)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func inventoryButton(_ title: String, color: Color = Theme.parchment, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.small)
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(Theme.wood, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.woodBorder, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }

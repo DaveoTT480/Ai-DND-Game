@@ -4,7 +4,7 @@ import { DungeonMasterError } from "./dm.js";
 import { resolveCheck, rollDie, type RollFn } from "./dice.js";
 import { resolveEra } from "./eras.js";
 import { FORGE_SYSTEM, REROLL_SYSTEM, actionUserMessage, dmSystemPrompt, forgeUserMessage, openingUserMessage, rerollUserMessage } from "./prompts.js";
-import type { GameState, Item, PlayerAction, Scene, ScenarioOption, Turn } from "./schemas.js";
+import { DEFAULT_PORTRAIT, type GameState, type Item, type PlayerAction, type Scene, type ScenarioOption, type Turn } from "./schemas.js";
 import type { GameStore } from "./store.js";
 
 export class GameError extends Error {
@@ -248,6 +248,8 @@ export class GameEngine {
     if (!game.era) game.era = resolveEra("classic-fantasy", "");
     if (!Array.isArray(game.research)) game.research = [];
     if (!Array.isArray(game.passedScenarios)) game.passedScenarios = [];
+    if (!game.character.portrait) game.character.portrait = { ...DEFAULT_PORTRAIT };
+    for (const t of game.turns) if (!Array.isArray(t.scene.loot)) t.scene.loot = [];
     return game;
   }
 

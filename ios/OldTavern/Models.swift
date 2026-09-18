@@ -48,6 +48,22 @@ struct Item: Codable, Hashable, Identifiable {
     var description: String
 }
 
+/// The hero's look in fixed choices; PortraitView draws it.
+struct Portrait: Codable, Hashable {
+    var skin: String
+    var hair: String
+    var hairStyle: String
+    var facialHair: String
+    var eyes: String
+    var headwear: String
+    var clothing: String
+    var symbol: String
+    var age: String
+    var scar: Bool
+
+    static let fallback = Portrait(skin: "tan", hair: "brown", hairStyle: "short", facialHair: "none", eyes: "brown", headwear: "none", clothing: "umber", symbol: "\u{2694}\u{FE0F}", age: "adult", scar: false)
+}
+
 struct CharacterSheet: Codable, Hashable {
     var name: String
     var race: String
@@ -61,8 +77,11 @@ struct CharacterSheet: Codable, Hashable {
     var inventory: [Item]
     var gold: Int
     var appearance: String
+    var portrait: Portrait?
     var backstory: String
     var motivation: String
+
+    var look: Portrait { portrait ?? .fallback }
 }
 
 struct ScenarioOption: Codable, Hashable, Identifiable {
@@ -181,9 +200,12 @@ struct StoryScene: Codable, Hashable {
     var npcs: [NPC]
     var choices: [Choice]
     var stateChange: StateChange
+    var loot: [Item]?
     var recap: String
     var mood: Mood
     var ending: Ending?
+
+    var lootItems: [Item] { loot ?? [] }
 }
 
 enum ActionKind: String, Codable, Hashable {
@@ -245,6 +267,7 @@ struct GameSummary: Codable, Hashable, Identifiable {
     var race: String
     var level: Int
     var eraName: String?
+    var portrait: Portrait?
     var scenarioTitle: String?
     var location: String
     var turnCount: Int

@@ -177,10 +177,14 @@ struct SavedGameRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(iconColor)
-                .frame(width: 32)
+            if let portrait = game.portrait {
+                PortraitView(portrait: portrait, size: 48, ring: iconColor)
+            } else {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(iconColor)
+                    .frame(width: 32)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text(game.characterName)
                     .font(Theme.display(18))

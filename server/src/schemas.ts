@@ -29,6 +29,22 @@ export const Item = z.object({
 });
 export type Item = z.infer<typeof Item>;
 
+export const Portrait = z.object({
+  skin: z.enum(["light", "fair", "tan", "olive", "brown", "dark"]),
+  hair: z.enum(["black", "brown", "blond", "red", "grey", "white", "none"]),
+  hairStyle: z.enum(["short", "long", "braided", "curly", "topknot", "bald"]),
+  facialHair: z.enum(["none", "stubble", "moustache", "beard", "fullbeard"]),
+  eyes: z.enum(["brown", "blue", "green", "grey", "hazel", "dark"]),
+  headwear: z.enum(["none", "hood", "helmet", "crown", "hat", "turban", "headscarf", "cap", "laurel", "veil"]),
+  clothing: z.enum(["crimson", "forest", "navy", "umber", "ochre", "black", "grey", "white", "purple", "teal", "olive", "sand"]),
+  symbol: z.string().describe("One emoji for the hero's trade or defining object"),
+  age: z.enum(["young", "adult", "old"]),
+  scar: z.boolean(),
+});
+export type Portrait = z.infer<typeof Portrait>;
+
+export const DEFAULT_PORTRAIT: Portrait = { skin: "tan", hair: "brown", hairStyle: "short", facialHair: "none", eyes: "brown", headwear: "none", clothing: "umber", symbol: "\u2694\uFE0F", age: "adult", scar: false };
+
 export const CharacterSheet = z.object({
   name: z.string(),
   race: z.string(),
@@ -42,6 +58,7 @@ export const CharacterSheet = z.object({
   inventory: z.array(Item),
   gold: z.number().int(),
   appearance: z.string().describe("One or two sentences"),
+  portrait: Portrait.describe("The hero's look in fixed choices, agreeing with the appearance text and the era"),
   backstory: z.string().describe("A polished 2-3 paragraph backstory expanded from the player's description, in third person"),
   motivation: z.string().describe("One sentence: what drives this character right now"),
 });
@@ -135,6 +152,7 @@ export const Scene = z.object({
   npcs: z.array(NPC).describe("Characters introduced this scene, or whose attitude changed. Empty if none."),
   choices: z.array(Choice).describe("3 or 4 options. Empty only when the adventure has ended."),
   stateChange: StateChange,
+  loot: z.array(Item).describe("Up to 3 objects present in this scene the hero could pick up right now; empty when none"),
   recap: z.string().describe("One sentence summarising what happened this turn, for the story log"),
   mood: Mood,
   ending: Ending.nullable().describe("Set only when the adventure concludes (victory, death, or a satisfying resolution)"),
@@ -221,6 +239,7 @@ export interface GameSummary {
   race: string;
   level: number;
   eraName: string;
+  portrait: Portrait;
   scenarioTitle: string | null;
   location: string;
   turnCount: number;
@@ -241,6 +260,7 @@ export function toSummary(game: GameState): GameSummary {
     race: game.character.race,
     level: game.level,
     eraName: game.era.name,
+    portrait: game.character.portrait ?? DEFAULT_PORTRAIT,
     scenarioTitle: game.scenario?.title ?? null,
     location: game.location,
     turnCount: game.turns.length,

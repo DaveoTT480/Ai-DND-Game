@@ -203,11 +203,17 @@ Notes:
    returns a scene: title, narration, any dice result, newly met NPCs, a state change (hit points, gold, xp, items, quest log, location,
    conditions), a one-line recap, a mood, and three or four choices. Pick one or type what you
    do instead.
-4. **Dice.** Choices can carry a skill check (ability, skill, DC). The server rolls a d20, adds
+4. **Portrait, inventory, chronicle.** The Keeper describes the hero's look in fixed choices
+   (skin, hair, headwear, clothing, an emoji for their trade) and the game paints a tavern-sign
+   portrait from it, shown on the home list, the status bar and the sheet. The backpack button
+   opens the inventory: what you carry, with Use, Examine and Drop, plus "Nearby" objects the
+   Dungeon Master says you could pick up right now, with a Take button. The character sheet
+   ends with a chronicle of every chapter so far, each one expandable to reread in full.
+5. **Dice.** Choices can carry a skill check (ability, skill, DC). The server rolls a d20, adds
    the hero's modifier and proficiency, and tells the Dungeon Master the result, which it must
    honour. Free-text actions get a "fate die" the Dungeon Master may use if the action is
    risky. Natural 20 and natural 1 are criticals.
-5. **The end.** When the central conflict resolves, or the hero dies, the Dungeon Master writes
+6. **The end.** When the central conflict resolves, or the hero dies, the Dungeon Master writes
    an epilogue and the tale is marked finished. Saved tales live on the server and appear on the
    tavern's home screen.
 
