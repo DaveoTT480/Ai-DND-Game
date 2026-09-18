@@ -31,8 +31,8 @@
     background: var(--wood-deep) var(--stars) repeat;
     color: var(--parchment);
     font-family: var(--body);
-    font-size: 16px;
-    line-height: 1.55;
+    font-size: 14px;
+    line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
   }
@@ -40,51 +40,51 @@
   button { cursor: pointer; }
   button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
   h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
-  h1 { font-size: 38px; font-weight: 600; letter-spacing: 0.01em; }
-  h2 { font-size: 28px; font-weight: 600; }
-  h3 { font-size: 24px; font-weight: 600; }
+  h1 { font-size: 32px; font-weight: 600; letter-spacing: 0.01em; }
+  h2 { font-size: 24px; font-weight: 600; }
+  h3 { font-size: 20px; font-weight: 600; }
   p { margin: 0; }
 
-  .screen { max-width: 640px; margin: 0 auto; padding-block: 18px 32px; padding-inline: 18px; display: flex; flex-direction: column; gap: 14px; }
-  .lead { color: var(--muted); font-size: 15px; }
-  .label { font-family: var(--body); font-weight: 500; text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .screen { max-width: 640px; margin: 0 auto; padding-block: 14px 28px; padding-inline: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .lead { color: var(--muted); font-size: 13px; }
+  .label { font-family: var(--body); font-weight: 500; text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; color: var(--muted); margin-top: 6px; }
   .stack { display: flex; flex-direction: column; gap: 10px; }
   .row { display: flex; gap: 10px; align-items: center; }
   .grow { flex: 1; }
   .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
-  .card { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .card { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
   .card.accent { border-color: rgba(196, 145, 79, 0.32); }
-  .card.error { border-color: var(--blood); color: #ffb0a6; font-size: 15px; }
-  .tagline { font-family: var(--body); font-style: italic; font-size: 15px; color: var(--ember-dim); }
-  .meta { color: var(--muted); font-size: 14px; }
+  .card.error { border-color: var(--blood); color: #ffb0a6; font-size: 13px; }
+  .tagline { font-family: var(--body); font-style: italic; font-size: 13.5px; color: var(--ember-dim); }
+  .meta { color: var(--muted); font-size: 12.5px; }
   .quiet-text { color: var(--parchment-dim); }
 
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; font-family: var(--body); font-size: 17px; font-weight: 600; letter-spacing: .01em; transition: transform .08s ease, opacity .12s ease; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 11px; padding: 11px 14px; font-family: var(--body); font-size: 15px; font-weight: 600; letter-spacing: .01em; transition: transform .08s ease, opacity .12s ease; }
   .btn:active { transform: scale(.985); }
   .btn:disabled { opacity: .45; cursor: default; transform: none; }
   .btn.ember { background: linear-gradient(180deg, #17120e, #0d0a07); color: var(--ember); border: 1px solid #4a3620; box-shadow: none; }
   .btn.quiet { background: var(--wood-light); color: var(--parchment); border: 1px solid var(--border); font-weight: 600; }
-  .btn.link { background: none; color: var(--ember-dim); font-family: var(--body); font-size: 15px; font-weight: 500; padding: 6px 0; width: auto; }
+  .btn.link { background: none; color: var(--ember-dim); font-family: var(--body); font-size: 13.5px; font-weight: 500; padding: 6px 0; width: auto; }
 
-  .field { width: 100%; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color: var(--parchment); }
+  .field { width: 100%; background: var(--wood-light); border: 1px solid var(--border); border-radius: 11px; padding: 10px 12px; color: var(--parchment); }
   .field:focus { border-color: rgba(196, 145, 79, .6); outline: none; }
   .field::placeholder { color: var(--muted); }
-  textarea.field { min-height: 150px; resize: vertical; line-height: 1.5; }
+  textarea.field { min-height: 120px; resize: vertical; line-height: 1.5; }
 
   .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: 0 0 auto; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+  .chip { flex: 0 0 auto; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
   .chip.on { background: var(--ember-soft); color: var(--ember); border-color: rgba(196, 145, 79, .6); font-weight: 600; }
-  .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 13px; margin: 4px 4px 0 0; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 12px; margin: 4px 4px 0 0; }
   .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
 
   .era-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 96px; }
+  .era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; min-height: 84px; }
   .era.on { border-color: rgba(196, 145, 79, .6); background: var(--ember-soft); }
-  .era .nm { font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.1; }
-  .era .wh { color: var(--ember-dim); font-size: 12px; }
-  .era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+  .era .nm { font-family: var(--display); font-size: 18px; font-weight: 600; line-height: 1.1; }
+  .era .wh { color: var(--ember-dim); font-size: 11px; }
+  .era .bl { color: var(--muted); font-size: 11.5px; line-height: 1.35; }
   .era.on .bl { color: var(--parchment-dim); }
   .hist { color: var(--gold); font-size: 11px; letter-spacing: .06em; }
   .portrait { flex: 0 0 auto; line-height: 0; }
@@ -100,7 +100,7 @@
   .inv-item .head button { background: none; border: 0; padding: 0; text-align: left; color: var(--parchment); flex: 1; display: flex; align-items: center; gap: 10px; }
   .item-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; background: radial-gradient(ellipse 70% 60% at 50% 40%, #3a2412 0%, var(--wood-light) 60%, var(--wood-light) 100%); border: 1px solid var(--border); border-radius: 14px; }
   .item-hero .sprite { image-rendering: pixelated; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
-  .item-hero h2 { font-size: 30px; text-align: center; }
+  .item-hero h2 { font-size: 26px; text-align: center; }
   .badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
   .badge { border-radius: 999px; padding: 4px 10px; font-size: 12px; letter-spacing: .04em; border: 1px solid currentColor; }
   .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -119,7 +119,7 @@
   .slot small { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
   .doll-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 6px; }
   .doll-mid .portrait img, .doll-mid .portrait svg { display: block; }
-  .doll-mid .who { text-align: center; font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.15; }
+  .doll-mid .who { text-align: center; font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.15; }
   .doll-mid .cls { color: var(--ember-dim); font-size: 12px; text-align: center; }
   .ac { width: 54px; height: 60px; display: grid; place-items: center; background: var(--wood); border: 1.5px solid var(--gold); border-radius: 8px 8px 26px 26px; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--parchment); }
   .ac small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .08em; text-align: center; font-family: var(--body); }
@@ -141,23 +141,23 @@
   .inv-actions { display: flex; gap: 6px; }
   .inv-actions button { flex: 1; background: var(--wood); border: 1px solid var(--border); color: var(--parchment); border-radius: 8px; padding: 8px; font-size: 13px; }
   .inv-actions button.drop { color: #ff9d94; }
-  .inputbar .pack { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); font-size: 20px; position: relative; }
+  .inputbar .pack { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); font-size: 20px; position: relative; }
   .inputbar .pack .n { position: absolute; top: -4px; right: -4px; background: #3a2a18; color: var(--ember); border: 1px solid #4a3620; border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; }
   details.chapter { border-bottom: 1px solid var(--border); padding: 8px 0; }
   details.chapter summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; }
   details.chapter summary::-webkit-details-marker { display: none; }
   details.chapter .n { color: var(--muted); font-size: 12px; min-width: 24px; font-variant-numeric: tabular-nums; }
-  details.chapter .t { font-family: var(--display); font-size: 19px; font-weight: 600; }
-  details.chapter .r { color: var(--muted); font-size: 14px; margin-left: 32px; }
+  details.chapter .t { font-family: var(--display); font-size: 17px; font-weight: 600; }
+  details.chapter .r { color: var(--muted); font-size: 13px; margin-left: 32px; }
   details.chapter .body { margin: 8px 0 0 32px; display: flex; flex-direction: column; gap: 8px; }
   .icon-btn { background: none; border: 0; color: var(--muted); font-size: 24px; padding: 4px 6px; line-height: 1; }
 
   /* Saved tales */
   .tale { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: none; border: 0; padding: 0; }
   .tale .glyph { font-size: 22px; width: 30px; text-align: center; padding-top: 2px; }
-  .tale .name { font-family: var(--display); font-size: 24px; font-weight: 600; }
-  .tale .sub { color: var(--muted); font-size: 13px; }
-  .tale .where { color: var(--ember-dim); font-size: 13px; }
+  .tale .name { font-family: var(--display); font-size: 20px; font-weight: 600; }
+  .tale .sub { color: var(--muted); font-size: 12.5px; }
+  .tale .where { color: var(--ember-dim); font-size: 12.5px; }
   .tale .chev { color: var(--muted); align-self: center; font-size: 20px; }
 
   /* Abilities and sheet */
@@ -168,7 +168,7 @@
   .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .sheet-grid div { background: var(--wood-light); border-radius: 10px; text-align: center; padding: 10px 0; }
   .sheet-grid small { display: block; color: var(--muted); font-size: 12px; }
-  .sheet-grid b { font-family: var(--display); font-size: 26px; display: block; }
+  .sheet-grid b { font-family: var(--display); font-size: 22px; display: block; }
   .sheet-grid .mod { color: var(--ember); font-size: 13px; }
   .vitals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .vitals div { background: var(--wood-light); border-radius: 10px; text-align: center; padding: 10px 0; }
@@ -176,20 +176,20 @@
   .vitals small { color: var(--muted); font-size: 12px; }
 
   /* Play */
-  #play { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-  .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(6, 6, 6, .92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 12px; align-items: center; font-size: 13px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  #play { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(6, 6, 6, .92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 8px 12px; display: flex; gap: 10px; align-items: center; font-size: 12.5px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
   .statusbar .loc { margin-left: auto; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42%; }
   .statusbar .hp.low { color: var(--blood); }
   .statusbar .back { color: var(--ember-dim); background: none; border: 0; padding: 0 6px 0 0; font-size: 22px; line-height: 1; }
-  .log { max-width: 640px; margin: 0 auto; padding-block: 12px; padding-inline: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(196, 145, 79, .28); border-radius: 14px; padding: 10px 14px; font-style: italic; }
+  .log { max-width: 640px; margin: 0 auto; padding-block: 10px; padding-inline: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(196, 145, 79, .28); border-radius: 12px; padding: 8px 12px; font-style: italic; font-size: 13.5px; }
   .bubble::before { content: "\276F  "; color: var(--ember-dim); font-style: normal; }
-  .scene { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-  .scene .head h3 { font-size: 26px; }
+  .scene { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .scene .head h3 { font-size: 22px; }
   .scene .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .scene .mood { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
-  .narration { line-height: 1.65; font-size: 16px; }
-  .narration p { margin: 0 0 10px; }
+  .narration { line-height: 1.55; font-size: 14px; }
+  .narration p { margin: 0 0 8px; }
   .narration p:last-child { margin-bottom: 0; }
   .dice { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; }
   .dice.ok { background: rgba(110, 164, 95, .14); }
@@ -197,28 +197,28 @@
   .dice .d20 { width: 44px; height: 44px; border-radius: 9px; background: var(--wood); display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 22px; border: 1.5px solid currentColor; flex: 0 0 auto; }
   .dice.ok .d20 { color: var(--moss); } .dice.bad .d20 { color: var(--blood); }
   .dice .d20 span { color: var(--parchment); }
-  .dice .what { font-size: 14px; }
+  .dice .what { font-size: 13px; }
   .dice .math { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .dice .verdict { margin-left: auto; font-family: var(--display); font-weight: 700; font-size: 18px; }
   .dice.ok .verdict { color: var(--moss); } .dice.bad .verdict { color: var(--blood); }
-  .changes { font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
+  .changes { font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
   .changes .hurt { color: var(--blood); } .changes .heal { color: var(--moss); } .changes .gold { color: var(--gold); } .changes .xp { color: var(--ember-dim); } .changes .item { color: var(--parchment-dim); } .changes .quest { color: var(--muted); }
   .ending { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .ending h4 { font-size: 30px; }
+  .ending h4 { font-size: 26px; }
   .ending.win h4 { color: var(--gold); } .ending.lose h4 { color: var(--muted); }
-  .choices { display: flex; flex-direction: column; gap: 8px; }
-  .choice { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .choices { display: flex; flex-direction: column; gap: 6px; }
+  .choice { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 11px; padding: 9px 12px; }
   .choice:active { background: var(--wood); }
   .choice .lbl { font-weight: 600; }
-  .choice .hint { color: var(--muted); font-size: 14px; }
-  .choice .check { margin-left: auto; color: var(--ember-dim); font-size: 12px; text-align: right; white-space: nowrap; }
+  .choice .hint { color: var(--muted); font-size: 12.5px; }
+  .choice .check { margin-left: auto; color: var(--ember-dim); font-size: 11px; text-align: right; white-space: nowrap; }
   .thinking { display: flex; align-items: center; gap: 12px; color: var(--muted); font-style: italic; }
   .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ember); border-radius: 50%; animation: spin .9s linear infinite; flex: 0 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--ember); } .btn { transition: none; } }
   .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(6, 6, 6, .96); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
-  .inputbar textarea { flex: 1; min-height: 46px; max-height: 120px; resize: none; border-radius: 16px; padding: 11px 14px; }
-  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #4a3620; background: #17120e; color: var(--ember); font-size: 22px; font-weight: 700; }
+  .inputbar textarea { flex: 1; min-height: 42px; max-height: 110px; resize: none; border-radius: 14px; padding: 10px 12px; }
+  .inputbar .send { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; border: 1px solid #4a3620; background: #17120e; color: var(--ember); font-size: 22px; font-weight: 700; }
   .inputbar .send:disabled { background: var(--border); color: var(--muted); }
   .stop { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; margin-left: auto; }
 
@@ -227,8 +227,8 @@
   .overlay .card { max-width: 380px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 10px; }
   .sheet-panel { position: relative; min-height: 100vh; }
   .toast.ok { background: #1f2e1c; border-color: var(--moss); color: #cfe8c6; }
-  .toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 10px 14px; z-index: 30; font-size: 15px; }
-  .notice { border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--muted); }
+  .toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 8px 12px; z-index: 30; font-size: 13.5px; }
+  .notice { border: 1px dashed var(--border); border-radius: 11px; padding: 10px 12px; font-size: 12.5px; color: var(--muted); }
   .notice b { color: var(--parchment); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .seg button { flex: 1; background: none; border: 0; padding: 10px; font-size: 14px; color: var(--muted); }
@@ -239,7 +239,7 @@
 <section id="home" class="screen" hidden>
   <div class="spread">
     <span style="width:28px"></span>
-    <h1 class="grow" style="text-align:center;font-size:40px">The Old Tavern</h1>
+    <h1 class="grow" style="text-align:center;font-size:34px">The Old Tavern</h1>
     <button class="icon-btn" data-action="settings" aria-label="Settings">&#9776;</button>
   </div>
   <p class="lead" style="text-align:center">Pull up a chair by the fire. Every tale starts with who you are.</p>
@@ -377,7 +377,7 @@
 <div id="busy" class="overlay" hidden>
   <div class="card accent">
     <div class="spinner" style="margin:0 auto"></div>
-    <div id="busy-line" style="font-family:var(--display);font-size:22px">The Keeper sharpens a quill...</div>
+    <div id="busy-line" style="font-family:var(--display);font-size:19px">The Keeper sharpens a quill...</div>
     <div class="meta">This takes a little while. Good heroes always do.</div>
     <button class="btn link" data-action="stop" style="margin:0 auto">Stop</button>
   </div>
@@ -1690,7 +1690,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         : `${esc(g.scenario?.title || "An adventure")} - concluded after ${g.turns.length} turns`;
       return `<div class="card stack" style="gap:6px"><button class="tale" data-action="open" data-id="${esc(g.id)}">
         <span class="portrait">${heroPortrait(g, 48, g.status === "ended" ? "#edc252" : "#b8874a")}</span>
-        <span class="grow"><span class="name">${esc(g.character.name)} <span style="font-size:14px">${glyph}</span></span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level} &middot; ${esc(g.era?.name || "Classic Fantasy")}</span><br><span class="where">${where}</span></span>
+        <span class="grow"><span class="name">${esc(g.character.name)} <span style="font-size:12.5px">${glyph}</span></span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level} &middot; ${esc(g.era?.name || "Classic Fantasy")}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <div class="row" style="gap:6px"><button class="btn link" data-action="delete" data-id="${esc(g.id)}">Delete</button></div></div>`;
     }).join("");
@@ -1736,13 +1736,13 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("pick").dataset.id = game.id;
     const c = game.character;
     $("p-hero").innerHTML = `<div class="card accent stack">
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#b8874a")}</span><div class="grow"><h2 style="font-size:30px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#b8874a")}</span><div class="grow"><h2 style="font-size:26px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:14.5px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p>${esc(c.appearance)}</p>
       <div class="narration quiet-text">${md(c.backstory)}</div>
       <div class="tagline">${esc(c.motivation)}</div>
     </div>`;
-    $("p-hero").innerHTML += game.research.length ? `<div class="card stack" style="gap:6px;margin-top:10px"><div class="label" style="margin:0">The Keeper's research &middot; ${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div>${game.research.map((r) => `<div class="quiet-text" style="font-size:15px">&#10022; ${esc(r)}</div>`).join("")}</div>` : "";
+    $("p-hero").innerHTML += game.research.length ? `<div class="card stack" style="gap:6px;margin-top:10px"><div class="label" style="margin:0">The Keeper's research &middot; ${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div>${game.research.map((r) => `<div class="quiet-text" style="font-size:13.5px">&#10022; ${esc(r)}</div>`).join("")}</div>` : "";
     $("p-scenarios").innerHTML = game.scenarios.map((s) => `<div class="card stack" style="gap:8px">
       <h3>${esc(s.title)}</h3>
       <div class="tagline">${esc(s.tagline)}</div>
@@ -1911,7 +1911,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         <div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0">${esc(t.action.text)}</div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div>
       </details>`).join("") : `<span class="meta">The tale has not begun.</span>`;
     $("sheet-body").innerHTML = `
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#b8874a")}</span><div class="grow"><h1 style="font-size:32px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#b8874a")}</span><div class="grow"><h1 style="font-size:26px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:14.5px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
       <div class="meta">${esc(c.appearance)}</div>
       <div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div>
       <div class="vitals">
@@ -2006,13 +2006,13 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
     $("item-body").innerHTML = `
       <div class="item-hero">
         <div class="sprite">${spriteSVG(item.sprite, item.tint, 128)}</div>
-        <h2>${esc(item.name)}${item.quantity > 1 ? ` <span class="meta" style="font-size:16px">x${item.quantity}</span>` : ""}</h2>
+        <h2>${esc(item.name)}${item.quantity > 1 ? ` <span class="meta" style="font-size:14px">x${item.quantity}</span>` : ""}</h2>
         <div class="badges"><span class="badge" style="color:${RARITY_COLOR[item.rarity]}">${esc(item.rarity)}</span><span class="badge" style="color:var(--parchment)">${kindLabel}</span>${dur === 0 ? `<span class="badge" style="color:var(--blood)">broken</span>` : ""}</div>
       </div>
       ${note ? `<div class="meta" style="text-align:center">${esc(note)}</div>` : ""}
       <div class="stat-row">
         <div><small>Worth</small><b>${item.value ? `${item.value} ${esc(cur)}` : "\u2014"}</b></div>
-        ${item.damage ? `<div><small>Damage</small><b>${esc(item.damage)}</b></div>` : `<div><small>Where</small><b style="font-size:16px">${where === "nearby" ? "Nearby" : "Carried"}</b></div>`}
+        ${item.damage ? `<div><small>Damage</small><b>${esc(item.damage)}</b></div>` : `<div><small>Where</small><b style="font-size:14px">${where === "nearby" ? "Nearby" : "Carried"}</b></div>`}
       </div>
       ${dur !== null ? `<div class="card" style="padding:10px 14px"><div class="spread"><small class="meta">Durability</small><b style="color:${durColor}">${dur}/100</b></div><div class="bar"><i style="width:${dur}%;background:${durColor}"></i></div></div>` : ""}
       ${item.description ? `<p>${esc(item.description)}</p>` : ""}
