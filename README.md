@@ -31,6 +31,7 @@ The API key never leaves the server. The app only ever talks to the game server.
 | `server/public/` | The mobile web app: play on iPhone with no Mac by adding it to the home screen. |
 | `server/api/index.ts`, `server/vercel.json` | Vercel deployment: one serverless function plus Vercel Blob for saves. |
 | `ios/` | The SwiftUI iPhone app. Open `ios/OldTavern.xcodeproj` in Xcode 16 or newer. |
+| `artifact/old-tavern.html` | The game as one claude.ai Artifact page: Claude as Dungeon Master on your own subscription, no server. |
 
 ## 1. Run the server
 
@@ -68,6 +69,17 @@ Tests and typecheck:
 npm test
 npm run typecheck
 ```
+
+## 0. The no-setup way: play inside Claude on your subscription
+
+`artifact/old-tavern.html` is the whole game as a single claude.ai Artifact page. Published
+from Claude Code, it asks Claude for each turn through the artifact runtime's `sample`
+capability, which runs on the viewer's own Claude account. No API key, no server, no Vercel,
+no token: open the artifact in the Claude app on your phone and play. Saved tales go to the
+artifact's private per-viewer database (with a browser-only fallback), so they follow you
+between devices. The first turn asks your permission to use Claude on this page.
+
+The server-and-app route below is for running the game outside Claude, on an API key.
 
 ## 2. Play on your iPhone without a Mac (web app)
 

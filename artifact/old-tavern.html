@@ -1,0 +1,1067 @@
+<title>The Old Tavern</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  /* A tavern after midnight: one committed palette, painted explicitly on both host grounds. */
+  :root {
+    --wood: #1c1410;
+    --wood-deep: #0d0806;
+    --wood-light: #2d2119;
+    --border: #4d3a2b;
+    --parchment: #f2e6c8;
+    --parchment-dim: rgba(242, 230, 200, 0.82);
+    --ember: #e08f2b;
+    --ember-soft: rgba(224, 143, 43, 0.14);
+    --muted: #a8917a;
+    --blood: #c9443a;
+    --moss: #6ea45f;
+    --gold: #edc252;
+    --violet: #9a82d6;
+    --display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --body: "Lora", Georgia, "Iowan Old Style", serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--wood) radial-gradient(ellipse 120% 70% at 50% -10%, #3a2718 0%, var(--wood) 55%, var(--wood-deep) 100%) fixed;
+    color: var(--parchment);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+  h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+  h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 26px; font-weight: 600; }
+  h3 { font-size: 22px; font-weight: 600; }
+  p { margin: 0; }
+
+  .screen { max-width: 640px; margin: 0 auto; padding-block: 18px 32px; padding-inline: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .lead { color: var(--muted); font-size: 16px; }
+  .label { font-family: var(--body); font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .grow { flex: 1; }
+  .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+  .card { background: var(--wood-light); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .card.accent { border-color: rgba(224, 143, 43, 0.55); }
+  .card.error { border-color: var(--blood); color: #ffb0a6; font-size: 15px; }
+  .tagline { font-family: var(--display); font-style: italic; font-size: 19px; color: var(--ember); }
+  .meta { color: var(--muted); font-size: 14px; }
+  .quiet-text { color: var(--parchment-dim); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; font-family: var(--display); font-size: 20px; font-weight: 700; transition: transform .08s ease, opacity .12s ease; }
+  .btn:active { transform: scale(.985); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .btn.ember { background: var(--ember); color: var(--wood-deep); }
+  .btn.quiet { background: var(--wood-light); color: var(--parchment); border: 1px solid var(--border); font-weight: 600; }
+  .btn.link { background: none; color: var(--ember); font-family: var(--body); font-size: 15px; font-weight: 500; padding: 6px 0; width: auto; }
+
+  .field { width: 100%; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color: var(--parchment); }
+  .field:focus { border-color: var(--ember); outline: none; }
+  .field::placeholder { color: var(--muted); }
+  textarea.field { min-height: 150px; resize: vertical; line-height: 1.5; }
+
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+  .chip.on { background: var(--ember); color: var(--wood-deep); border-color: var(--ember); font-weight: 600; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 13px; margin: 4px 4px 0 0; }
+  .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+
+  .icon-btn { background: none; border: 0; color: var(--muted); font-size: 24px; padding: 4px 6px; line-height: 1; }
+
+  /* Saved tales */
+  .tale { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: none; border: 0; padding: 0; }
+  .tale .glyph { font-size: 22px; width: 30px; text-align: center; padding-top: 2px; }
+  .tale .name { font-family: var(--display); font-size: 22px; font-weight: 600; }
+  .tale .sub { color: var(--muted); font-size: 14px; }
+  .tale .where { color: var(--ember); font-size: 14px; }
+  .tale .chev { color: var(--muted); align-self: center; font-size: 20px; }
+
+  /* Abilities and sheet */
+  .abilities { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .abilities div { background: var(--wood); border-radius: 8px; text-align: center; padding: 6px 0; }
+  .abilities small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .06em; }
+  .abilities b { font-family: var(--display); font-size: 18px; font-variant-numeric: tabular-nums; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sheet-grid div { background: var(--wood-light); border-radius: 10px; text-align: center; padding: 10px 0; }
+  .sheet-grid small { display: block; color: var(--muted); font-size: 12px; }
+  .sheet-grid b { font-family: var(--display); font-size: 26px; display: block; }
+  .sheet-grid .mod { color: var(--ember); font-size: 13px; }
+  .vitals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .vitals div { background: var(--wood-light); border-radius: 10px; text-align: center; padding: 10px 0; }
+  .vitals b { display: block; font-family: var(--display); font-size: 20px; font-variant-numeric: tabular-nums; }
+  .vitals small { color: var(--muted); font-size: 12px; }
+
+  /* Play */
+  #play { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(28, 20, 16, .96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 12px; align-items: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .statusbar .loc { margin-left: auto; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42%; }
+  .statusbar .hp.low { color: var(--blood); }
+  .statusbar .back { color: var(--ember); background: none; border: 0; padding: 0 6px 0 0; font-size: 22px; line-height: 1; }
+  .log { max-width: 640px; margin: 0 auto; padding-block: 12px; padding-inline: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(224, 143, 43, .4); border-radius: 14px; padding: 10px 14px; font-style: italic; }
+  .bubble::before { content: "\276F  "; color: var(--ember); font-style: normal; }
+  .scene { background: var(--wood-light); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .scene .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .scene .mood { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  .narration { line-height: 1.6; }
+  .narration p { margin: 0 0 10px; }
+  .narration p:last-child { margin-bottom: 0; }
+  .dice { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; }
+  .dice.ok { background: rgba(110, 164, 95, .14); }
+  .dice.bad { background: rgba(201, 68, 58, .14); }
+  .dice .d20 { width: 44px; height: 44px; border-radius: 9px; background: var(--wood); display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 22px; border: 1.5px solid currentColor; flex: 0 0 auto; }
+  .dice.ok .d20 { color: var(--moss); } .dice.bad .d20 { color: var(--blood); }
+  .dice .d20 span { color: var(--parchment); }
+  .dice .what { font-size: 14px; }
+  .dice .math { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .dice .verdict { margin-left: auto; font-family: var(--display); font-weight: 700; font-size: 18px; }
+  .dice.ok .verdict { color: var(--moss); } .dice.bad .verdict { color: var(--blood); }
+  .changes { font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
+  .changes .hurt { color: var(--blood); } .changes .heal { color: var(--moss); } .changes .gold { color: var(--gold); } .changes .xp { color: var(--ember); } .changes .item { color: var(--parchment-dim); } .changes .quest { color: var(--muted); }
+  .ending { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .ending h4 { font-size: 28px; }
+  .ending.win h4 { color: var(--gold); } .ending.lose h4 { color: var(--muted); }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .choice:active { background: var(--wood); }
+  .choice .lbl { font-weight: 600; }
+  .choice .hint { color: var(--muted); font-size: 14px; }
+  .choice .check { margin-left: auto; color: var(--ember); font-size: 12px; text-align: right; white-space: nowrap; }
+  .thinking { display: flex; align-items: center; gap: 12px; color: var(--muted); font-style: italic; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ember); border-radius: 50%; animation: spin .9s linear infinite; flex: 0 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--ember); } .btn { transition: none; } }
+  .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(28, 20, 16, .97); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
+  .inputbar textarea { flex: 1; min-height: 46px; max-height: 120px; resize: none; border-radius: 16px; padding: 11px 14px; }
+  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ember); color: var(--wood-deep); font-size: 22px; font-weight: 700; }
+  .inputbar .send:disabled { background: var(--border); color: var(--muted); }
+  .stop { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; margin-left: auto; }
+
+  /* Overlays */
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .66); display: grid; place-items: center; padding: 24px; z-index: 20; }
+  .overlay .card { max-width: 380px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 10px; }
+  .sheet-panel { position: fixed; inset: 0; z-index: 15; background: var(--wood) radial-gradient(ellipse 120% 70% at 50% -10%, #3a2718 0%, var(--wood) 55%, var(--wood-deep) 100%); overflow-y: auto; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 10px 14px; z-index: 30; font-size: 15px; }
+  .notice { border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--muted); }
+  .notice b { color: var(--parchment); }
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg button { flex: 1; background: none; border: 0; padding: 10px; font-size: 14px; color: var(--muted); }
+  .seg button.on { background: var(--ember); color: var(--wood-deep); font-weight: 600; }
+</style>
+
+<!-- Home -->
+<section id="home" class="screen" hidden>
+  <div class="spread">
+    <h1>The Old Tavern</h1>
+    <button class="icon-btn" data-action="settings" aria-label="Settings">&#9881;</button>
+  </div>
+  <p class="lead">Pull up a chair by the fire. Every tale starts with who you are.</p>
+  <div id="availability" class="notice" hidden></div>
+  <button id="new-btn" class="btn ember" data-action="new">Begin a new adventure</button>
+  <div class="label">Saved tales</div>
+  <div id="tales" class="stack"></div>
+  <div class="notice"><b>How it works.</b> Describe a character in your own words. The Keeper forges a full character sheet and three adventures for them. Then Claude plays Dungeon Master: it narrates, voices everyone you meet, and offers choices, or you type what you do. Dice are rolled by the tavern; the Dungeon Master honours them. The story runs on your own Claude account, so the first turn asks your permission.</div>
+</section>
+
+<!-- Forge -->
+<section id="forge" class="screen" hidden>
+  <div><button class="btn link" data-action="home">&#8249; Tavern</button></div>
+  <h1>Who walks in?</h1>
+  <p class="lead">Describe your character: their past, their trade, their flaws, what they carry. The Keeper turns it into a full character sheet and three adventures made for them.</p>
+  <div class="label">Name (optional)</div>
+  <input id="f-name" class="field" placeholder="Leave blank and one will be chosen" autocomplete="off">
+  <div class="label">Background</div>
+  <textarea id="f-background" class="field" placeholder="A retired ship's cook with a cursed ladle and a grudge against the Admiralty..."></textarea>
+  <div><button class="btn link" data-action="example">&#10024; Surprise me with an example</button></div>
+  <div class="label">Tone of the tale</div>
+  <div id="f-tones" class="chips"></div>
+  <input id="f-custom-tone" class="field" placeholder="e.g. cozy mystery, cosmic horror, heist caper" hidden>
+  <div id="f-error" class="card error" hidden></div>
+  <button id="f-go" class="btn ember" data-action="forge">Forge my hero</button>
+</section>
+
+<!-- Pick a scenario -->
+<section id="pick" class="screen" hidden>
+  <div class="spread">
+    <button class="btn link" data-action="home">&#8249; Tavern</button>
+    <button class="btn link" data-action="sheet">Character sheet</button>
+  </div>
+  <div id="p-hero"></div>
+  <div class="label">Choose your tale</div>
+  <div id="p-scenarios" class="stack"></div>
+  <div class="label">Or write your own</div>
+  <textarea id="p-custom" class="field" placeholder="I wake in a burning library with no memory of how I got here..." style="min-height:100px"></textarea>
+  <button class="btn quiet" data-action="start-custom">Begin my own tale</button>
+  <div id="p-error" class="card error" hidden></div>
+</section>
+
+<!-- Play -->
+<section id="play" hidden>
+  <div class="statusbar" data-action="sheet">
+    <button class="back" data-action="home" aria-label="Back to tavern">&#8249;</button>
+    <span id="s-hp" class="hp">&#9829; 10/10</span>
+    <span id="s-gold">&#9679; 0</span>
+    <span id="s-lv" style="color:var(--muted)">Lv 1</span>
+    <span id="s-loc" class="loc"></span>
+  </div>
+  <div id="log" class="log"></div>
+  <div class="inputbar">
+    <textarea id="free" rows="1" placeholder="Or do something else..."></textarea>
+    <button id="send" class="send" data-action="send" aria-label="Act">&#8593;</button>
+  </div>
+</section>
+
+<!-- Character sheet -->
+<section id="sheet" class="sheet-panel" hidden>
+  <div class="screen">
+    <div class="spread">
+      <h2>Character sheet</h2>
+      <button class="btn link" data-action="close-sheet">Done</button>
+    </div>
+    <div id="sheet-body" class="stack"></div>
+  </div>
+</section>
+
+<!-- Settings -->
+<div id="settings" class="overlay" hidden>
+  <div class="card">
+    <h3>The Keeper's pace</h3>
+    <p class="meta">Which Claude tells the tale. Deeper thinks longer before each turn.</p>
+    <div class="seg" id="tier-seg">
+      <button data-tier="quick">Quick</button>
+      <button data-tier="default">Balanced</button>
+      <button data-tier="complex">Deeper</button>
+    </div>
+    <p class="meta" id="storage-note"></p>
+    <button class="btn quiet" data-action="close-settings">Done</button>
+  </div>
+</div>
+
+<!-- Busy -->
+<div id="busy" class="overlay" hidden>
+  <div class="card accent">
+    <div class="spinner" style="margin:0 auto"></div>
+    <div id="busy-line" style="font-family:var(--display);font-size:22px">The Keeper sharpens a quill...</div>
+    <div class="meta">This takes a little while. Good heroes always do.</div>
+    <button class="btn link" data-action="stop" style="margin:0 auto">Stop</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ------------------------------------------------------------------
+  // Constants and copy
+  // ------------------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+  const TONES = [
+    ["classic fantasy", "Classic fantasy"], ["grimdark", "Grimdark"], ["lighthearted comedy", "Comedy"],
+    ["gothic horror", "Gothic horror"], ["swashbuckling high seas", "High seas"], ["steampunk mystery", "Steampunk"], ["custom", "Custom..."],
+  ];
+  const EXAMPLES = [
+    "A retired ship's cook with a cursed ladle and a grudge against the Admiralty. Cheerful, overweight, deadly with a cleaver.",
+    "A young half-elf scholar who stole a forbidden book from her academy and is now hunted by her own professors. Brilliant, nervous, allergic to horses.",
+    "A dwarven blacksmith who lost his forge to a dragon and swore never to make another weapon. He carries a hammer anyway.",
+    "A street magician from the capital who can do one real spell and pretends the rest are also real. Charming, broke, owes money to a tiefling loan shark.",
+    "An old knight, once famous, now forgotten, looking for one last deed worth a song. Her armour still fits. Mostly.",
+  ];
+  const FORGE_LINES = ["The Keeper sharpens a quill...", "Rolling for your strengths...", "Consulting the notice board...", "Writing your name in the ledger...", "Three tales are being chosen for you..."];
+  const THINK_LINES = ["The Dungeon Master is thinking...", "Dice clatter behind the screen...", "Somewhere, a plot thickens...", "The candle gutters. The story turns..."];
+  const ABILITIES = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+  const LONG = { STR: "Strength", DEX: "Dexterity", CON: "Constitution", INT: "Intelligence", WIS: "Wisdom", CHA: "Charisma" };
+  const MOODS = ["calm", "tense", "mysterious", "combat", "triumphant", "grim", "festive"];
+  const ATTITUDES = ["friendly", "neutral", "suspicious", "hostile"];
+  const MOOD_COLOR = { calm: "var(--muted)", tense: "var(--ember)", mysterious: "var(--violet)", combat: "var(--blood)", triumphant: "var(--gold)", grim: "#8a8a92", festive: "#e6738c" };
+  const ATT_COLOR = { friendly: "var(--moss)", neutral: "var(--muted)", suspicious: "var(--ember)", hostile: "var(--blood)" };
+  const VERBATIM_TURNS = 10;
+  const PROMPT_BUDGET = 52000; // characters; the platform caps input at 64 KiB
+  const ERROR_COPY = {
+    not_granted: "This tavern needs your permission to ask Claude. Reload the page to be asked again.",
+    sampling_disabled: "Claude is not available on this account, so the Dungeon Master cannot speak.",
+    rate_limited: "The tavern is crowded: you have hit your Claude usage limit for now. Try again a little later.",
+    session_expired: "Your Claude session has expired. Sign in again and reload.",
+    refused: "The Dungeon Master declined to take the story that way. Try a different action.",
+    invalid_json: "The Dungeon Master mumbled something unreadable. Try that again.",
+    empty_completion: "The Dungeon Master fell silent. Try again.",
+    prompt_too_large: "This tale has grown too long for one breath. Start a new adventure.",
+    upstream_error: "The connection to the Dungeon Master dropped. Try again.",
+    cancelled: "",
+  };
+
+  // ------------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------------
+  const games = new Map();
+  let sample = null;      // claude sample capability, or null
+  let store = null;       // save store (db-backed or local)
+  let busy = false;
+  let controller = null;  // AbortController for the running call
+  let tone = "classic fantasy";
+  let tier = "default";
+  try { tier = localStorage.getItem("tavern.tier") || "default"; } catch {}
+
+  // ------------------------------------------------------------------
+  // Small helpers
+  // ------------------------------------------------------------------
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g, "$1<i>$2</i>")
+    .split(/\n{2,}/).map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+  const mod = (v) => Math.floor((v - 10) / 2);
+  const fmtMod = (m) => (m >= 0 ? "+" : "") + m;
+  const int = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : d);
+  const str = (v, d = "") => (typeof v === "string" ? v : d);
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  const now = () => new Date().toISOString();
+  const d20 = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return 1 + (a[0] % 20); };
+
+  function toast(msg, ms = 4500) {
+    if (!msg) return;
+    const t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { t.hidden = true; }, ms);
+  }
+
+  // ------------------------------------------------------------------
+  // Save store: private per-viewer db documents, else this browser only
+  // ------------------------------------------------------------------
+  async function makeStore() {
+    try {
+      const db = await window.claude?.use?.("db");
+      const user = await window.claude?.use?.("user");
+      const uid = user ? await user.id() : null;
+      if (db && uid) {
+        const col = db.collection("data/users/" + uid);
+        return {
+          kind: "cloud",
+          async list() { const snap = await col.orderBy("updatedAt", "desc").limit(200).get(); return snap.docs.map((d) => d.data()); },
+          async get(id) { const snap = await col.doc(id).get(); return snap.exists ? snap.data() : null; },
+          async save(game) { await col.doc(game.id).set(compactForSave(game)); },
+          async remove(id) { await col.doc(id).delete(); },
+        };
+      }
+    } catch (e) { console.warn("db unavailable", e); }
+    const KEY = "tavern.games";
+    const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } };
+    const write = (all) => { try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) { toast("Could not save in this browser."); } };
+    return {
+      kind: "local",
+      async list() { return Object.values(read()).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")); },
+      async get(id) { return read()[id] || null; },
+      async save(game) { const all = read(); all[game.id] = compactForSave(game); write(all); },
+      async remove(id) { const all = read(); delete all[id]; write(all); },
+    };
+  }
+
+  /** Keep a save under the document size cap by trimming the oldest narration to its recap. */
+  function compactForSave(game) {
+    let copy = JSON.parse(JSON.stringify(game));
+    let size = JSON.stringify(copy).length;
+    let i = 0;
+    while (size > 200000 && i < copy.turns.length - VERBATIM_TURNS) {
+      const t = copy.turns[i++];
+      t.scene.narration = t.scene.recap;
+      t.scene.npcs = [];
+      size = JSON.stringify(copy).length;
+    }
+    return copy;
+  }
+
+  // ------------------------------------------------------------------
+  // Prompts (the Dungeon Master's rules)
+  // ------------------------------------------------------------------
+  const FORGE_RULES = `You are the Keeper of the Old Tavern, a veteran Dungeon Master who turns a few sentences about a character into a complete, playable hero and three tempting adventures.
+
+How to build the character:
+- Honour every concrete detail the player gives (name, race, class, age, past deeds, relationships, gear). Invent the rest so it fits.
+- If the player names a class or race that isn't in classic Dungeons & Dragons, keep it anyway.
+- Ability scores use D&D 5e ranges: 8 to 17 at level 1, strengths clearly reflected, six scores summing to 72-78.
+- Level is 1 unless the description makes them a seasoned veteran; never above 3.
+- maxHp = class hit die maximum (d6 caster, d8 rogue/cleric, d10 fighter/ranger, d12 barbarian) + CON modifier, plus hit die average + CON modifier per level above 1.
+- armorClass reflects described gear (10 + DEX modifier if unarmoured).
+- 3 to 6 inventory items that tell a story, and a modest purse of gold.
+- 2 to 4 proficient skills from: Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival.
+- Backstory: warm, vivid third-person prose, 2 to 3 short paragraphs. Keep the player's facts; add colour, not contradictions.
+
+How to build the three scenarios, all in the requested tone:
+- Scenario 1 grows directly out of the backstory (an old debt, a lost friend, a rival).
+- Scenario 2 is an open-world hook that starts somewhere new and strange.
+- Scenario 3 has a twist or unusual premise (a heist, a mystery, a siege, a wedding gone wrong).
+- Each is playable in 20 to 30 turns with a central conflict and a clear stake. Titles are 2 to 5 words; taglines one line for a notice board.
+
+Reply with ONLY a JSON object, no prose before or after, exactly this shape:
+{"character":{"name":string,"race":string,"characterClass":string,"level":int,"maxHp":int,"armorClass":int,"abilities":{"STR":int,"DEX":int,"CON":int,"INT":int,"WIS":int,"CHA":int},"proficientSkills":[string],"traits":[string],"inventory":[{"name":string,"quantity":int,"description":string}],"gold":int,"appearance":string,"backstory":string,"motivation":string},
+ "scenarios":[{"id":"short-slug","title":string,"tagline":string,"synopsis":string,"setting":string,"tone":string,"openingLocation":string}, ... exactly 3]}`;
+
+  function forgePrompt(background, toneName, name) {
+    return `${FORGE_RULES}
+
+Tone requested: ${toneName}
+${name ? `The player wants the character to be called: ${name}` : "The player did not choose a name - invent one that suits the description."}
+
+The player's description of their character:
+<description>
+${background}
+</description>
+
+Forge the character sheet and three scenarios. JSON only.`;
+  }
+
+  function characterBlock(c) {
+    const a = c.abilities;
+    const f = (v) => `${v} (${fmtMod(mod(v))})`;
+    return [
+      `Name: ${c.name}`,
+      `Race and class: ${c.race} ${c.characterClass}, level ${c.level}`,
+      `Abilities: STR ${f(a.STR)}, DEX ${f(a.DEX)}, CON ${f(a.CON)}, INT ${f(a.INT)}, WIS ${f(a.WIS)}, CHA ${f(a.CHA)}`,
+      `Armour class: ${c.armorClass}. Max hit points: ${c.maxHp}.`,
+      `Proficient skills: ${c.proficientSkills.join(", ") || "none"}`,
+      `Traits: ${c.traits.join("; ")}`,
+      `Appearance: ${c.appearance}`,
+      `Motivation: ${c.motivation}`,
+      `Backstory: ${c.backstory}`,
+    ].join("\n");
+  }
+
+  function dmRules(game) {
+    const s = game.scenario;
+    return `You are the Dungeon Master of a solo Dungeons & Dragons-style adventure played on a phone. You narrate the world, voice every non-player character, and keep the story moving. The player controls one hero.
+
+## Voice and style
+- Second person, present tense ("You push open the door...").
+- Vivid, concrete, and tight: 120 to 260 words of narration per turn, in short paragraphs.
+- Tone for this adventure: ${game.tone}. Stay in it.
+- Give NPCs names, distinct voices and wants of their own. Quote their dialogue directly.
+- Never break character, never mention being an AI, never explain rules unless asked in play.
+- Markdown for emphasis and dialogue only: no headings, no lists inside narration.
+- Content stays at the level of a PG-13 fantasy film.
+
+## Rules of play
+- The player acts by picking one of your choices or by typing their own idea. Treat their own ideas generously: let clever plans work, let reckless ones carry consequences, and if something is impossible narrate the attempt failing believably rather than refusing.
+- Dice are rolled by the game, not by you. Each turn you receive a "fate die" (a d20). If the player's action carries real risk, decide the ability, skill and DC (10 easy, 13 moderate, 16 hard, 20 very hard), add the hero's modifier (ability modifier, plus proficiency bonus ${2 + Math.floor((game.level - 1) / 4)} if proficient in the skill), compare to the DC, narrate the outcome, and report it in diceResult. If the game already resolved a check for the chosen option, you MUST honour that result exactly. Natural 20 is a critical success, natural 1 a critical failure. Routine actions need no check.
+- The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
+- Hero at 0 hit points = death: set ending with victory false and a fitting epilogue. Death is rare and earned, never arbitrary.
+- Combat is theatre of the mind: describe blows, positioning and stakes; resolve a whole exchange per turn; offer tactical choices.
+
+## Choices
+- Offer 3 or 4 choices every turn (none only when the story has ended). Make them genuinely different: bold, cautious, social, clever, unexpected.
+- Attach a check to any choice with real risk; check is null for safe actions.
+- Labels are imperative, at most 60 characters. Hints at most 90 characters, honestly signalling cost or reward.
+- Never offer a choice that repeats what was already done.
+
+## Pacing
+- Every turn changes something: new information, a threat, a relationship shift, a reward, or a cost.
+- A complication or a surprising NPC at least every three turns.
+- Build toward the scenario's central conflict; aim for a climax around turn 20 to 30, then an ending. When the conflict resolves (or the hero dies), set ending and leave choices empty.
+- Experience: 10 to 50 xp for meaningful progress, 100 or more for a major victory.
+- recap is one past-tense sentence for the story log. npcs lists only characters introduced this scene or whose attitude changed. stateChange.location is the hero's current place in a few words; statusEffects is the FULL current list of conditions (empty when none).
+
+## The hero
+${characterBlock(game.character)}
+
+## The adventure
+Title: ${s.title}
+Tagline: ${s.tagline}
+Synopsis: ${s.synopsis}
+Setting: ${s.setting}
+Opening location: ${s.openingLocation}
+
+## Output
+Reply with ONLY a JSON object, no prose before or after, exactly this shape:
+{"chapterTitle":string (max 40 chars),"narration":string (markdown),"diceResult":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int,"roll":int,"modifier":int,"total":int,"success":bool,"summary":string},
+ "npcs":[{"name":string,"role":string,"description":string,"attitude":"friendly|neutral|suspicious|hostile"}],
+ "choices":[{"id":"a","label":string,"hint":string,"check":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int}}],
+ "stateChange":{"hpDelta":int,"goldDelta":int,"xpGained":int,"itemsGained":[{"name":string,"quantity":int,"description":string}],"itemsLost":[string],"questUpdates":[string],"location":string,"statusEffects":[string]},
+ "recap":string,"mood":"calm|tense|mysterious|combat|triumphant|grim|festive","ending":null|{"victory":bool,"epilogue":string}}`;
+  }
+
+  function stateBlock(game) {
+    const inv = game.inventory.length ? game.inventory.map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : "nothing";
+    return [
+      `Hit points: ${game.hp}/${game.character.maxHp}`,
+      `Level ${game.level}, ${game.xp} xp`,
+      `Gold: ${game.gold}`,
+      `Inventory: ${inv}`,
+      `Conditions: ${game.statusEffects.join(", ") || "none"}`,
+      `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,
+      `Location: ${game.location || "unknown"}`,
+      `Turns played: ${game.turns.length}`,
+    ].join("\n");
+  }
+
+  function compactScene(scene) {
+    const parts = [`[${scene.chapterTitle}]`, scene.narration];
+    if (scene.diceResult) parts.push(`(${scene.diceResult.summary})`);
+    if (scene.choices.length) parts.push(`Choices offered: ${scene.choices.map((c) => `${c.id}) ${c.label}`).join("; ")}`);
+    if (scene.ending) parts.push(`THE END. ${scene.ending.epilogue}`);
+    return parts.join("\n\n");
+  }
+
+  /** Build the turn list for the Dungeon Master: rules, replayed history, then this action. */
+  function buildTurns(game, finalUser) {
+    const rules = { role: "user", content: dmRules(game) };
+    let recent = game.turns.slice(-VERBATIM_TURNS);
+    const history = () => recent.flatMap((t) => [
+      { role: "user", content: t.action.kind === "start" ? `Begin the adventure. Fate die: ${t.fateRoll}.` : t.action.kind === "choice" ? `The player chooses: ${t.action.text}` : `The player says: "${t.action.text}"` },
+      { role: "assistant", content: compactScene(t.scene) },
+    ]);
+    let turns = [rules, ...history(), { role: "user", content: finalUser }];
+    let size = () => turns.reduce((n, t) => n + t.content.length, 0);
+    while (size() > PROMPT_BUDGET && recent.length > 2) {
+      recent = recent.slice(1);
+      turns = [rules, ...history(), { role: "user", content: finalUser }];
+    }
+    return turns;
+  }
+
+  // ------------------------------------------------------------------
+  // Dice
+  // ------------------------------------------------------------------
+  function proficiencyBonus(level) { return 2 + Math.floor((Math.max(level, 1) - 1) / 4); }
+  function checkModifier(game, ability, skill) {
+    let m = mod(game.character.abilities[ability] ?? 10);
+    if (skill && game.character.proficientSkills.some((s) => s.trim().toLowerCase() === skill.trim().toLowerCase())) m += proficiencyBonus(game.level);
+    return m;
+  }
+  function resolveCheck(game, check, roll) {
+    const modifier = checkModifier(game, check.ability, check.skill);
+    const total = roll + modifier;
+    const success = roll === 20 ? true : roll === 1 ? false : total >= check.dc;
+    const label = check.skill ? `${check.skill} (${check.ability})` : check.ability;
+    const verdict = roll === 20 ? "natural 20, critical success" : roll === 1 ? "natural 1, critical failure" : success ? "success" : "failure";
+    return { ability: check.ability, skill: check.skill, dc: check.dc, roll, modifier, total, success, summary: `${label} check: ${roll} ${modifier >= 0 ? "+" : "-"} ${Math.abs(modifier)} = ${total} vs DC ${check.dc} - ${verdict}` };
+  }
+
+  // ------------------------------------------------------------------
+  // Normalising what the Dungeon Master returns (nothing is validated upstream)
+  // ------------------------------------------------------------------
+  function normCharacter(c) {
+    c = c && typeof c === "object" ? c : {};
+    const ab = c.abilities && typeof c.abilities === "object" ? c.abilities : {};
+    const abilities = {};
+    for (const k of ABILITIES) abilities[k] = Math.min(20, Math.max(3, int(ab[k], 10)));
+    return {
+      name: str(c.name, "Nameless"), race: str(c.race, "Human"), characterClass: str(c.characterClass, "Adventurer"),
+      level: Math.min(3, Math.max(1, int(c.level, 1))), maxHp: Math.max(4, int(c.maxHp, 10)), armorClass: Math.max(8, int(c.armorClass, 10)),
+      abilities, proficientSkills: arr(c.proficientSkills).map(String), traits: arr(c.traits).map(String),
+      inventory: arr(c.inventory).map(normItem), gold: Math.max(0, int(c.gold, 5)),
+      appearance: str(c.appearance), backstory: str(c.backstory), motivation: str(c.motivation),
+    };
+  }
+  const normItem = (i) => (typeof i === "string" ? { name: i, quantity: 1, description: "" } : { name: str(i?.name, "Curio"), quantity: Math.max(1, int(i?.quantity, 1)), description: str(i?.description) });
+  function normScenario(s, i) {
+    s = s && typeof s === "object" ? s : {};
+    return { id: str(s.id, `tale-${i + 1}`).replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase() || `tale-${i + 1}`, title: str(s.title, `Tale ${i + 1}`), tagline: str(s.tagline), synopsis: str(s.synopsis), setting: str(s.setting), tone: str(s.tone), openingLocation: str(s.openingLocation, str(s.setting)) };
+  }
+  function normCheck(c) {
+    if (!c || typeof c !== "object") return null;
+    const ability = ABILITIES.includes(c.ability) ? c.ability : null;
+    if (!ability) return null;
+    return { ability, skill: c.skill ? String(c.skill) : null, dc: Math.max(5, int(c.dc, 12)) };
+  }
+  function normScene(s) {
+    s = s && typeof s === "object" ? s : {};
+    const sc = s.stateChange && typeof s.stateChange === "object" ? s.stateChange : {};
+    const dr = s.diceResult && typeof s.diceResult === "object" && ABILITIES.includes(s.diceResult.ability) ? s.diceResult : null;
+    const choices = arr(s.choices).slice(0, 4).map((c, i) => ({ id: str(c?.id, "abcd"[i]) || "abcd"[i], label: str(c?.label, "Press on"), hint: str(c?.hint), check: normCheck(c?.check) }));
+    // ids must be unique so a tap resolves one choice
+    const seen = new Set();
+    for (const c of choices) { let id = c.id; while (seen.has(id)) id += "x"; c.id = id; seen.add(id); }
+    const ending = s.ending && typeof s.ending === "object" && typeof s.ending.epilogue === "string" ? { victory: Boolean(s.ending.victory), epilogue: s.ending.epilogue } : null;
+    return {
+      chapterTitle: str(s.chapterTitle, "The Story Continues"),
+      narration: str(s.narration, "The moment passes in silence."),
+      diceResult: dr ? { ability: dr.ability, skill: dr.skill ? String(dr.skill) : null, dc: int(dr.dc), roll: int(dr.roll), modifier: int(dr.modifier), total: int(dr.total), success: Boolean(dr.success), summary: str(dr.summary) } : null,
+      npcs: arr(s.npcs).map((n) => ({ name: str(n?.name, "Stranger"), role: str(n?.role), description: str(n?.description), attitude: ATTITUDES.includes(n?.attitude) ? n.attitude : "neutral" })),
+      choices, stateChange: {
+        hpDelta: int(sc.hpDelta), goldDelta: int(sc.goldDelta), xpGained: Math.max(0, int(sc.xpGained)),
+        itemsGained: arr(sc.itemsGained).map(normItem), itemsLost: arr(sc.itemsLost).map(String), questUpdates: arr(sc.questUpdates).map(String),
+        location: str(sc.location), statusEffects: arr(sc.statusEffects).map(String),
+      },
+      recap: str(s.recap, "The tale went on."), mood: MOODS.includes(s.mood) ? s.mood : "calm", ending,
+    };
+  }
+
+  // ------------------------------------------------------------------
+  // Engine
+  // ------------------------------------------------------------------
+  function xpForLevel(level) { return 300 * ((level - 1) * level) / 2; }
+  function levelForXp(xp, startingLevel) {
+    let level = startingLevel;
+    while (level < 20 && xp >= xpForLevel(level + 1) - xpForLevel(startingLevel)) level += 1;
+    return level;
+  }
+
+  async function askDM(input, lines) {
+    if (!sample) throw { code: "sampling_disabled", message: "no sample capability" };
+    controller = new AbortController();
+    return sample.json(input, { modelTier: tier, cache: false, signal: controller.signal });
+  }
+
+  async function createGame({ background, tone: toneName, name }) {
+    const forged = await askDM(forgePrompt(background, toneName, name));
+    const character = normCharacter(forged?.character);
+    const scenarios = arr(forged?.scenarios).slice(0, 3).map(normScenario);
+    if (!scenarios.length) throw { code: "invalid_json", message: "no scenarios" };
+    const ts = now();
+    const game = {
+      id: uuid(), createdAt: ts, updatedAt: ts, status: "forged", tone: toneName, background,
+      character, scenarios, scenario: null,
+      hp: character.maxHp, gold: character.gold, xp: 0, level: character.level,
+      inventory: character.inventory.map((i) => ({ ...i })), quests: [], statusEffects: [], location: "", npcsMet: [], turns: [],
+    };
+    games.set(game.id, game);
+    await store.save(game);
+    return game;
+  }
+
+  async function startGame(game, { scenarioId, customScenario }) {
+    let scenario;
+    if (customScenario) {
+      scenario = { id: "custom", title: "Your Own Tale", tagline: customScenario.split(/[.!?]/)[0].slice(0, 120), synopsis: customScenario, setting: "as the player describes", tone: game.tone, openingLocation: "wherever the player's description begins" };
+    } else {
+      scenario = game.scenarios.find((s) => s.id === scenarioId);
+    }
+    if (!scenario) throw { code: "invalid_request", message: "no scenario" };
+    const fateRoll = d20();
+    const draft = { ...game, scenario, location: scenario.openingLocation, status: "playing" };
+    const opening = `Begin the adventure. Open on the hero in the opening location with a vivid scene, introduce the first hook or complication, and end with the first set of choices.\n\nCurrent state:\n${stateBlock(draft)}\n\nFate die for this turn: ${fateRoll}\n\nJSON only.`;
+    const scene = normScene(await askDM(buildTurns(draft, opening)));
+    Object.assign(game, draft);
+    applyScene(game, { kind: "start", text: "Begin the adventure", choiceId: null }, fateRoll, scene);
+    await store.save(game);
+    return game;
+  }
+
+  async function takeTurn(game, { choiceId, freeText }) {
+    const last = game.turns[game.turns.length - 1];
+    let action, resolved = null;
+    const fateRoll = d20();
+    if (choiceId) {
+      const choice = last.scene.choices.find((c) => c.id === choiceId);
+      if (!choice) throw { code: "invalid_request", message: "stale choice" };
+      action = { kind: "choice", text: choice.label, choiceId: choice.id };
+      if (choice.check) resolved = resolveCheck(game, choice.check, fateRoll).summary;
+    } else {
+      action = { kind: "freeText", text: freeText.slice(0, 600), choiceId: null };
+    }
+    const older = game.turns.slice(0, Math.max(0, game.turns.length - VERBATIM_TURNS)).map((t) => t.scene.recap);
+    const parts = [];
+    if (older.length) parts.push("Story so far (earlier turns, oldest first):", ...older.map((r) => `- ${r}`), "");
+    parts.push(action.kind === "choice" ? `The player chooses: ${action.text}` : `The player says: "${action.text}"`, "");
+    parts.push(resolved ? `The game already rolled for this choice: ${resolved}. Honour this result exactly and include it in diceResult.` : `Fate die for this turn: ${fateRoll}. Use it only if the action calls for a check.`);
+    parts.push("", "Current state:", stateBlock(game), "", "Narrate what happens next and offer new choices. JSON only.");
+    const scene = normScene(await askDM(buildTurns(game, parts.join("\n"))));
+    applyScene(game, action, fateRoll, scene);
+    await store.save(game);
+    return game;
+  }
+
+  function applyScene(game, action, fateRoll, scene) {
+    const ch = scene.stateChange;
+    game.hp = Math.max(0, Math.min(game.character.maxHp, game.hp + ch.hpDelta));
+    game.gold = Math.max(0, game.gold + ch.goldDelta);
+    game.xp += ch.xpGained;
+    const newLevel = levelForXp(game.xp, game.character.level);
+    if (newLevel > game.level) {
+      const gained = newLevel - game.level;
+      game.level = newLevel;
+      game.character.level = newLevel;
+      game.character.maxHp += 6 * gained;
+      game.hp = Math.min(game.character.maxHp, game.hp + 6 * gained);
+    }
+    for (const item of ch.itemsGained) {
+      const ex = game.inventory.find((i) => i.name.toLowerCase() === item.name.toLowerCase());
+      if (ex) ex.quantity += item.quantity; else game.inventory.push({ ...item });
+    }
+    for (const name of ch.itemsLost) {
+      const idx = game.inventory.findIndex((i) => i.name.toLowerCase() === name.trim().toLowerCase());
+      if (idx === -1) continue;
+      if (game.inventory[idx].quantity > 1) game.inventory[idx].quantity -= 1; else game.inventory.splice(idx, 1);
+    }
+    for (const q of ch.questUpdates) { const t = q.trim(); if (t && !game.quests.includes(t)) game.quests.push(t); }
+    if (game.quests.length > 12) game.quests = game.quests.slice(-12);
+    game.statusEffects = ch.statusEffects.map((s) => s.trim()).filter(Boolean);
+    if (ch.location.trim()) game.location = ch.location.trim();
+    for (const npc of scene.npcs) {
+      const ex = game.npcsMet.find((n) => n.name.toLowerCase() === npc.name.toLowerCase());
+      if (ex) Object.assign(ex, npc); else game.npcsMet.push({ ...npc });
+    }
+    if (game.hp <= 0 && !scene.ending) {
+      scene.ending = { victory: false, epilogue: `${game.character.name}'s story ends here, in ${game.location || "a place far from home"}. The tavern will remember the name.` };
+    }
+    if (scene.ending) { scene.choices = []; game.status = "ended"; }
+    const turn = { index: game.turns.length, action, fateRoll, scene, createdAt: now() };
+    game.turns.push(turn);
+    game.updatedAt = turn.createdAt;
+  }
+
+  // ------------------------------------------------------------------
+  // Routing
+  // ------------------------------------------------------------------
+  function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+
+  async function loadGame(id) {
+    if (games.has(id)) return games.get(id);
+    const g = await store.get(id);
+    if (g) games.set(id, g);
+    return g;
+  }
+
+  async function render() {
+    const [route, id] = location.hash.replace(/^#\/?/, "").split("/");
+    for (const s of ["home", "forge", "pick", "play", "sheet"]) $(s).hidden = true;
+    try {
+      if (route === "forge") renderForge();
+      else if (route === "pick" && id) {
+        const g = await loadGame(id);
+        if (!g) throw new Error("That tale is not in the ledger.");
+        if (g.status !== "forged") return go(`#play/${id}`);
+        renderPick(g);
+      } else if (route === "play" && id) {
+        const g = await loadGame(id);
+        if (!g) throw new Error("That tale is not in the ledger.");
+        renderPlay(g);
+      } else await renderHome();
+    } catch (e) {
+      toast(e.message || "Something went wrong in the tavern.");
+      if (route && route !== "home") go("#home"); else $("home").hidden = false;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Home
+  // ------------------------------------------------------------------
+  async function renderHome() {
+    $("home").hidden = false;
+    const box = $("tales");
+    let list = [];
+    try { list = await store.list(); } catch (e) { toast("Could not read the ledger: " + (e.message || e.code || "unknown")); }
+    if (!list.length) {
+      box.innerHTML = `<div class="card meta">No tales yet. The bard is waiting for a hero.</div>`;
+      return;
+    }
+    box.innerHTML = list.map((g) => {
+      const glyph = g.status === "forged" ? "&#128220;" : g.status === "playing" ? "&#128214;" : "&#127941;";
+      const where = g.status === "forged" ? "Ready to choose a tale"
+        : g.status === "playing" ? `${esc(g.scenario?.title || "An adventure")} - ${esc(g.location)}, turn ${g.turns.length}`
+        : `${esc(g.scenario?.title || "An adventure")} - concluded after ${g.turns.length} turns`;
+      return `<div class="card stack" style="gap:6px"><button class="tale" data-action="open" data-id="${esc(g.id)}">
+        <span class="glyph">${glyph}</span>
+        <span class="grow"><span class="name">${esc(g.character.name)}</span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level}</span><br><span class="where">${where}</span></span>
+        <span class="chev">&#8250;</span></button>
+        <div><button class="btn link" data-action="delete" data-id="${esc(g.id)}">Delete</button></div></div>`;
+    }).join("");
+  }
+
+  // ------------------------------------------------------------------
+  // Forge
+  // ------------------------------------------------------------------
+  function renderForge() {
+    $("forge").hidden = false;
+    $("f-tones").innerHTML = TONES.map(([v, l]) => `<button class="chip ${tone === v ? "on" : ""}" data-action="tone" data-tone="${v}">${l}</button>`).join("");
+    $("f-custom-tone").hidden = tone !== "custom";
+    $("f-error").hidden = true;
+  }
+
+  function showError(id, msg) { const el = $(id); el.textContent = msg; el.hidden = false; }
+
+  async function forge() {
+    const background = $("f-background").value.trim();
+    const effectiveTone = tone === "custom" ? $("f-custom-tone").value.trim() : tone;
+    if (background.length < 10) return showError("f-error", "Describe your character in at least a sentence.");
+    if (background.length > 4000) return showError("f-error", "Keep the description under 4000 characters.");
+    if (!effectiveTone) return showError("f-error", "Name a tone for the tale.");
+    await withBusy(FORGE_LINES, async () => {
+      const game = await createGame({ background, tone: effectiveTone, name: $("f-name").value.trim() });
+      $("f-background").value = "";
+      $("f-name").value = "";
+      go(`#pick/${game.id}`);
+    }, (e) => showError("f-error", copyFor(e)));
+  }
+
+  // ------------------------------------------------------------------
+  // Pick
+  // ------------------------------------------------------------------
+  function renderPick(game) {
+    $("pick").hidden = false;
+    $("pick").dataset.id = game.id;
+    const c = game.character;
+    $("p-hero").innerHTML = `<div class="card accent stack">
+      <div><h2 style="font-size:32px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div></div>
+      <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
+      <p>${esc(c.appearance)}</p>
+      <div class="narration quiet-text">${md(c.backstory)}</div>
+      <div class="tagline">${esc(c.motivation)}</div>
+    </div>`;
+    $("p-scenarios").innerHTML = game.scenarios.map((s) => `<div class="card stack" style="gap:8px">
+      <h3>${esc(s.title)}</h3>
+      <div class="tagline">${esc(s.tagline)}</div>
+      <p class="quiet-text">${esc(s.synopsis)}</p>
+      <div class="meta">&#128506; ${esc(s.setting)}</div>
+      <button class="btn ember" data-action="start" data-id="${esc(s.id)}">Begin this tale</button>
+    </div>`).join("");
+    $("p-error").hidden = true;
+  }
+
+  async function start(game, body) {
+    await withBusy(THINK_LINES, async () => {
+      await startGame(game, body);
+      $("p-custom").value = "";
+      go(`#play/${game.id}`);
+    }, (e) => showError("p-error", copyFor(e)));
+  }
+
+  // ------------------------------------------------------------------
+  // Play
+  // ------------------------------------------------------------------
+  function renderPlay(game) {
+    $("play").hidden = false;
+    $("play").dataset.id = game.id;
+    const low = game.hp * 3 <= game.character.maxHp;
+    $("s-hp").innerHTML = `&#9829; ${game.hp}/${game.character.maxHp}`;
+    $("s-hp").classList.toggle("low", low);
+    $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold}`;
+    $("s-lv").textContent = `Lv ${game.level}`;
+    $("s-loc").textContent = game.location || "Somewhere";
+
+    const over = game.status === "ended";
+    const parts = [];
+    if (game.scenario) parts.push(`<div><div class="tagline">${esc(game.scenario.tagline)}</div><div class="meta">${esc(game.scenario.setting)}</div></div>`);
+    for (const t of game.turns) {
+      if (t.action.kind !== "start") parts.push(`<div class="bubble">${esc(t.action.text)}</div>`);
+      parts.push(renderScene(t.scene));
+    }
+    if (busy) {
+      parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span><button class="stop" data-action="stop">Stop</button></div>`);
+    } else {
+      const last = game.turns[game.turns.length - 1];
+      if (last && last.scene.choices.length) {
+        parts.push(`<div class="choices"><div class="label">What do you do?</div>${last.scene.choices.map((c) => `
+          <button class="choice" data-action="choose" data-id="${esc(c.id)}">
+            <span><span class="lbl">${esc(c.label)}</span><br><span class="hint">${esc(c.hint)}</span></span>
+            ${c.check ? `<span class="check">&#127922;<br>${esc(c.check.skill || LONG[c.check.ability])} DC ${c.check.dc}</span>` : ""}
+          </button>`).join("")}</div>`);
+      }
+      if (over) parts.push(`<button class="btn quiet" data-action="home">Return to the tavern</button><button class="btn ember" data-action="new">Begin a new adventure</button>`);
+    }
+    $("log").innerHTML = parts.join("");
+    $("free").disabled = $("send").disabled = busy || over;
+    $("free").placeholder = over ? "The tale has ended" : "Or do something else...";
+    animateDice();
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+  }
+
+  function renderScene(s) {
+    const d = s.diceResult, ch = s.stateChange, lines = [];
+    if (ch.hpDelta < 0) lines.push(`<div class="hurt">&#128148; ${ch.hpDelta} hit points</div>`);
+    if (ch.hpDelta > 0) lines.push(`<div class="heal">&#10084; +${ch.hpDelta} hit points</div>`);
+    if (ch.goldDelta) lines.push(`<div class="gold">&#9679; ${ch.goldDelta > 0 ? "+" : ""}${ch.goldDelta} gold</div>`);
+    if (ch.xpGained > 0) lines.push(`<div class="xp">&#9733; +${ch.xpGained} xp</div>`);
+    for (const i of ch.itemsGained) lines.push(`<div class="item">&#127890; Gained ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</div>`);
+    for (const n of ch.itemsLost) lines.push(`<div class="quest">&#127890; Lost ${esc(n)}</div>`);
+    for (const q of ch.questUpdates) lines.push(`<div class="quest">&#128220; ${esc(q)}</div>`);
+    const color = MOOD_COLOR[s.mood] || "var(--muted)";
+    return `<div class="scene" style="border-color:${color}">
+      <div class="head"><h3>${esc(s.chapterTitle)}</h3><span class="mood" style="color:${color}">${esc(s.mood)}</span></div>
+      ${d ? `<div class="dice ${d.success ? "ok" : "bad"}"><div class="d20"><span data-roll="${d.roll}">${d.roll}</span></div>
+        <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
+        <div class="verdict">${d.roll === 20 ? "Critical!" : d.roll === 1 ? "Fumble!" : d.success ? "Success" : "Failure"}</div></div>` : ""}
+      <div class="narration">${md(s.narration)}</div>
+      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude]}"></span>${esc(n.name)}, ${esc(n.role)}</span>`).join("")}</div>` : ""}
+      ${lines.length ? `<div class="changes">${lines.join("")}</div>` : ""}
+      ${s.ending ? `<div class="ending ${s.ending.victory ? "win" : "lose"}"><h4>${s.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(s.ending.epilogue)}</div></div>` : ""}
+    </div>`;
+  }
+
+  function animateDice() {
+    const dice = document.querySelectorAll("[data-roll]");
+    const last = dice[dice.length - 1];
+    if (!last || last.dataset.done) return;
+    for (const d of dice) d.dataset.done = "1";
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let n = 0;
+    const timer = setInterval(() => {
+      last.textContent = 1 + Math.floor(Math.random() * 20);
+      if (++n >= 7) { clearInterval(timer); last.textContent = last.dataset.roll; }
+    }, 70);
+  }
+
+  async function act(game, body) {
+    if (busy) return;
+    busy = true;
+    renderPlay(game);
+    const ticker = rotate("think-line", THINK_LINES, 4000);
+    try {
+      await takeTurn(game, body);
+      $("free").value = "";
+      $("free").style.height = "auto";
+      if (navigator.vibrate) navigator.vibrate(15);
+    } catch (e) {
+      toast(copyFor(e), 6000);
+    } finally {
+      clearInterval(ticker);
+      busy = false;
+      controller = null;
+      renderPlay(game);
+    }
+  }
+
+  function rotate(id, lines, ms) {
+    let i = 0;
+    return setInterval(() => { const el = $(id); if (el) el.textContent = lines[(i = (i + 1) % lines.length)]; }, ms);
+  }
+
+  async function withBusy(lines, fn, onError) {
+    if (busy) return;
+    busy = true;
+    $("busy").hidden = false;
+    $("busy-line").textContent = lines[0];
+    const ticker = rotate("busy-line", lines, 3000);
+    try { await fn(); }
+    catch (e) { const msg = copyFor(e); if (msg) onError ? onError(e) : toast(msg); }
+    finally { clearInterval(ticker); busy = false; controller = null; $("busy").hidden = true; }
+  }
+
+  function copyFor(e) {
+    if (!e) return "Something went wrong in the tavern.";
+    if (e.code && e.code in ERROR_COPY) return ERROR_COPY[e.code];
+    if (e.code) return ERROR_COPY.upstream_error;
+    return e.message || "Something went wrong in the tavern.";
+  }
+
+  // ------------------------------------------------------------------
+  // Character sheet
+  // ------------------------------------------------------------------
+  function openSheet(game) {
+    const c = game.character;
+    const chips = (items, color) => items.length ? items.map((t) => `<span class="tag" style="border-color:${color}">${esc(t)}</span>`).join("") : `<span class="meta">none</span>`;
+    $("sheet-body").innerHTML = `
+      <div><h1 style="font-size:34px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(c.appearance)}</div></div>
+      <div class="vitals">
+        <div><b style="color:${game.hp * 3 <= c.maxHp ? "var(--blood)" : "var(--moss)"}">${game.hp}/${c.maxHp}</b><small>Hit points</small></div>
+        <div><b>${c.armorClass}</b><small>Armour</small></div>
+        <div><b style="color:var(--gold)">${game.gold}</b><small>Gold</small></div>
+        <div><b style="color:var(--ember)">${game.xp}</b><small>XP</small></div>
+      </div>
+      <div class="label">Abilities</div>
+      <div class="sheet-grid">${ABILITIES.map((a) => `<div><small>${LONG[a]}</small><b>${c.abilities[a]}</b><span class="mod">${fmtMod(mod(c.abilities[a]))}</span></div>`).join("")}</div>
+      <div class="label">Proficient skills</div><div>${chips(c.proficientSkills, "var(--ember)")}</div>
+      <div class="label">Traits</div><div>${chips(c.traits, "var(--border)")}</div>
+      ${game.statusEffects.length ? `<div class="label">Conditions</div><div>${chips(game.statusEffects, "var(--blood)")}</div>` : ""}
+      <div class="label">Inventory</div>
+      <div class="card stack" style="gap:6px">${game.inventory.length ? game.inventory.map((i) => `<div class="spread" style="align-items:flex-start"><span>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</span><span class="meta" style="text-align:right">${esc(i.description)}</span></div>`).join("") : `<span class="meta">Empty pockets.</span>`}</div>
+      <div class="label">Quest log</div>
+      <div class="card stack" style="gap:6px">${game.quests.length ? game.quests.map((q) => `<div>&#128220; ${esc(q)}</div>`).join("") : `<span class="meta">Nothing written yet.</span>`}</div>
+      <div class="label">People met</div>
+      <div class="card stack" style="gap:8px">${game.npcsMet.length ? game.npcsMet.map((n) => `<div><b>${esc(n.name)}</b> <span style="font-size:12px;color:${ATT_COLOR[n.attitude]}">${esc(n.attitude)}</span><br><span class="meta">${esc(n.role)}. ${esc(n.description)}</span></div>`).join("") : `<span class="meta">No one yet.</span>`}</div>
+      <div class="label">Backstory</div>
+      <div class="narration quiet-text">${md(c.backstory)}</div>
+      <div class="tagline">${esc(c.motivation)}</div>`;
+    $("sheet").hidden = false;
+    $("sheet").scrollTop = 0;
+  }
+
+  // ------------------------------------------------------------------
+  // Settings
+  // ------------------------------------------------------------------
+  function renderSettings() {
+    for (const b of $("tier-seg").querySelectorAll("button")) b.classList.toggle("on", b.dataset.tier === tier);
+    $("storage-note").textContent = store?.kind === "cloud"
+      ? "Saved tales live in your private Claude storage and follow you between devices."
+      : "Saved tales live in this browser only.";
+  }
+
+  // ------------------------------------------------------------------
+  // Events
+  // ------------------------------------------------------------------
+  document.addEventListener("click", async (ev) => {
+    const el = ev.target.closest("[data-action], [data-tier]");
+    if (!el) return;
+    if (el.dataset.tier) {
+      tier = el.dataset.tier;
+      try { localStorage.setItem("tavern.tier", tier); } catch {}
+      renderSettings();
+      return;
+    }
+    const action = el.dataset.action;
+    const current = games.get($("play").dataset.id) || games.get($("pick").dataset.id);
+    switch (action) {
+      case "home": ev.stopPropagation(); go("#home"); break;
+      case "new": go("#forge"); break;
+      case "settings": renderSettings(); $("settings").hidden = false; break;
+      case "close-settings": $("settings").hidden = true; break;
+      case "open": go(`#pick/${el.dataset.id}`); break;
+      case "delete":
+        if (!confirm("Delete this tale for good?")) return;
+        try { await store.remove(el.dataset.id); games.delete(el.dataset.id); renderHome(); } catch (e) { toast(copyFor(e)); }
+        break;
+      case "example": $("f-background").value = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]; break;
+      case "tone": tone = el.dataset.tone; renderForge(); break;
+      case "forge": forge(); break;
+      case "start": start(games.get($("pick").dataset.id), { scenarioId: el.dataset.id }); break;
+      case "start-custom": {
+        const text = $("p-custom").value.trim();
+        if (text.length < 10) return showError("p-error", "Give your tale at least a sentence.");
+        if (text.length > 1500) return showError("p-error", "Keep your scenario under 1500 characters.");
+        start(games.get($("pick").dataset.id), { customScenario: text });
+        break;
+      }
+      case "choose": act(games.get($("play").dataset.id), { choiceId: el.dataset.id }); break;
+      case "send": {
+        const text = $("free").value.trim();
+        if (text) act(games.get($("play").dataset.id), { freeText: text });
+        break;
+      }
+      case "stop": controller?.abort(); break;
+      case "sheet": if (current) openSheet(current); break;
+      case "close-sheet": $("sheet").hidden = true; break;
+    }
+  });
+
+  $("free").addEventListener("input", (e) => {
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  });
+  $("free").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("send").click(); }
+  });
+  window.addEventListener("hashchange", render);
+
+  // ------------------------------------------------------------------
+  // Boot: render at once, light up Claude and cloud saves when they resolve
+  // ------------------------------------------------------------------
+  async function boot() {
+    // Paint the tavern before any capability answers; the ledger fills in when saves resolve.
+    $("home").hidden = false;
+    $("tales").innerHTML = `<div class="card thinking"><div class="spinner"></div>Dusting off the ledgers...</div>`;
+    store = await makeStore();
+    await render();
+    sample = await (window.claude?.use?.("sample") ?? Promise.resolve(null));
+    const note = $("availability");
+    if (!sample) {
+      note.innerHTML = "<b>The Dungeon Master is away.</b> Open this page inside Claude (the claude.ai site or the Claude app) to play; here it can only show saved tales.";
+      note.hidden = false;
+      $("new-btn").disabled = true;
+    } else {
+      note.hidden = true;
+      $("new-btn").disabled = false;
+    }
+  }
+  boot();
+})();
+</script>
