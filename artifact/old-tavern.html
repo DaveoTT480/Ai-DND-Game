@@ -94,6 +94,20 @@
   .loot .take { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--gold); color: var(--parchment); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
   .loot .take b { color: var(--gold); font-weight: 600; }
   .inv-item { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .inv-item .head { display: flex; align-items: center; gap: 10px; }
+  .inv-item .head button { background: none; border: 0; padding: 0; text-align: left; color: var(--parchment); flex: 1; display: flex; align-items: center; gap: 10px; }
+  .item-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; background: radial-gradient(ellipse 70% 60% at 50% 40%, #4a3320 0%, var(--wood-light) 60%, var(--wood-light) 100%); border: 1px solid var(--border); border-radius: 14px; }
+  .item-hero .sprite { image-rendering: pixelated; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+  .item-hero h2 { font-size: 30px; text-align: center; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .badge { border-radius: 999px; padding: 4px 10px; font-size: 12px; letter-spacing: .04em; border: 1px solid currentColor; }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-row div { background: var(--wood-light); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+  .stat-row small { display: block; color: var(--muted); font-size: 12px; }
+  .stat-row b { font-family: var(--display); font-size: 20px; }
+  .bar { height: 8px; border-radius: 999px; background: var(--wood); border: 1px solid var(--border); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; }
+  .lore { font-style: italic; color: var(--parchment-dim); }
   .inv-item:last-child { border-bottom: 0; }
   .inv-actions { display: flex; gap: 6px; }
   .inv-actions button { flex: 1; background: var(--wood); border: 1px solid var(--border); color: var(--parchment); border-radius: 8px; padding: 8px; font-size: 13px; }
@@ -288,6 +302,17 @@
     <div id="paint-status" class="meta"></div>
     <div id="paint-preview" class="portrait square" style="align-self:center"></div>
     <button id="paint-remove" class="btn link" data-action="remove-paint" hidden>Remove painted portrait and use the drawn one</button>
+  </div>
+</section>
+
+<!-- Item card -->
+<section id="item" class="sheet-panel" hidden>
+  <div class="screen">
+    <div class="spread">
+      <h2>Item</h2>
+      <button class="btn link" data-action="close-item">Done</button>
+    </div>
+    <div id="item-body" class="stack"></div>
   </div>
 </section>
 
@@ -809,6 +834,192 @@ This is a real historical period unless the player's words make it fictional. Be
   }
 
   // ------------------------------------------------------------------
+  // 8-bit item sprites: 16x16, one character per pixel. '.' is clear;
+  // 't'/'T' take the item's tint; other letters are the fixed palette.
+  // ------------------------------------------------------------------
+  const SPRITE_PALETTE = {
+    k: "#1b1410", h: "#ffffff", c: "#2a2a2e",
+    s: "#d3d9de", S: "#7f8a93", w: "#8a5a2b", W: "#5b3a1c", g: "#e8c04a", G: "#a67c1e",
+    r: "#c23b2e", R: "#7a1f18", b: "#3f7fbf", B: "#24486f", n: "#5a9a4c", N: "#2d5a2b",
+    p: "#efe3c2", P: "#c9b98d", l: "#a7743c", L: "#6b4520", x: "#8a5fc0", X: "#4f3378", o: "#e08f2b", O: "#a85f14",
+  };
+  const SPRITES = {
+    dagger: [
+      "................", "..............k.", ".............ks.", "............ksk.", "...........ksk..", "..........ksk...", ".........ksk....", "........ksk.....",
+      ".......ksk......", "....kkkskkk.....", "...kgggkgggk....", "..kWWkkkkkkk....", ".kWWk...........", "kWWk............", "kWk.............", ".k..............",
+    ],
+    sword: [
+      "..............k.", ".............khk", "............khsk", "...........khsk.", "..........khsk..", ".........khsk...", "........khsk....", ".......khsk.....",
+      "......khsk......", ".kk..khsk.......", ".kggkhsk........", "..kgggk.........", "...kgggk........", "..kWkkggk.......", ".kWWk..kk.......", ".kkk............",
+    ],
+    axe: [
+      ".....kkkk.......", "...kkssssk......", "..kssssssk......", ".kssssssskkk....", ".kssssssskWWk...", ".ksssssskkWk....", "..kssssskWk.....", "...kkkkkWWk.....",
+      "........kWk.....", ".......kWWk.....", ".......kWk......", "......kWWk......", "......kWk.......", ".....kWWk.......", ".....kWk........", ".....kk.........",
+    ],
+    bow: [
+      "......kk........", ".....kwwk.......", "....kwk.k.......", "...kwk..k.......", "...kwk..k.......", "..kwk...k.......", "..kwk...k.......", "..kwkkkkkkkkkk..",
+      "..kwk...k.......", "..kwk...k.......", "...kwk..k.......", "...kwk..k.......", "....kwk.k.......", ".....kwwk.......", "......kk........", "................",
+    ],
+    spear: [
+      "..............k.", ".............ksk", "............kssk", "...........kssk.", "..........kksk..", ".........kWk....", "........kWk.....", ".......kWk......",
+      "......kWk.......", ".....kWk........", "....kWk.........", "...kWk..........", "..kWk...........", ".kWk............", "kWk.............", "kk..............",
+    ],
+    shield: [
+      "...kkkkkkkkkk...", "..ktttttttttk...", ".kttttttttttk...", ".kttkkkkkkttk...", ".kttkggggkttk...", ".kttkgggg kttk..", ".kttkkkkkkttk...", ".kTTttttttTTk...",
+      ".kTTTttttTTTk...", "..kTTTttTTTk....", "..kTTTTTTTTk....", "...kTTTTTTk.....", "....kTTTTk......", ".....kTTk.......", "......kk........", "................",
+    ],
+    helmet: [
+      "......kkkk......", "....kkssssk.....", "...kssssssskk...", "..ksssssssssk...", "..kssssssssssk..", ".ksSSSSSSSSSsk..", ".kSSSSSSSSSSSk..", ".kSkkkkkkkkkSk..",
+      ".kSk..kSk..kSk..", ".kSk..kSk..kSk..", ".kSk..kSk..kSk..", "..kk..kSk..kk...", "......kSk.......", "......kkk.......", "................", "................",
+    ],
+    armor: [
+      "...kk.....kk....", "..ktttkkkktttk..", ".ktttttttttttk..", ".kttkttttttkttk.", ".kkkktTTTTtkkkk.", "....ktTTTTtk....", "....ktTTTTtk....", "....ktTTTTtk....",
+      "....ktTkkTtk....", "....ktTTTTtk....", "....ktTTTTtk....", "....kTTTTTTk....", "....kTTTTTTk....", ".....kTTTTk.....", "......kkkk......", "................",
+    ],
+    cloak: [
+      "......kkkk......", ".....ktttttk....", "....kttttttk....", "....kttttttk....", "...kttttttttk...", "...kttTttTttk...", "..kttTTttTTttk..", "..kttTTttTTttk..",
+      ".kttTTTttTTTttk.", ".kttTTTttTTTttk.", ".kTTTTTttTTTTTk.", ".kTTTTTttTTTTTk.", ".kTTTTTTTTTTTTk.", "..kkkkkkkkkkkk..", "................", "................",
+    ],
+    boots: [
+      "................", "....kkkk........", "....kLLlk.......", "....kLLlk.......", "....kLLlk.......", "....kLLlk.......", "....kLLlkkkkk...", "....kLLLlllllk..",
+      "...kLLLLLLLLLlk.", "..kLLLLLLLLLLLk.", "..kWWWWWWWWWWWk.", "..kkkkkkkkkkkkk.", "................", "................", "................", "................",
+    ],
+    potion: [
+      "......kkkk......", "......kppk......", "......kppk......", "......kppk......", ".....kkkkkk.....", "....khsssssk....", "...khsssssssk...", "..khsstttttssk..",
+      "..kssttttttttk..", "..ksttttttttttk.", "..kttttttttttk..", "..kTTttttttTTk..", "..kTTTTTTTTTTk..", "...kTTTTTTTTk...", "....kkkkkkkk....", "................",
+    ],
+    scroll: [
+      "................", "..kkkkkkkkkkkk..", ".kPpppppppppppk.", ".kpppppppppppPk.", ".kppPPPPPPPpppk.", ".kpppppppppppPk.", ".kppPPPPPPpppPk.", ".kpppppppppppPk.",
+      ".kppPPPPPPPpppk.", ".kpppppppppppPk.", ".kppPPPPPpppppk.", ".kpppppppppppPk.", ".kPpppppppppppk.", "..kkkkkkkkkkkk..", "................", "................",
+    ],
+    book: [
+      "................", "..kkkkkkkkkkk...", ".kttttttttttkk..", ".kttttttttttkpk.", ".kttggggggttkpk.", ".kttttttttttkpk.", ".kttgggggttttpk.", ".kttttttttttkpk.",
+      ".kttttttttttkpk.", ".kttttttttttkpk.", ".kTTTTTTTTTTkpk.", ".kTTTTTTTTTTkpk.", ".kkkkkkkkkkkkk..", "................", "................", "................",
+    ],
+    letter: [
+      "................", "..kkkkkkkkkkkk..", ".kppppppppppppk.", ".kpkppppppppkpk.", ".kppkppppppkppk.", ".kpppkppppkpppk.", ".kppppkppkppppk.", ".kpppppkkpppppk.",
+      ".kppppppppppppk.", ".kpppprrrpppppk.", ".kppppprrppppppk", ".kppppppppppppk.", ".kkkkkkkkkkkkkk.", "................", "................", "................",
+    ],
+    key: [
+      "................", "................", "...kkkk.........", "..kggggk........", ".kgg..ggk.......", ".kg....gkkkkkkk.", ".kg....gggggggk.", ".kgg..ggkkgkgkk.",
+      "..kggggk..kgkk..", "...kkkk...kk....", "................", "................", "................", "................", "................", "................",
+    ],
+    coins: [
+      "................", "................", ".....kkkk.......", "....kgggggk.....", "...kggGGGggk....", "...kgGgggGgk....", "...kgGgggGgk....", "..kkkgGGGgkkk...",
+      ".kgggkkkkkgggk..", ".kggGGGGGGGggk..", ".kgGgggggggGgk..", ".kgGgggggggGgk..", ".kggGGGGGGGggk..", "..kgggggggggk...", "...kkkkkkkkk....", "................",
+    ],
+    purse: [
+      "................", "......kkkk......", ".....kllllk.....", "....kkkkkkkk....", "....kllllllk....", "...kllllllllk...", "..kllllllllllk..", "..kllLLLLLLllk..",
+      ".kllLLLLLLLLllk.", ".kllLLLLLLLLllk.", ".kllLLLggLLLllk.", ".kllLLLLLLLLllk.", "..kllLLLLLLllk..", "...kllllllllk...", "....kkkkkkkk....", "................",
+    ],
+    ring: [
+      "................", "................", "......kkkk......", ".....kttttk.....", "....kt.tt.tk....", "...kt......tk...", "...kgk....kgk...", "...kgk....kgk...",
+      "...kgk....kgk...", "...kGgk..kgGk...", "....kGgkkgGk....", ".....kGGGGk.....", "......kkkk......", "................", "................", "................",
+    ],
+    amulet: [
+      "......kkkk......", ".....kg..gk.....", "....kg....gk....", "....kg....gk....", "....kg....gk....", ".....kg..gk.....", "......kggk......", ".....kgggggk....",
+      "....kggttttggk..", "....kgtttttttgk.", "....kgtTTTTttgk.", "....kgtTTTTttgk.", ".....kgTTTTgk...", "......kgggk.....", ".......kkk......", "................",
+    ],
+    gem: [
+      "................", "................", "....kkkkkkkk....", "...khttttttTk...", "..khhtttttTTTk..", ".khhttttttTTTTk.", ".kttttttttTTTTk.", "..kttttttTTTTk..",
+      "...kttttTTTTk...", "....kttTTTTk....", ".....kTTTTk.....", "......kTTk......", ".......kk.......", "................", "................", "................",
+    ],
+    torch: [
+      "......ko........", ".....koook......", "....koooook.....", "....koggook.....", ".....kggok......", "......kgk.......", ".....kkkkk......", ".....kWWWk......",
+      "......kwk.......", "......kwk.......", "......kwk.......", "......kwk.......", "......kwk.......", "......kwk.......", "......kkk.......", "................",
+    ],
+    rope: [
+      "................", "....kkkkkkk.....", "...klLlLlLlk....", "..klLl...lLlk...", "..kLl.....lLk...", "..klL.....Llk...", "..kLl.....lLk...", "..klLl...lLlk...",
+      "...klLlLlLlk....", "....kkkkkkkkk...", "........klLlk...", ".........kLlk...", ".........klLk...", "..........kk....", "................", "................",
+    ],
+    tools: [
+      "................", "..kk........kk..", ".kssk......kssk.", ".kssk......kssk.", "..ksk......ksk..", "..ksk..kk..ksk..", "..ksk.kssk.ksk..", "..kskksssskksk..",
+      "...ksssssssssk..", "....ksssssssk...", ".....kWWWWWk....", ".....kWWWWWk....", ".....kWWWWWk....", ".....kWWWWWk....", "......kkkkk.....", "................",
+    ],
+    bread: [
+      "................", "................", "....kkkkkkkk....", "..kkllllllllkk..", ".kllllLllLllllk.", ".kllLllllllLllk.", "kllllllLllllllk.", "klLLlllllllLLlk.",
+      "kLLLLLLLLLLLLLk.", ".kLLLLLLLLLLLk..", "..kkkkkkkkkkk...", "................", "................", "................", "................", "................",
+    ],
+    bottle: [
+      "......kkkk......", "......kWWk......", "......kttk......", "......kttk......", "......kttk......", ".....kkttkk.....", "....ktttttk.....", "....kttttttk....",
+      "....ktppppttk...", "....ktpttpttk...", "....ktpttpttk...", "....ktppppttk...", "....kTTTTTTTk...", "....kTTTTTTk....", ".....kkkkkk.....", "................",
+    ],
+    map: [
+      "................", ".kkkkkkkkkkkkkk.", ".kppppppppppppk.", ".kppnnppppnnppk.", ".kpnnnnppnnnnpk.", ".kppnnpprppnppk.", ".kpppppbbbppppk.", ".kppppbbbbbpppk.",
+      ".kppprpbbbppppk.", ".kppppppppnnppk.", ".kpnnppppnnnnpk.", ".kppppppppppppk.", ".kkkkkkkkkkkkkk.", "................", "................", "................",
+    ],
+    lantern: [
+      "......kkkk......", ".....kSSSSk.....", "......kkkk......", ".....kSSSSk.....", "....kSkkkkSk....", "....kSkoookSk...", "....kSkgggkSk...", "....kSkoookSk...",
+      "....kSkkkkkSk...", ".....kSSSSk.....", ".....kSSSSk.....", "......kkkk......", "................", "................", "................", "................",
+    ],
+    pistol: [
+      "................", "................", "................", "...kkkkkkkkkkk..", "..kcccccccccccck", "..kccccccccckkk.", "..kkkkccccck....", ".....kcckcck....",
+      "....kWWkkk......", "....kWWk........", "...kWWk.........", "...kWWk.........", "...kkk..........", "................", "................", "................",
+    ],
+    rifle: [
+      "................", "................", "..............kk", ".......kkkkkkkck", "...kkkkccccccck.", ".kkWWWccccccck..", "kWWWWkkkkkkkk...", "kWWWk..kck......",
+      ".kkk...kck......", ".......kk.......", "................", "................", "................", "................", "................", "................",
+    ],
+    radio: [
+      "..............k.", ".............k..", "............k...", "...........k....", "..kkkkkkkkkkkk..", ".kWWWWWWWWWWWWk.", ".kWkkkkkkWkkkWk.", ".kWkssssskWgkWk.",
+      ".kWksSSSskkkkWk.", ".kWkssssskWgkWk.", ".kWkkkkkkWkkkWk.", ".kWWWWWWWWWWWWk.", ".kkkkkkkkkkkkkk.", "................", "................", "................",
+    ],
+    compass: [
+      "................", "....kkkkkkkk....", "...kggggggggk...", "..kgppppppppgk..", ".kgppppkpppppgk.", ".kgpppkrkppppgk.", ".kgppkrrrkpppgk.", ".kgppppkppppppk.",
+      ".kgppppkppppppk.", ".kgpppkskppppgk.", ".kgppppkpppppgk.", "..kgppppppppgk..", "...kggggggggk...", "....kkkkkkkk....", "................", "................",
+    ],
+    papers: [
+      "................", "..kkkkkkkkkk....", ".kppppppppppk...", ".kpkkkkkkkkpkk..", ".kpppppppppppk..", ".kpkkkkkkkpppk..", ".kpppppppppppk..", ".kpkkkkkkkkppk..",
+      ".kpppppppppppk..", ".kpkkkkkkpppppk.", ".kpppppppppppk..", ".kppppppprrppk..", ".kkkkkkkkkkkkk..", "................", "................", "................",
+    ],
+    crown: [
+      "................", "................", "..k....kk....k..", ".kgk..kggk..kgk.", ".kggk.kggk.kggk.", ".kgggkkggkkgggk.", ".kggggggggggggk.", ".kgrggggbggggrk.",
+      ".kggggggggggggk.", ".kGGGGGGGGGGGGk.", ".kgggggggggggggk", ".kkkkkkkkkkkkkk.", "................", "................", "................", "................",
+    ],
+    skull: [
+      "................", ".....kkkkkk.....", "....kppppppk....", "...kppppppppk...", "..kppppppppppk..", "..kpkkppppkkpk..", "..kkccpppkcckk..", "..kpkkppppkkpk..",
+      "..kppppkkppppk..", "...kppppppppk...", "....kpkpkpkpk...", "....kkkkkkkkk...", "................", "................", "................", "................",
+    ],
+    herb: [
+      "................", "......k.........", ".....knk...k....", "....knnnk.knk...", "....knnnkknnnk..", ".....knnknnnk...", "......knnnnk....", "..k...knnk......",
+      ".knk..kNk.......", ".knnkkNk........", "..kNNNk.........", "...kNk..........", "...kNk..........", "...kNk..........", "....k...........", "................",
+    ],
+    mask: [
+      "................", "..kkkkkkkkkkkk..", ".kttttttttttttk.", ".kttttttttttttk.", ".ktkkkttttkkktk.", ".ktkhhkttkhhktk.", ".ktkkkkttkkkktk.", ".kttttttttttttk.",
+      ".kttttkkkkttttk.", ".kTttttttttttTk.", "..kTTTkkkkTTTk..", "...kTTTTTTTTk...", "....kkkkkkkk....", "................", "................", "................",
+    ],
+    hourglass: [
+      "....kkkkkkkk....", "....kWWWWWWk....", "....kppppppk....", ".....kppppk.....", ".....kppppk.....", "......kppk......", ".......kk.......", "......k..k......",
+      ".....k.pp.k.....", ".....k.pp.k.....", "....k.pppp.k....", "....kppppppk....", "....kppppppk....", "....kWWWWWWk....", "....kkkkkkkk....", "................",
+    ],
+    candle: [
+      "......ko........", ".....koook......", ".....kgggk......", "......kgk.......", "......kkk.......", ".....kpppk......", ".....kpppk......", ".....kpPpk......",
+      ".....kpppk......", ".....kpPpk......", ".....kpppk......", "....kkpppkk.....", "...kGgggggGk....", "...kGGGGGGGk....", "....kkkkkkk.....", "................",
+    ],
+    curio: [
+      "................", "......kkkk......", ".....kttttk.....", "....kttttttk....", "...kttThhTttk...", "...kttThhTttk...", "...kttttttttk...", "...kTttttttTk...",
+      "....kTttttTk....", ".....kTTTTk.....", "......kkkk......", "......kwwk......", ".....kwwwwk.....", ".....kkkkkk.....", "................", "................",
+    ],
+  };
+  const SPRITE_NAMES = Object.keys(SPRITES);
+
+  const spriteShade = (hex, f) => { const n = parseInt(hex.slice(1), 16); const c = (x) => Math.max(0, Math.min(255, Math.round(x * f))); return `#${[c(n >> 16), c((n >> 8) & 255), c(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("")}`; };
+
+  /** Crisp SVG for a 16x16 sprite at the given pixel size, tinted for 't'/'T' cells. */
+  function spriteSVG(name, tint, size = 96) {
+    const rows = SPRITES[name] || SPRITES.curio;
+    const t = /^#[0-9a-f]{6}$/i.test(tint || "") ? tint : "#9aa0a6";
+    const colors = { ...SPRITE_PALETTE, t, T: spriteShade(t, 0.62) };
+    const rects = [];
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      const ch = rows[y]?.[x] || ".";
+      if (ch === "." || !colors[ch]) continue;
+      rects.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[ch]}"/>`);
+    }
+    return `<svg viewBox="0 0 16 16" width="${size}" height="${size}" shape-rendering="crispEdges" role="img" aria-label="${name}">${rects.join("")}</svg>`;
+  }
+
+  // ------------------------------------------------------------------
   // State
   // ------------------------------------------------------------------
   const games = new Map();
@@ -901,6 +1112,8 @@ This is a real historical period unless the player's words make it fictional. Be
   // ------------------------------------------------------------------
   // Prompts (the Dungeon Master's rules)
   // ------------------------------------------------------------------
+  const ITEM_SHAPE = `{"name":string,"quantity":int,"description":string (one line, what it looks like),"kind":"weapon|armor|tool|consumable|treasure|document|key|clothing|curio","sprite":"${SPRITE_NAMES.join("|")}","tint":"#rrggbb (the item's main colour)","rarity":"common|uncommon|rare|legendary","value":int (worth in the era's money),"damage":string|null (weapons only, e.g. "1d4 piercing"),"durability":int|null (0-100, weapons and armour only; 100 is new),"lore":string (1-2 sentences of history, maker or use)}`;
+
   const FORGE_RULES = `You are the Keeper of the Old Tavern, a veteran Dungeon Master who turns a few sentences about a character into a complete, playable hero and three tempting adventures.
 
 How to build the character:
@@ -910,7 +1123,7 @@ How to build the character:
 - Level is 1 unless the description makes them a seasoned veteran; never above 3.
 - maxHp = class hit die maximum (d6 caster, d8 rogue/cleric, d10 fighter/ranger, d12 barbarian) + CON modifier, plus hit die average + CON modifier per level above 1.
 - armorClass reflects described gear (10 + DEX modifier if unarmoured).
-- 3 to 6 inventory items that tell a story, and a modest purse of gold.
+- 3 to 6 inventory items that tell a story, and a modest purse. Every item is a full item object (shape below): pick the closest sprite, a fitting tint, a fair value in the era's money, damage and durability for weapons and armour, and a line of lore.
 - 2 to 4 proficient skills from: Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival.
 - Backstory: warm, vivid third-person prose, 2 to 3 short paragraphs. Keep the player's facts; add colour, not contradictions.
 
@@ -928,7 +1141,7 @@ How to build the three scenarios, all in the requested tone:
 - Each scenario names at least one real person, place or event from the briefing in its synopsis.
 
 Reply with ONLY a JSON object, no prose before or after, exactly this shape:
-{"character":{"name":string,"race":string,"characterClass":string,"level":int,"maxHp":int,"armorClass":int,"abilities":{"STR":int,"DEX":int,"CON":int,"INT":int,"WIS":int,"CHA":int},"proficientSkills":[string],"traits":[string],"inventory":[{"name":string,"quantity":int,"description":string}],"gold":int,"appearance":string,"portrait":{"skin":string,"hair":string,"hairStyle":string,"facialHair":string,"eyes":string,"headwear":string,"clothing":string,"symbol":string,"age":string,"scar":bool},"backstory":string,"motivation":string},
+{"character":{"name":string,"race":string,"characterClass":string,"level":int,"maxHp":int,"armorClass":int,"abilities":{"STR":int,"DEX":int,"CON":int,"INT":int,"WIS":int,"CHA":int},"proficientSkills":[string],"traits":[string],"inventory":[ITEM, ...],"gold":int,"appearance":string,"portrait":{"skin":string,"hair":string,"hairStyle":string,"facialHair":string,"eyes":string,"headwear":string,"clothing":string,"symbol":string,"age":string,"scar":bool},"backstory":string,"motivation":string},
  "research":[string, ... 4 to 6],
  "scenarios":[{"id":"short-slug","title":string,"tagline":string,"synopsis":string,"setting":string,"tone":string,"openingLocation":string}, ... exactly 3]}`;
 
@@ -946,7 +1159,7 @@ The player's description of their character:
 ${background}
 </description>
 
-Forge the character sheet and three scenarios. JSON only.`;
+Forge the character sheet and three scenarios. JSON only. Where the shape says ITEM, use this object: ${ITEM_SHAPE}`;
   }
 
   const REROLL_LINES = ["The Keeper flips through the notice board...", "Tearing down the old notices...", "Three new tales are being chosen for you..."];
@@ -1014,7 +1227,9 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 - The player acts by picking one of your choices or by typing their own idea. Treat their own ideas generously: let clever plans work, let reckless ones carry consequences, and if something is impossible narrate the attempt failing believably rather than refusing.
 - Dice are rolled by the game, not by you. Each turn you receive a "fate die" (a d20). If the player's action carries real risk, decide the ability, skill and DC (10 easy, 13 moderate, 16 hard, 20 very hard), add the hero's modifier (ability modifier, plus proficiency bonus ${2 + Math.floor((game.level - 1) / 4)} if proficient in the skill), compare to the DC, narrate the outcome, and report it in diceResult. If the game already resolved a check for the chosen option, you MUST honour that result exactly. Natural 20 is a critical success, natural 1 a critical failure. Routine actions need no check.
 - The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange.
-- Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses, examines or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
+- Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost.
+- Every item in loot and itemsGained is a full item object: ${ITEM_SHAPE}
+- Wear: when a weapon or armour is used hard (a fight, a forced lock, a fall), report it in stateChange.wear as {"name":string,"durabilityDelta":int} with small negative numbers (-3 to -15). An item at 0 durability is broken and no longer works; say so if it happens. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
 - Hero at 0 hit points = death: set ending with victory false and a fitting epilogue. Death is rare and earned, never arbitrary.
 - Combat is theatre of the mind: describe blows, positioning and stakes; resolve a whole exchange per turn; offer tactical choices.
 
@@ -1056,13 +1271,13 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 {"chapterTitle":string (max 40 chars),"narration":string (markdown),"diceResult":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int,"roll":int,"modifier":int,"total":int,"success":bool,"summary":string},
  "npcs":[{"name":string,"role":string,"description":string,"attitude":"friendly|neutral|suspicious|hostile","real":bool}],
  "choices":[{"id":"a","label":string,"hint":string,"check":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int}}],
- "stateChange":{"hpDelta":int,"goldDelta":int,"xpGained":int,"itemsGained":[{"name":string,"quantity":int,"description":string}],"itemsLost":[string],"questUpdates":[string],"location":string,"statusEffects":[string]},
- "loot":[{"name":string,"quantity":int,"description":string}],
+ "stateChange":{"hpDelta":int,"goldDelta":int,"xpGained":int,"itemsGained":[ITEM],"itemsLost":[string],"questUpdates":[string],"location":string,"statusEffects":[string],"wear":[{"name":string,"durabilityDelta":int}]},
+ "loot":[ITEM],
  "recap":string,"mood":"calm|tense|mysterious|combat|triumphant|grim|festive","ending":null|{"victory":bool,"epilogue":string}}`;
   }
 
   function stateBlock(game) {
-    const inv = game.inventory.length ? game.inventory.map((i) => (i.quantity > 1 ? `${i.name} x${i.quantity}` : i.name)).join(", ") : "nothing";
+    const inv = game.inventory.length ? game.inventory.map((i) => `${i.name}${i.quantity > 1 ? ` x${i.quantity}` : ""}${typeof i.durability === "number" ? ` [${i.durability <= 0 ? "broken" : `durability ${i.durability}`}]` : ""}`).join(", ") : "nothing";
     return [
       `Hit points: ${game.hp}/${game.character.maxHp}`,
       `Level ${game.level}, ${game.xp} xp`,
@@ -1134,7 +1349,34 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       appearance: str(c.appearance), portrait: normPortrait(c.portrait), backstory: str(c.backstory), motivation: str(c.motivation),
     };
   }
-  const normItem = (i) => (typeof i === "string" ? { name: i, quantity: 1, description: "" } : { name: str(i?.name, "Curio"), quantity: Math.max(1, int(i?.quantity, 1)), description: str(i?.description) });
+  const KINDS = ["weapon", "armor", "tool", "consumable", "treasure", "document", "key", "clothing", "curio"];
+  const RARITIES = ["common", "uncommon", "rare", "legendary"];
+  const SPRITE_GUESS = [
+    [/dagger|knife|dirk|stiletto/i, "dagger"], [/sword|blade|gladius|sabre|saber|rapier|katana|seax/i, "sword"], [/axe|hatchet/i, "axe"], [/bow|crossbow/i, "bow"],
+    [/spear|pike|lance|javelin|pilum|yari|staff/i, "spear"], [/shield|buckler/i, "shield"], [/helm/i, "helmet"], [/armou?r|mail|cuirass|breastplate|vest|jerkin/i, "armor"],
+    [/cloak|cape|coat|robe|toga|habit/i, "cloak"], [/boot|shoe|sandal/i, "boots"], [/potion|vial|elixir|tonic|draught|medicine/i, "potion"], [/scroll|parchment|papyrus/i, "scroll"],
+    [/book|ledger|tome|journal|diary|bible|codex/i, "book"], [/letter|note|envelope|missive/i, "letter"], [/\bkey/i, "key"], [/coin|denari|drachm|dollar|franc|mark|deben|silver|gold piece|sestert/i, "coins"],
+    [/purse|pouch|wallet/i, "purse"], [/\bring\b|signet/i, "ring"], [/amulet|pendant|locket|necklace|charm|talisman|medallion/i, "amulet"], [/gem|jewel|ruby|emerald|diamond|sapphire|pearl/i, "gem"],
+    [/torch|brand/i, "torch"], [/rope|cord|line/i, "rope"], [/tool|pick|wrench|hammer|chisel|stylus|quill|pen|needle|kit/i, "tools"], [/bread|food|ration|cheese|meat|apple|loaf|biscuit/i, "bread"],
+    [/bottle|wine|flask|ale|rum|whisky|beer|jug/i, "bottle"], [/\bmap|chart/i, "map"], [/lantern|lamp/i, "lantern"], [/pistol|revolver|handgun|luger|colt/i, "pistol"], [/rifle|musket|carbine|sten|shotgun|arquebus/i, "rifle"],
+    [/radio|transmitter|wireless|receiver/i, "radio"], [/compass/i, "compass"], [/paper|passport|document|card|identity|ticket|permit|warrant|pass\b/i, "papers"], [/crown|circlet|diadem|tiara/i, "crown"],
+    [/skull|bone/i, "skull"], [/herb|flower|leaf|root|plant|garlic|moss/i, "herb"], [/mask/i, "mask"], [/hourglass|clock|watch/i, "hourglass"], [/candle|taper/i, "candle"],
+  ];
+  const guessSprite = (name) => (SPRITE_GUESS.find(([re]) => re.test(name || "")) || [null, "curio"])[1];
+  const normItem = (i) => {
+    if (typeof i === "string") i = { name: i };
+    i = i && typeof i === "object" ? i : {};
+    const name = str(i.name, "Curio");
+    const appraised = Boolean(i.kind || i.lore || i.sprite);
+    return {
+      name, quantity: Math.max(1, int(i.quantity, 1)), description: str(i.description),
+      kind: KINDS.includes(i.kind) ? i.kind : "curio", sprite: SPRITES[i.sprite] ? i.sprite : guessSprite(name),
+      tint: /^#[0-9a-f]{6}$/i.test(i.tint || "") ? i.tint : null, rarity: RARITIES.includes(i.rarity) ? i.rarity : "common",
+      value: Math.max(0, int(i.value, 0)), damage: i.damage ? String(i.damage) : null,
+      durability: typeof i.durability === "number" && Number.isFinite(i.durability) ? Math.max(0, Math.min(100, Math.round(i.durability))) : null,
+      lore: str(i.lore), appraised,
+    };
+  };
   function normScenario(s, i) {
     s = s && typeof s === "object" ? s : {};
     return { id: str(s.id, `tale-${i + 1}`).replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase() || `tale-${i + 1}`, title: str(s.title, `Tale ${i + 1}`), tagline: str(s.tagline), synopsis: str(s.synopsis), setting: str(s.setting), tone: str(s.tone), openingLocation: str(s.openingLocation, str(s.setting)) };
@@ -1163,6 +1405,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         hpDelta: int(sc.hpDelta), goldDelta: int(sc.goldDelta), xpGained: Math.max(0, int(sc.xpGained)),
         itemsGained: arr(sc.itemsGained).map(normItem), itemsLost: arr(sc.itemsLost).map(String), questUpdates: arr(sc.questUpdates).map(String),
         location: str(sc.location), statusEffects: arr(sc.statusEffects).map(String),
+        wear: arr(sc.wear).map((w) => ({ name: str(w?.name), durabilityDelta: int(w?.durabilityDelta) })).filter((w) => w.name && w.durabilityDelta),
       },
       loot: arr(s.loot).slice(0, 3).map(normItem),
       recap: str(s.recap, "The tale went on."), mood: MOODS.includes(s.mood) ? s.mood : "calm", ending,
@@ -1275,7 +1518,12 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     }
     for (const item of ch.itemsGained) {
       const ex = game.inventory.find((i) => i.name.toLowerCase() === item.name.toLowerCase());
-      if (ex) ex.quantity += item.quantity; else game.inventory.push({ ...item });
+      if (ex) { ex.quantity += item.quantity; if (!ex.appraised && item.appraised) Object.assign(ex, item, { quantity: ex.quantity }); }
+      else game.inventory.push({ ...item });
+    }
+    for (const w of ch.wear || []) {
+      const it = game.inventory.find((i) => i.name.toLowerCase() === w.name.toLowerCase());
+      if (it && typeof it.durability === "number") it.durability = Math.max(0, Math.min(100, it.durability + w.durabilityDelta));
     }
     for (const name of ch.itemsLost) {
       const idx = game.inventory.findIndex((i) => i.name.toLowerCase() === name.trim().toLowerCase());
@@ -1311,6 +1559,9 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (!Array.isArray(g.research)) g.research = [];
     if (!Array.isArray(g.passedScenarios)) g.passedScenarios = [];
     if (g.character && !g.character.portrait) g.character.portrait = normPortrait({ symbol: "\u2694\uFE0F" });
+    if (Array.isArray(g.inventory)) g.inventory = g.inventory.map(normItem);
+    if (g.character && Array.isArray(g.character.inventory)) g.character.inventory = g.character.inventory.map(normItem);
+    for (const t of g.turns || []) if (t.scene && Array.isArray(t.scene.loot)) t.scene.loot = t.scene.loot.map(normItem);
     for (const t of g.turns || []) if (t.scene && !Array.isArray(t.scene.loot)) t.scene.loot = [];
     return g;
   }
@@ -1603,7 +1854,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       <div class="label">Traits</div><div>${chips(c.traits, "var(--border)")}</div>
       ${game.statusEffects.length ? `<div class="label">Conditions</div><div>${chips(game.statusEffects, "var(--blood)")}</div>` : ""}
       <div class="label">Inventory</div>
-      <div class="card stack" style="gap:6px">${game.inventory.length ? game.inventory.map((i) => `<div class="spread" style="align-items:flex-start"><span>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</span><span class="meta" style="text-align:right">${esc(i.description)}</span></div>`).join("") : `<span class="meta">Empty pockets.</span>`}</div>
+      <div class="card stack" style="gap:8px">${game.inventory.length ? game.inventory.map((i) => `<div class="row" style="align-items:center"><span class="portrait">${spriteSVG(i.sprite, i.tint, 28)}</span><span class="grow">${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</span><span class="meta" style="text-align:right">${typeof i.durability === "number" ? `${i.durability}/100` : esc(i.description)}</span></div>`).join("") : `<span class="meta">Empty pockets.</span>`}</div>
       <div class="label">Quest log</div>
       <div class="card stack" style="gap:6px">${game.quests.length ? game.quests.map((q) => `<div>&#128220; ${esc(q)}</div>`).join("") : `<span class="meta">Nothing written yet.</span>`}</div>
       <div class="label">People met</div>
@@ -1622,7 +1873,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   // and swap back out, restoring the scroll position. No fixed layers:
   // the viewer's frame handles those unpredictably.
   // ------------------------------------------------------------------
-  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint"];
+  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item"];
   const panelStack = [];
   function openPanel(id) {
     const from = SCREENS.filter((k) => !$(k).hidden);
@@ -1645,9 +1896,70 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
   function closeAllPanels() {
     while (panelStack.length) {
       const prev = panelStack.pop();
-      for (const k of ["sheet", "inventory", "paint"]) $(k).hidden = true;
+      for (const k of ["sheet", "inventory", "paint", "item"]) $(k).hidden = true;
       for (const k of prev.from) $(k).hidden = false;
       if (!panelStack.length) window.scrollTo(0, prev.scroll);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Item card: sprite, stats, lore. Older items get appraised on the spot.
+  // ------------------------------------------------------------------
+  const RARITY_COLOR = { common: "var(--muted)", uncommon: "var(--moss)", rare: "#6aa5e8", legendary: "var(--gold)" };
+  let itemCtx = null; // { game, item, where: "carried"|"nearby" }
+
+  async function appraise(game, item) {
+    if (!sample) return false;
+    const prompt = `You are the Keeper of the Old Tavern appraising one item for a hero. Reply with ONLY a JSON object of this shape: ${ITEM_SHAPE}
+Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, ${game.era.when}` : ""} (money in ${game.era.currency}). Hero: ${game.character.race} ${game.character.characterClass}. Known description: ${item.description || "(none)"}. Invent a fitting sprite, tint, value, damage and durability where they apply, and one or two sentences of lore true to the era. JSON only.`;
+    try {
+      const raw = await sample.json(prompt, { modelTier: "quick", cache: false });
+      const fresh = normItem({ ...raw, name: item.name, quantity: item.quantity });
+      Object.assign(item, fresh, { appraised: true });
+      await store.save(game);
+      return true;
+    } catch (e) {
+      console.warn("appraisal failed", e);
+      return false;
+    }
+  }
+
+  function renderItemCard(ctx, note) {
+    const { game, item, where } = ctx;
+    const over = game.status === "ended";
+    const cur = shortCurrency(game);
+    const dur = typeof item.durability === "number" ? item.durability : null;
+    const durColor = dur === null ? "" : dur > 60 ? "var(--moss)" : dur > 25 ? "var(--ember)" : "var(--blood)";
+    const kindLabel = { weapon: "Weapon", armor: "Armour", tool: "Tool", consumable: "Consumable", treasure: "Treasure", document: "Document", key: "Key", clothing: "Clothing", curio: "Curio" }[item.kind] || "Curio";
+    $("item-body").innerHTML = `
+      <div class="item-hero">
+        <div class="sprite">${spriteSVG(item.sprite, item.tint, 128)}</div>
+        <h2>${esc(item.name)}${item.quantity > 1 ? ` <span class="meta" style="font-size:16px">x${item.quantity}</span>` : ""}</h2>
+        <div class="badges"><span class="badge" style="color:${RARITY_COLOR[item.rarity]}">${esc(item.rarity)}</span><span class="badge" style="color:var(--parchment)">${kindLabel}</span>${dur === 0 ? `<span class="badge" style="color:var(--blood)">broken</span>` : ""}</div>
+      </div>
+      ${note ? `<div class="meta" style="text-align:center">${esc(note)}</div>` : ""}
+      <div class="stat-row">
+        <div><small>Worth</small><b>${item.value ? `${item.value} ${esc(cur)}` : "\u2014"}</b></div>
+        ${item.damage ? `<div><small>Damage</small><b>${esc(item.damage)}</b></div>` : `<div><small>Where</small><b style="font-size:16px">${where === "nearby" ? "Nearby" : "Carried"}</b></div>`}
+      </div>
+      ${dur !== null ? `<div class="card" style="padding:10px 14px"><div class="spread"><small class="meta">Durability</small><b style="color:${durColor}">${dur}/100</b></div><div class="bar"><i style="width:${dur}%;background:${durColor}"></i></div></div>` : ""}
+      ${item.description ? `<p>${esc(item.description)}</p>` : ""}
+      ${item.lore ? `<p class="lore">${esc(item.lore)}</p>` : ""}
+      ${over ? "" : where === "nearby"
+        ? `<button class="btn ember" data-action="take" data-name="${esc(item.name)}">Take it</button>`
+        : `<div class="row"><button class="btn quiet" data-action="use-item" data-name="${esc(item.name)}">Use</button><button class="btn quiet" style="color:#ff9d94" data-action="drop-item" data-name="${esc(item.name)}">Drop</button></div>`}`;
+  }
+
+  async function openItemCard(game, name, where) {
+    const list = where === "nearby" ? (game.turns[game.turns.length - 1]?.scene.loot || []) : game.inventory;
+    const item = list.find((i) => i.name === name);
+    if (!item) return;
+    itemCtx = { game, item, where };
+    renderItemCard(itemCtx, item.appraised ? "" : "The Keeper is appraising it...");
+    openPanel("item");
+    if (!item.appraised) {
+      const ok = await appraise(game, item);
+      if (itemCtx && itemCtx.item === item) renderItemCard(itemCtx, ok ? "" : "The Keeper could not appraise this just now.");
     }
   }
 
@@ -1661,13 +1973,16 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     const items = game.inventory;
     $("inv-body").innerHTML = `
       <div class="meta">${esc(game.character.name)} carries ${items.reduce((n, i) => n + (i.quantity || 1), 0)} thing${items.length === 1 ? "" : "s"} and ${game.gold} ${esc(shortCurrency(game))}.</div>
-      ${loot.length ? `<div class="label">Nearby</div><div class="card"><div class="loot">${loot.map((i) => `<button class="take" data-action="take" data-name="${esc(i.name)}"><b>&#43;</b> ${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</button>`).join("")}</div>${loot.map((i) => i.description ? `<div class="meta" style="margin-top:6px">${esc(i.name)}: ${esc(i.description)}</div>` : "").join("")}</div>` : ""}
+      ${loot.length ? `<div class="label">Nearby</div><div class="card">${loot.map((i) => `<div class="inv-item">
+        <div class="head"><button data-action="examine-loot" data-name="${esc(i.name)}">${spriteSVG(i.sprite, i.tint, 36)}<span><b>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</b>${i.description ? `<br><span class="meta">${esc(i.description)}</span>` : ""}</span></button></div>
+        <div class="inv-actions"><button data-action="examine-loot" data-name="${esc(i.name)}">Examine</button><button style="color:var(--gold)" data-action="take" data-name="${esc(i.name)}">Take</button></div>
+      </div>`).join("")}</div>` : ""}
       <div class="label">Carried</div>
       <div class="card">${items.length ? items.map((i) => `<div class="inv-item">
-        <div><b>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</b>${i.description ? `<div class="meta">${esc(i.description)}</div>` : ""}</div>
+        <div class="head"><button data-action="examine-item" data-name="${esc(i.name)}">${spriteSVG(i.sprite, i.tint, 36)}<span><b>${esc(i.name)}${i.quantity > 1 ? ` x${i.quantity}` : ""}</b>${typeof i.durability === "number" ? `<br><span class="meta">${i.durability <= 0 ? "Broken" : `Durability ${i.durability}/100`}</span>` : i.description ? `<br><span class="meta">${esc(i.description)}</span>` : ""}</span></button></div>
         ${over ? "" : `<div class="inv-actions">
-          <button data-action="use-item" data-name="${esc(i.name)}">Use</button>
           <button data-action="examine-item" data-name="${esc(i.name)}">Examine</button>
+          <button data-action="use-item" data-name="${esc(i.name)}">Use</button>
           <button class="drop" data-action="drop-item" data-name="${esc(i.name)}">Drop</button></div>`}
       </div>`).join("") : `<span class="meta">Empty pockets. Things you pick up in the world appear here.</span>`}</div>`;
     openPanel("inventory");
@@ -1842,11 +2157,18 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       }
       case "remove-paint": removePortrait(); break;
       case "close-inventory": closePanel("inventory"); break;
-      case "take": case "use-item": case "examine-item": case "drop-item": {
+      case "examine-item": case "examine-loot": {
+        const game = games.get($("play").dataset.id);
+        if (game) openItemCard(game, el.dataset.name, action === "examine-loot" ? "nearby" : "carried");
+        break;
+      }
+      case "close-item": itemCtx = null; closePanel("item"); break;
+      case "take": case "use-item": case "drop-item": {
         const game = games.get($("play").dataset.id);
         if (!game) break;
         const name = el.dataset.name;
-        const text = action === "take" ? `I pick up the ${name}.` : action === "use-item" ? `I use my ${name}.` : action === "examine-item" ? `I take a closer look at my ${name}.` : `I drop my ${name} and leave it behind.`;
+        const text = action === "take" ? `I pick up the ${name}.` : action === "use-item" ? `I use my ${name}.` : `I drop my ${name} and leave it behind.`;
+        itemCtx = null;
         closeAllPanels();
         act(game, { freeText: text });
         break;

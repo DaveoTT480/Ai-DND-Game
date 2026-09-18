@@ -211,7 +211,11 @@ Notes:
    bust from it, shown on the home list, the status bar and the sheet. For a real painted
    portrait in the style of Old Greg's Tavern, see "Painted portraits" below. The backpack button
    opens the inventory: what you carry, with Use, Examine and Drop, plus "Nearby" objects the
-   Dungeon Master says you could pick up right now, with a Take button. The character sheet
+   Dungeon Master says you could pick up right now, with a Take button. Examine opens an item
+   card instead of a story turn: an 8-bit sprite (a hand-drawn set of 39, tinted per item),
+   rarity, type, worth in the era's money, damage and a durability bar for weapons and armour,
+   and a line of lore. Fights and hard use wear weapons down; at zero they break. Items from
+   before this feature are appraised on the spot with a quick call. The character sheet
    ends with a chronicle of every chapter so far, each one expandable to reread in full.
 5. **Dice.** Choices can carry a skill check (ability, skill, DC). The server rolls a d20, adds
    the hero's modifier and proficiency, and tells the Dungeon Master the result, which it must
