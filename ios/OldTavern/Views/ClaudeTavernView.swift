@@ -19,6 +19,26 @@ struct ClaudeTavernView: View {
                     .tint(Theme.ember)
                     .padding(.top, 8)
             }
+            if let popup = controller.popup {
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Sign in")
+                            .font(Theme.small)
+                            .foregroundStyle(Theme.muted)
+                        Spacer()
+                        Button("Close") { controller.closePopup() }
+                            .font(Theme.small)
+                            .foregroundStyle(Theme.ember)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Color.black)
+                    PopupWebView(webView: popup)
+                }
+                .background(Color.black)
+                .ignoresSafeArea(.container, edges: .bottom)
+                .transition(.move(edge: .bottom))
+            }
             if let message = controller.errorMessage {
                 VStack(spacing: 10) {
                     Text("The tavern door is stuck")
@@ -87,6 +107,8 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
     var isLoading = false
     var errorMessage: String?
     var pageDetails: String?
+    /// A window the page opened (Google sign-in uses one); shown over the tavern until it closes itself.
+    var popup: WKWebView?
     private(set) var currentURL: URL?
     private var returnTask: Task<Void, Never>?
 
@@ -187,7 +209,12 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         isLoading = false
-        steerBackIfLost()
+        if webView === self.webView { steerBackIfLost() }
+    }
+
+    func closePopup() {
+        popup?.stopLoading()
+        popup = nil
     }
 
     /// The web content process died (memory pressure, a crash): reload rather than sit on a blank view.
@@ -221,13 +248,30 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
         completionHandler(defaultText)
     }
 
-    /// Links that ask for a new window (target=_blank) open in the same view.
+    /// The page asked for a new window. Sign-in popups talk back to their opener, so the
+    /// child must be a real web view made from the offered configuration, not a reload here.
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if navigationAction.targetFrame == nil, let url = navigationAction.request.url {
-            webView.load(URLRequest(url: url))
-        }
-        return nil
+        let child = WKWebView(frame: webView.bounds, configuration: configuration)
+        child.customUserAgent = webView.customUserAgent
+        child.navigationDelegate = self
+        child.uiDelegate = self
+        child.isOpaque = false
+        child.backgroundColor = .black
+        child.scrollView.backgroundColor = .black
+        popup = child
+        return child
     }
+
+    /// The popup called window.close(): sign-in is done, drop it.
+    func webViewDidClose(_ webView: WKWebView) {
+        if webView === popup { popup = nil }
+    }
+}
+
+struct PopupWebView: UIViewRepresentable {
+    let webView: WKWebView
+    func makeUIView(context: Context) -> WKWebView { webView }
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 
 struct TavernWebView: UIViewRepresentable {
