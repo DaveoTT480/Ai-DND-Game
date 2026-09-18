@@ -53,6 +53,9 @@ struct ClaudeTavernView: View {
                 Menu {
                     Button { controller.reload() } label: { Label("Reload", systemImage: "arrow.clockwise") }
                     Button { controller.openInSafari() } label: { Label("Open in Safari", systemImage: "safari") }
+                    Button { controller.goHome() } label: { Label("Back to the tavern", systemImage: "house") }
+                    Button { Task { await controller.describePage() } } label: { Label("Page details", systemImage: "info.circle") }
+                    Button(role: .destructive) { controller.signOut() } label: { Label("Sign out and reset", systemImage: "arrow.uturn.backward") }
                     Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -61,6 +64,12 @@ struct ClaudeTavernView: View {
         }
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.black, for: .navigationBar)
+        .alert("Page details", isPresented: Binding(get: { controller.pageDetails != nil }, set: { if !$0 { controller.pageDetails = nil } })) {
+            Button("Copy") { UIPasteboard.general.string = controller.pageDetails ?? ""; controller.pageDetails = nil }
+            Button("OK", role: .cancel) { controller.pageDetails = nil }
+        } message: {
+            Text(controller.pageDetails ?? "")
+        }
         .sheet(isPresented: $showSettings, onDismiss: {
             if controller.currentURL?.absoluteString != settings.artifactURL.trimmingCharacters(in: .whitespacesAndNewlines) {
                 controller.load(settings.artifactURL)
@@ -77,7 +86,9 @@ struct ClaudeTavernView: View {
 final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
     var isLoading = false
     var errorMessage: String?
+    var pageDetails: String?
     private(set) var currentURL: URL?
+    private var returnTask: Task<Void, Never>?
 
     let webView: WKWebView
 
@@ -120,7 +131,47 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
         guard let currentURL else { return }
         var comps = URLComponents(url: currentURL, resolvingAgainstBaseURL: false)
         comps?.fragment = "home"
+        errorMessage = nil
         if let url = comps?.url { webView.load(URLRequest(url: url)) }
+    }
+
+    /// Sign-in flows land on claude.ai's own home rather than back on the tavern.
+    /// When the web view settles on such a page, steer it back to the artifact.
+    private func steerBackIfLost() {
+        returnTask?.cancel()
+        guard let url = webView.url, let target = currentURL else { return }
+        let host = url.host ?? ""
+        guard host.hasSuffix("claude.ai") else { return }
+        let path = url.path
+        if path.contains("/artifact") { return }
+        let lostPaths: Set<String> = ["", "/", "/new", "/chats", "/recents", "/code", "/projects", "/artifacts", "/chat"]
+        let isLost = lostPaths.contains(path) || path.hasPrefix("/chat/") || path.hasPrefix("/project/")
+        guard isLost else { return }
+        returnTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            guard let self, !Task.isCancelled, let now = self.webView.url, now == url else { return }
+            self.webView.load(URLRequest(url: target))
+        }
+    }
+
+    /// What the web view is actually showing, for bug reports.
+    func describePage() async {
+        var lines = ["URL: \(webView.url?.absoluteString ?? "none")", "Title: \(webView.title ?? "")", "Loading: \(webView.isLoading)"]
+        let js = "(() => { try { const b = document.body; return [document.readyState, b ? b.innerText.replace(/\\s+/g, ' ').slice(0, 240) : 'no body', document.querySelectorAll('iframe').length + ' iframes', getComputedStyle(document.documentElement).backgroundColor].join(' | '); } catch (e) { return 'error ' + e.message; } })()"
+        let result: Any? = try? await webView.evaluateJavaScript(js)
+        if let text = result as? String { lines.append("Page: \(text)") }
+        pageDetails = lines.joined(separator: "\n")
+    }
+
+    /// Clears cookies and site data so the next visit signs in fresh.
+    func signOut() {
+        let store = webView.configuration.websiteDataStore
+        let types = WKWebsiteDataStore.allWebsiteDataTypes()
+        store.fetchDataRecords(ofTypes: types) { records in
+            store.removeData(ofTypes: types, for: records) { [weak self] in
+                Task { @MainActor in self?.reload() }
+            }
+        }
     }
 
     func openInSafari() {
@@ -136,6 +187,13 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         isLoading = false
+        steerBackIfLost()
+    }
+
+    /// The web content process died (memory pressure, a crash): reload rather than sit on a blank view.
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        isLoading = false
+        if let currentURL { webView.load(URLRequest(url: currentURL)) }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -149,6 +207,19 @@ final class TavernWebController: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     // MARK: WKUIDelegate
+
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        pageDetails = message
+        completionHandler()
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        completionHandler(true)
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
+        completionHandler(defaultText)
+    }
 
     /// Links that ask for a new window (target=_blank) open in the same view.
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
