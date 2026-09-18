@@ -9,8 +9,9 @@
     --border: #2a2521;
     --parchment: #f3efe6;
     --parchment-dim: rgba(243, 239, 230, 0.8);
-    --ember: #d9892c;
-    --ember-soft: rgba(217, 137, 44, 0.14);
+    --ember: #c4914f;
+    --ember-dim: rgba(196, 145, 79, 0.72);
+    --ember-soft: rgba(196, 145, 79, 0.09);
     --muted: #8f8a82;
     --blood: #c9443a;
     --moss: #6ea45f;
@@ -53,42 +54,42 @@
   .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
   .card { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-  .card.accent { border-color: rgba(224, 143, 43, 0.55); }
+  .card.accent { border-color: rgba(196, 145, 79, 0.32); }
   .card.error { border-color: var(--blood); color: #ffb0a6; font-size: 15px; }
-  .tagline { font-family: var(--body); font-style: italic; font-size: 15px; color: var(--ember); }
+  .tagline { font-family: var(--body); font-style: italic; font-size: 15px; color: var(--ember-dim); }
   .meta { color: var(--muted); font-size: 14px; }
   .quiet-text { color: var(--parchment-dim); }
 
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; font-family: var(--body); font-size: 17px; font-weight: 600; letter-spacing: .01em; transition: transform .08s ease, opacity .12s ease; }
   .btn:active { transform: scale(.985); }
   .btn:disabled { opacity: .45; cursor: default; transform: none; }
-  .btn.ember { background: linear-gradient(180deg, #1c1510, #0f0b08); color: var(--ember); border: 1px solid #7a4a1c; box-shadow: 0 0 18px rgba(217, 137, 44, .12); }
+  .btn.ember { background: linear-gradient(180deg, #17120e, #0d0a07); color: var(--ember); border: 1px solid #4a3620; box-shadow: none; }
   .btn.quiet { background: var(--wood-light); color: var(--parchment); border: 1px solid var(--border); font-weight: 600; }
-  .btn.link { background: none; color: var(--ember); font-family: var(--body); font-size: 15px; font-weight: 500; padding: 6px 0; width: auto; }
+  .btn.link { background: none; color: var(--ember-dim); font-family: var(--body); font-size: 15px; font-weight: 500; padding: 6px 0; width: auto; }
 
   .field { width: 100%; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color: var(--parchment); }
-  .field:focus { border-color: var(--ember); outline: none; }
+  .field:focus { border-color: rgba(196, 145, 79, .6); outline: none; }
   .field::placeholder { color: var(--muted); }
   textarea.field { min-height: 150px; resize: vertical; line-height: 1.5; }
 
   .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: 0 0 auto; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
-  .chip.on { background: var(--ember-soft); color: var(--ember); border-color: var(--ember); font-weight: 600; }
+  .chip.on { background: var(--ember-soft); color: var(--ember); border-color: rgba(196, 145, 79, .6); font-weight: 600; }
   .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 13px; margin: 4px 4px 0 0; }
   .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
 
   .era-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 96px; }
-  .era.on { border-color: var(--ember); background: var(--ember-soft); }
+  .era.on { border-color: rgba(196, 145, 79, .6); background: var(--ember-soft); }
   .era .nm { font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.1; }
-  .era .wh { color: var(--ember); font-size: 12px; }
+  .era .wh { color: var(--ember-dim); font-size: 12px; }
   .era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
   .era.on .bl { color: var(--parchment-dim); }
   .hist { color: var(--gold); font-size: 11px; letter-spacing: .06em; }
   .portrait { flex: 0 0 auto; line-height: 0; }
   .portrait svg { display: block; }
-  .portrait img { display: block; object-fit: cover; border-radius: 50%; border: 1.6px solid var(--ember); background: #1a1410; box-shadow: 0 0 16px rgba(217, 137, 44, .18); }
+  .portrait img { display: block; object-fit: cover; border-radius: 50%; border: 1.4px solid var(--ember-dim); background: #1a1410; box-shadow: 0 0 14px rgba(196, 145, 79, .1); }
   .portrait.square img { border-radius: 14px; }
   .prompt-box { width: 100%; min-height: 110px; background: var(--wood); border: 1px solid var(--border); border-radius: 10px; color: var(--parchment); padding: 10px; font-size: 13px; line-height: 1.45; resize: vertical; }
   .loot { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -113,13 +114,13 @@
   .slots { display: flex; flex-direction: column; gap: 6px; }
   .slot { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; color: var(--muted); }
   .slot .box { width: 56px; height: 56px; border-radius: 9px; background: var(--wood); border: 1px solid var(--border); display: grid; place-items: center; box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
-  .slot.filled .box { border-color: var(--ember); background: #1c150e; }
+  .slot.filled .box { border-color: rgba(196, 145, 79, .55); background: #1c150e; }
   .slot.empty .box svg { opacity: .28; }
   .slot small { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
   .doll-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 6px; }
   .doll-mid .portrait img, .doll-mid .portrait svg { display: block; }
   .doll-mid .who { text-align: center; font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.15; }
-  .doll-mid .cls { color: var(--ember); font-size: 12px; text-align: center; }
+  .doll-mid .cls { color: var(--ember-dim); font-size: 12px; text-align: center; }
   .ac { width: 54px; height: 60px; display: grid; place-items: center; background: var(--wood); border: 1.5px solid var(--gold); border-radius: 8px 8px 26px 26px; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--parchment); }
   .ac small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .08em; text-align: center; font-family: var(--body); }
   .strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -127,7 +128,7 @@
   .strip small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
   .strip b { font-family: var(--display); font-size: 18px; font-variant-numeric: tabular-nums; }
   .xp { height: 6px; border-radius: 999px; background: var(--wood); border: 1px solid var(--border); overflow: hidden; margin-top: 4px; }
-  .xp i { display: block; height: 100%; background: var(--ember); }
+  .xp i { display: block; height: 100%; background: var(--ember-dim); }
   .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
   .tile { aspect-ratio: 1; background: var(--wood); border: 1px solid var(--border); border-radius: 8px; display: grid; place-items: center; position: relative; padding: 0; box-shadow: inset 0 2px 6px rgba(0,0,0,.45); }
   .tile.uncommon { border-color: var(--moss); } .tile.rare { border-color: #6aa5e8; } .tile.legendary { border-color: var(--gold); box-shadow: inset 0 2px 6px rgba(0,0,0,.45), 0 0 10px rgba(237,194,82,.25); }
@@ -141,7 +142,7 @@
   .inv-actions button { flex: 1; background: var(--wood); border: 1px solid var(--border); color: var(--parchment); border-radius: 8px; padding: 8px; font-size: 13px; }
   .inv-actions button.drop { color: #ff9d94; }
   .inputbar .pack { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); font-size: 20px; position: relative; }
-  .inputbar .pack .n { position: absolute; top: -4px; right: -4px; background: var(--ember); color: #0a0908; border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; }
+  .inputbar .pack .n { position: absolute; top: -4px; right: -4px; background: #3a2a18; color: var(--ember); border: 1px solid #4a3620; border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; }
   details.chapter { border-bottom: 1px solid var(--border); padding: 8px 0; }
   details.chapter summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; }
   details.chapter summary::-webkit-details-marker { display: none; }
@@ -156,7 +157,7 @@
   .tale .glyph { font-size: 22px; width: 30px; text-align: center; padding-top: 2px; }
   .tale .name { font-family: var(--display); font-size: 24px; font-weight: 600; }
   .tale .sub { color: var(--muted); font-size: 13px; }
-  .tale .where { color: var(--ember); font-size: 13px; }
+  .tale .where { color: var(--ember-dim); font-size: 13px; }
   .tale .chev { color: var(--muted); align-self: center; font-size: 20px; }
 
   /* Abilities and sheet */
@@ -179,10 +180,10 @@
   .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(6, 6, 6, .92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 12px; align-items: center; font-size: 13px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
   .statusbar .loc { margin-left: auto; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42%; }
   .statusbar .hp.low { color: var(--blood); }
-  .statusbar .back { color: var(--ember); background: none; border: 0; padding: 0 6px 0 0; font-size: 22px; line-height: 1; }
+  .statusbar .back { color: var(--ember-dim); background: none; border: 0; padding: 0 6px 0 0; font-size: 22px; line-height: 1; }
   .log { max-width: 640px; margin: 0 auto; padding-block: 12px; padding-inline: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(224, 143, 43, .4); border-radius: 14px; padding: 10px 14px; font-style: italic; }
-  .bubble::before { content: "\276F  "; color: var(--ember); font-style: normal; }
+  .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(196, 145, 79, .28); border-radius: 14px; padding: 10px 14px; font-style: italic; }
+  .bubble::before { content: "\276F  "; color: var(--ember-dim); font-style: normal; }
   .scene { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
   .scene .head h3 { font-size: 26px; }
   .scene .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -201,7 +202,7 @@
   .dice .verdict { margin-left: auto; font-family: var(--display); font-weight: 700; font-size: 18px; }
   .dice.ok .verdict { color: var(--moss); } .dice.bad .verdict { color: var(--blood); }
   .changes { font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
-  .changes .hurt { color: var(--blood); } .changes .heal { color: var(--moss); } .changes .gold { color: var(--gold); } .changes .xp { color: var(--ember); } .changes .item { color: var(--parchment-dim); } .changes .quest { color: var(--muted); }
+  .changes .hurt { color: var(--blood); } .changes .heal { color: var(--moss); } .changes .gold { color: var(--gold); } .changes .xp { color: var(--ember-dim); } .changes .item { color: var(--parchment-dim); } .changes .quest { color: var(--muted); }
   .ending { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
   .ending h4 { font-size: 30px; }
   .ending.win h4 { color: var(--gold); } .ending.lose h4 { color: var(--muted); }
@@ -210,14 +211,14 @@
   .choice:active { background: var(--wood); }
   .choice .lbl { font-weight: 600; }
   .choice .hint { color: var(--muted); font-size: 14px; }
-  .choice .check { margin-left: auto; color: var(--ember); font-size: 12px; text-align: right; white-space: nowrap; }
+  .choice .check { margin-left: auto; color: var(--ember-dim); font-size: 12px; text-align: right; white-space: nowrap; }
   .thinking { display: flex; align-items: center; gap: 12px; color: var(--muted); font-style: italic; }
   .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ember); border-radius: 50%; animation: spin .9s linear infinite; flex: 0 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--ember); } .btn { transition: none; } }
   .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(6, 6, 6, .96); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
   .inputbar textarea { flex: 1; min-height: 46px; max-height: 120px; resize: none; border-radius: 16px; padding: 11px 14px; }
-  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #7a4a1c; background: #1c1510; color: var(--ember); font-size: 22px; font-weight: 700; }
+  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #4a3620; background: #17120e; color: var(--ember); font-size: 22px; font-weight: 700; }
   .inputbar .send:disabled { background: var(--border); color: var(--muted); }
   .stop { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; margin-left: auto; }
 
@@ -677,7 +678,7 @@ This is a real historical period unless the player's words make it fictional. Be
 
   /** Portrait markup for a game: the uploaded painting when there is one, else the drawn bust. */
   function heroPortrait(game, size, ring) {
-    if (game && game.portraitAssetId) return `<img src="/_blob/${esc(game.portraitAssetId)}" width="${size}" height="${size}" alt="portrait" style="border-color:${ring || "#d9892c"}">`;
+    if (game && game.portraitAssetId) return `<img src="/_blob/${esc(game.portraitAssetId)}" width="${size}" height="${size}" alt="portrait" style="border-color:${ring || "#b8874a"}">`;
     return portraitSVG(game?.character?.portrait || {}, size, ring);
   }
 
@@ -871,7 +872,7 @@ This is a real historical period unless the player's words make it fictional. Be
     k: "#1b1410", h: "#ffffff", c: "#2a2a2e",
     s: "#d3d9de", S: "#7f8a93", w: "#8a5a2b", W: "#5b3a1c", g: "#e8c04a", G: "#a67c1e",
     r: "#c23b2e", R: "#7a1f18", b: "#3f7fbf", B: "#24486f", n: "#5a9a4c", N: "#2d5a2b",
-    p: "#efe3c2", P: "#c9b98d", l: "#a7743c", L: "#6b4520", x: "#8a5fc0", X: "#4f3378", o: "#d9892c", O: "#a85f14",
+    p: "#efe3c2", P: "#c9b98d", l: "#a7743c", L: "#6b4520", x: "#8a5fc0", X: "#4f3378", o: "#b8874a", O: "#a85f14",
   };
   const SPRITES = {
     dagger: [
@@ -1688,7 +1689,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         : g.status === "playing" ? `${esc(g.scenario?.title || "An adventure")} - ${esc(g.location)}, turn ${g.turns.length}`
         : `${esc(g.scenario?.title || "An adventure")} - concluded after ${g.turns.length} turns`;
       return `<div class="card stack" style="gap:6px"><button class="tale" data-action="open" data-id="${esc(g.id)}">
-        <span class="portrait">${heroPortrait(g, 48, g.status === "ended" ? "#edc252" : "#d9892c")}</span>
+        <span class="portrait">${heroPortrait(g, 48, g.status === "ended" ? "#edc252" : "#b8874a")}</span>
         <span class="grow"><span class="name">${esc(g.character.name)} <span style="font-size:14px">${glyph}</span></span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level} &middot; ${esc(g.era?.name || "Classic Fantasy")}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <div class="row" style="gap:6px"><button class="btn link" data-action="delete" data-id="${esc(g.id)}">Delete</button></div></div>`;
@@ -1735,7 +1736,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("pick").dataset.id = game.id;
     const c = game.character;
     $("p-hero").innerHTML = `<div class="card accent stack">
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#d9892c")}</span><div class="grow"><h2 style="font-size:30px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#b8874a")}</span><div class="grow"><h2 style="font-size:30px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p>${esc(c.appearance)}</p>
       <div class="narration quiet-text">${md(c.backstory)}</div>
@@ -1772,7 +1773,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
-    $("s-portrait").innerHTML = heroPortrait(game, 28, low ? "#c9443a" : "#d9892c");
+    $("s-portrait").innerHTML = heroPortrait(game, 28, low ? "#c9443a" : "#b8874a");
     const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
     $("pack-n").textContent = String(packCount);
     $("pack-n").hidden = packCount === 0;
@@ -1826,7 +1827,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     for (const n of ch.itemsLost) lines.push(`<div class="quest">&#127890; Lost ${esc(n)}</div>`);
     for (const q of ch.questUpdates) lines.push(`<div class="quest">&#128220; ${esc(q)}</div>`);
     const color = MOOD_COLOR[s.mood] || "var(--muted)";
-    return `<div class="scene" style="border-color:${color}">
+    return `<div class="scene" style="border-color:color-mix(in srgb, ${color} 40%, var(--border))">
       <div class="head"><h3>${esc(s.chapterTitle)}</h3><span class="mood" style="color:${color}">${esc(s.mood)}</span></div>
       ${d ? `<div class="dice ${d.success ? "ok" : "bad"}"><div class="d20"><span data-roll="${d.roll}">${d.roll}</span></div>
         <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
@@ -1910,7 +1911,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         <div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0">${esc(t.action.text)}</div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div>
       </details>`).join("") : `<span class="meta">The tale has not begun.</span>`;
     $("sheet-body").innerHTML = `
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#d9892c")}</span><div class="grow"><h1 style="font-size:32px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#b8874a")}</span><div class="grow"><h1 style="font-size:32px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
       <div class="meta">${esc(c.appearance)}</div>
       <div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div>
       <div class="vitals">
@@ -2061,7 +2062,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       <div class="doll">
         <div class="slots">${["head", "chest", "cloak", "hands", "feet"].map(slot).join("")}</div>
         <div class="doll-mid">
-          <span class="portrait">${heroPortrait(game, 118, "#d9892c")}</span>
+          <span class="portrait">${heroPortrait(game, 118, "#b8874a")}</span>
           <div class="who">${esc(c.name)}</div>
           <div class="cls">${esc(c.race)} ${esc(c.characterClass)}</div>
           <div class="ac"><span>${c.armorClass}<small>armour</small></span></div>
