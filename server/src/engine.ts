@@ -3,6 +3,7 @@ import type { DMMessage, DungeonMaster } from "./dm.js";
 import { DungeonMasterError } from "./dm.js";
 import { resolveCheck, rollDie, type RollFn } from "./dice.js";
 import { resolveEra } from "./eras.js";
+import { noImages, portraitPrompt, type ImageProvider } from "./images.js";
 import { FORGE_SYSTEM, REROLL_SYSTEM, actionUserMessage, dmSystemPrompt, forgeUserMessage, openingUserMessage, rerollUserMessage } from "./prompts.js";
 import { DEFAULT_PORTRAIT, type GameState, type Item, type PlayerAction, type Scene, type ScenarioOption, type Turn } from "./schemas.js";
 import type { GameStore } from "./store.js";
@@ -26,6 +27,8 @@ export interface EngineOptions {
   now?: () => Date;
   /** Maximum Dungeon Master calls per UTC day across all games; 0 or undefined means unlimited. */
   dailyCallLimit?: number;
+  /** Painted portraits; defaults to none. */
+  images?: ImageProvider;
 }
 
 export interface NewGameInput {
@@ -63,8 +66,10 @@ export class GameEngine {
   private readonly roll: RollFn;
   private readonly now: () => Date;
   private readonly dailyCallLimit: number;
+  private readonly images: ImageProvider;
 
   constructor(opts: EngineOptions) {
+    this.images = opts.images ?? noImages;
     this.dm = opts.dm;
     this.store = opts.store;
     this.roll = opts.roll ?? rollDie;
@@ -122,6 +127,7 @@ export class GameEngine {
       character,
       scenarios: forged.scenarios,
       passedScenarios: [],
+      portraitImage: false,
       scenario: null,
       hp: character.maxHp,
       gold: character.gold,
@@ -135,7 +141,20 @@ export class GameEngine {
       turns: [],
     };
     await this.store.save(game);
+    // A painted portrait, when an image model is configured. Never blocks the forge on failure.
+    const bytes = await this.images.generate(portraitPrompt(character, era));
+    if (bytes) {
+      await this.store.putImage(game.id, bytes);
+      game.portraitImage = true;
+      await this.store.save(game);
+    }
     return game;
+  }
+
+  /** Painted portrait bytes for a game, or null. */
+  async portraitImage(id: string): Promise<Buffer | null> {
+    const game = await this.load(id);
+    return game.portraitImage ? this.store.getImage(game.id) : null;
   }
 
   /** Replace the three offered scenarios with three new ones the player has not seen. */
@@ -249,6 +268,7 @@ export class GameEngine {
     if (!Array.isArray(game.research)) game.research = [];
     if (!Array.isArray(game.passedScenarios)) game.passedScenarios = [];
     if (!game.character.portrait) game.character.portrait = { ...DEFAULT_PORTRAIT };
+    if (typeof game.portraitImage !== "boolean") game.portraitImage = false;
     for (const t of game.turns) if (!Array.isArray(t.scene.loot)) t.scene.loot = [];
     return game;
   }

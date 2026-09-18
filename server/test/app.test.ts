@@ -60,6 +60,19 @@ test("full play loop over HTTP", async () => {
   assert.equal((await app.request(`/api/games/${game.id}`)).status, 404);
 });
 
+test("GET /api/games/:id/portrait serves the painted portrait or 404", async () => {
+  const engine = new GameEngine({ dm: new MockDungeonMaster(), store: new MemoryStore(), images: { async generate() { return Buffer.from([0xff, 0xd8, 0xff]); } } });
+  const app = createApp({ engine });
+  const created = await app.request("/api/games", json({ background: "A knight who fears horses more than dragons." }));
+  const { game } = (await created.json()) as any;
+  assert.equal(game.portraitImage, true);
+  const img = await app.request(`/api/games/${game.id}/portrait`);
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get("content-type"), "image/jpeg");
+  assert.equal((await img.arrayBuffer()).byteLength, 3);
+  assert.equal((await app.request(`/api/games/nope/portrait`)).status, 404);
+});
+
 test("GET /api/eras lists the catalogue without prompt text", async () => {
   const app = makeApp();
   const res = await app.request("/api/eras");

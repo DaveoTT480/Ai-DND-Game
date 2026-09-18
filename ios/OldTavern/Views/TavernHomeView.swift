@@ -178,7 +178,7 @@ struct SavedGameRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if let portrait = game.portrait {
-                PortraitView(portrait: portrait, size: 48, ring: iconColor)
+                HeroPortraitView(gameId: game.id, hasImage: game.portraitImage ?? false, portrait: portrait, size: 48, ring: iconColor)
             } else {
                 Image(systemName: icon)
                     .font(.title2)

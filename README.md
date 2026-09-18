@@ -58,6 +58,9 @@ Environment variables (see `server/.env.example`):
 | `DM_MODEL` | `claude-opus-5` | Model that plays Dungeon Master. |
 | `DM_EFFORT` | `medium` | Reasoning effort per turn. `low` is faster and cheaper; `high` is more careful. |
 | `GAME_API_TOKEN` | | Shared secret; clients send `Authorization: Bearer <token>`. Optional locally, required on Vercel (the server fails closed without it). |
+| `OPENAI_API_KEY` | | Optional. Enables painted portraits from `gpt-image-1` at forge time. |
+| `IMAGE_PROVIDER` | `openai` if a key is set, else `none` | Image provider for portraits. |
+| `IMAGE_MODEL`, `IMAGE_QUALITY` | `gpt-image-1`, `medium` | Portrait model and quality. |
 | `DM_DAILY_CALL_LIMIT` | 300 on Vercel, unlimited locally | Maximum model calls per UTC day; 429 after that. `0` disables the cap. |
 | `REQUIRE_API_TOKEN` | `0` | Set to `1` to fail closed without a token even for local runs. |
 | `DATA_DIR` | `./data` | Saved adventures, one JSON file each (local runs). |
@@ -204,8 +207,9 @@ Notes:
    conditions), a one-line recap, a mood, and three or four choices. Pick one or type what you
    do instead.
 4. **Portrait, inventory, chronicle.** The Keeper describes the hero's look in fixed choices
-   (skin, hair, headwear, clothing, an emoji for their trade) and the game paints a tavern-sign
-   portrait from it, shown on the home list, the status bar and the sheet. The backpack button
+   (skin, hair, headwear, clothing, an emoji for their trade) and the game draws a lit, shaded
+   bust from it, shown on the home list, the status bar and the sheet. For a real painted
+   portrait in the style of Old Greg's Tavern, see "Painted portraits" below. The backpack button
    opens the inventory: what you carry, with Use, Examine and Drop, plus "Nearby" objects the
    Dungeon Master says you could pick up right now, with a Take button. The character sheet
    ends with a chronicle of every chapter so far, each one expandable to reread in full.
@@ -217,6 +221,24 @@ Notes:
    an epilogue and the tale is marked finished. Saved tales live on the server and appear on the
    tavern's home screen.
 
+## Painted portraits
+
+Anthropic's models write text; they do not generate images. Two ways to get a painted
+portrait anyway:
+
+- **Server route (automatic).** Set `OPENAI_API_KEY` on the server (locally or in Vercel) and
+  every forged hero gets a portrait from OpenAI's `gpt-image-1`: an oil-painting bust with warm
+  rim light on a dark smoky ground, period-accurate to the era, built from the Keeper's
+  description. It costs a few cents per hero, is stored beside the save (on disk locally, in
+  Vercel Blob when deployed) and served at `GET /api/games/:id/portrait`. The web app and iOS
+  app show it in place of the drawn bust. `IMAGE_MODEL` and `IMAGE_QUALITY` (`low`, `medium`,
+  `high`) tune it; `IMAGE_PROVIDER=none` turns it off. Other providers can be added in
+  `server/src/images.ts`; the interface is one function that returns JPEG bytes.
+- **Artifact route (manual).** The claude.ai Artifact cannot reach an image model, so its
+  "Get a painted portrait" button gives you a ready-made prompt in the same style. Paste it
+  into any image generator, save the result, and upload it on the same screen. The upload
+  is stored with the artifact and replaces the drawn portrait everywhere.
+
 ## API
 
 All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, send
@@ -227,6 +249,7 @@ All game endpoints are under `/api` and return JSON. With `GAME_API_TOKEN` set, 
 | `GET` | `/health` | | `{ ok: true }` |
 | `GET` | `/api/usage` | | `{ used, limit }` model calls today |
 | `GET` | `/api/eras` | | `{ eras: [...] }` the era catalogue |
+| `GET` | `/api/games/:id/portrait` | | JPEG painted portrait, or 404 when none was generated |
 | `GET` | `/api/games` | | `{ games: GameSummary[] }` |
 | `POST` | `/api/games` | `{ background, tone?, name?, eraId?, customEra? }` | `{ game }` with `status: "forged"`, character and scenarios |
 | `GET` | `/api/games/:id` | | `{ game }` |

@@ -26,6 +26,24 @@ test("createGame rejects empty or oversized backgrounds", async () => {
   await assert.rejects(engine.createGame({ background: "x".repeat(5000) }), GameError);
 });
 
+test("a configured image provider paints a portrait at forge time; none means none", async () => {
+  const prompts: string[] = [];
+  const images = { async generate(prompt: string) { prompts.push(prompt); return Buffer.from("fake-jpeg"); } };
+  const store = new MemoryStore();
+  const engine = new GameEngine({ dm: new MockDungeonMaster(), store, images });
+  const game = await engine.createGame({ background: "A dock rat with a silver locket and a debt.", eraId: "rome" });
+  assert.equal(game.portraitImage, true);
+  assert.equal((await engine.portraitImage(game.id))?.toString(), "fake-jpeg");
+  assert.match(prompts[0]!, /Imperial Rome/);
+  assert.match(prompts[0]!, /Oil painting/);
+  assert.match(prompts[0]!, /hood/);
+
+  const plain = new GameEngine({ dm: new MockDungeonMaster(), store: new MemoryStore() });
+  const g2 = await plain.createGame({ background: "A dock rat with a silver locket and a debt." });
+  assert.equal(g2.portraitImage, false);
+  assert.equal(await plain.portraitImage(g2.id), null);
+});
+
 test("the forge carries a portrait and scenes carry loot", async () => {
   const engine = makeEngine();
   const created = await engine.createGame({ background: "A dock rat with a silver locket and a debt." });

@@ -70,6 +70,12 @@ export function createApp({ engine, apiToken, requireToken = false }: AppOptions
     return c.json({ game: toSnapshot(game) });
   });
 
+  api.get("/games/:id/portrait", async (c) => {
+    const bytes = await engine.portraitImage(c.req.param("id"));
+    if (!bytes) return c.json({ error: "No painted portrait for this tale." }, 404);
+    return new Response(new Uint8Array(bytes), { headers: { "content-type": "image/jpeg", "cache-control": "private, max-age=86400" } });
+  });
+
   api.post("/games/:id/reroll", async (c) => {
     const game = await engine.rerollScenarios(c.req.param("id"));
     return c.json({ game: toSnapshot(game) });

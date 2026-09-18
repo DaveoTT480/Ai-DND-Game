@@ -160,7 +160,7 @@ struct AdventureView: View {
         let game = model.game
         let lowHp = game.hp * 3 <= game.character.maxHp
         return HStack(spacing: 14) {
-            PortraitView(portrait: game.character.look, size: 28, ring: lowHp ? Theme.blood : Theme.ember)
+            HeroPortraitView(gameId: game.id, hasImage: game.portraitImage ?? false, portrait: game.character.look, size: 28, ring: lowHp ? Theme.blood : Theme.ember)
             HStack(spacing: 5) {
                 Image(systemName: "heart.fill").foregroundStyle(lowHp ? Theme.blood : Theme.moss)
                 Text("\(game.hp)/\(game.character.maxHp)")

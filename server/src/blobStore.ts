@@ -9,6 +9,8 @@ import type { GameStore } from "./store.js";
 export interface BlobClient {
   put(pathname: string, body: string): Promise<void>;
   get(pathname: string): Promise<string | null>;
+  putBytes(pathname: string, body: Buffer, contentType: string): Promise<void>;
+  getBytes(pathname: string): Promise<Buffer | null>;
   list(prefix: string): Promise<string[]>;
   del(pathname: string): Promise<void>;
 }
@@ -26,6 +28,14 @@ export const vercelBlobClient: BlobClient = {
     const result = await get(pathname, { access: "private", useCache: false });
     if (!result || !result.stream) return null;
     return new Response(result.stream).text();
+  },
+  async putBytes(pathname, body, contentType) {
+    await put(pathname, body, { access: "private", addRandomSuffix: false, allowOverwrite: true, contentType });
+  },
+  async getBytes(pathname) {
+    const result = await get(pathname, { access: "private" });
+    if (!result || !result.stream) return null;
+    return Buffer.from(await new Response(result.stream).arrayBuffer());
   },
   async list(prefix) {
     const pathnames: string[] = [];
@@ -106,6 +116,17 @@ export class BlobStore implements GameStore {
     const existing = await this.client.get(pathname);
     if (!existing) return false;
     await this.client.del(pathname);
+    await this.client.del(`portraits/${id}.jpg`).catch(() => undefined);
     return true;
+  }
+
+  async getImage(gameId: string): Promise<Buffer | null> {
+    if (!/^[A-Za-z0-9-]+$/.test(gameId)) return null;
+    return this.client.getBytes(`portraits/${gameId}.jpg`);
+  }
+
+  async putImage(gameId: string, bytes: Buffer): Promise<void> {
+    if (!/^[A-Za-z0-9-]+$/.test(gameId)) throw new Error("Invalid game id");
+    await this.client.putBytes(`portraits/${gameId}.jpg`, bytes, "image/jpeg");
   }
 }

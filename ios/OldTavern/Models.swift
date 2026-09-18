@@ -242,6 +242,7 @@ struct GameSnapshot: Codable, Hashable, Identifiable {
     var character: CharacterSheet
     var scenarios: [ScenarioOption]
     var passedScenarios: [String]?
+    var portraitImage: Bool?
     var scenario: ScenarioOption?
     var hp: Int
     var gold: Int
@@ -268,6 +269,7 @@ struct GameSummary: Codable, Hashable, Identifiable {
     var level: Int
     var eraName: String?
     var portrait: Portrait?
+    var portraitImage: Bool?
     var scenarioTitle: String?
     var location: String
     var turnCount: Int

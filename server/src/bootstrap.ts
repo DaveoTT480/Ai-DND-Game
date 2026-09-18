@@ -3,6 +3,7 @@ import { createApp } from "./app.js";
 import { BlobStore } from "./blobStore.js";
 import { ClaudeDungeonMaster, type DungeonMaster } from "./dm.js";
 import { GameEngine } from "./engine.js";
+import { chooseImageProvider } from "./images.js";
 import { MockDungeonMaster } from "./mockDM.js";
 import { FileStore, MemoryStore, type GameStore } from "./store.js";
 
@@ -15,7 +16,7 @@ export function buildApp(env: NodeJS.ProcessEnv = process.env, defaultDataDir?: 
   const dm: DungeonMaster = mock ? new MockDungeonMaster() : new ClaudeDungeonMaster();
   const onVercel = Boolean(env.VERCEL);
   const dailyCallLimit = env.DM_DAILY_CALL_LIMIT !== undefined ? Number(env.DM_DAILY_CALL_LIMIT) : onVercel ? 300 : 0;
-  const engine = new GameEngine({ dm, store: chooseStore(env, defaultDataDir), dailyCallLimit });
+  const engine = new GameEngine({ dm, store: chooseStore(env, defaultDataDir), dailyCallLimit, images: chooseImageProvider(env) });
   const app = createApp({
     engine,
     apiToken: env.GAME_API_TOKEN || null,

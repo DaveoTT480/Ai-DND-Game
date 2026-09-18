@@ -43,7 +43,7 @@ struct CharacterSheetView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
-            PortraitView(portrait: c.look, size: 96)
+            HeroPortraitView(gameId: game.id, hasImage: game.portraitImage ?? false, portrait: c.look, size: 96)
             VStack(alignment: .leading, spacing: 4) {
             Text(c.name)
                 .font(Theme.display(30, weight: .bold))

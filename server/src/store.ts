@@ -10,11 +10,15 @@ export interface GameStore {
   /** Small key/value area for counters such as the daily spend guard. */
   getMeta(key: string): Promise<string | null>;
   setMeta(key: string, value: string): Promise<void>;
+  /** Painted portrait bytes (JPEG) for a game, when one was generated. */
+  getImage(gameId: string): Promise<Buffer | null>;
+  putImage(gameId: string, bytes: Buffer): Promise<void>;
 }
 
 export class MemoryStore implements GameStore {
   protected games = new Map<string, GameState>();
   protected meta = new Map<string, string>();
+  protected images = new Map<string, Buffer>();
 
   async get(id: string) {
     return this.games.get(id) ?? null;
@@ -33,6 +37,12 @@ export class MemoryStore implements GameStore {
   }
   async setMeta(key: string, value: string) {
     this.meta.set(key, value);
+  }
+  async getImage(gameId: string) {
+    return this.images.get(gameId) ?? null;
+  }
+  async putImage(gameId: string, bytes: Buffer) {
+    this.images.set(gameId, bytes);
   }
 }
 
@@ -84,12 +94,6 @@ export class FileStore extends MemoryStore {
     const { rename } = await import("node:fs/promises");
     await rename(tmp, file);
   }
-  override async delete(id: string) {
-    await this.ensureLoaded();
-    const existed = await super.delete(id);
-    if (existed) await rm(path.join(this.dir, `${id}.json`), { force: true });
-    return existed;
-  }
   override async getMeta(key: string) {
     await this.ensureLoaded();
     return super.getMeta(key);
@@ -98,5 +102,30 @@ export class FileStore extends MemoryStore {
     await this.ensureLoaded();
     await super.setMeta(key, value);
     await writeFile(path.join(this.dir, "_meta.json"), JSON.stringify(Object.fromEntries(this.meta), null, 2));
+  }
+  private imagePath(gameId: string) {
+    return path.join(this.dir, "portraits", `${gameId}.jpg`);
+  }
+  override async getImage(gameId: string) {
+    if (!/^[A-Za-z0-9-]+$/.test(gameId)) return null;
+    try {
+      return await readFile(this.imagePath(gameId));
+    } catch {
+      return null;
+    }
+  }
+  override async putImage(gameId: string, bytes: Buffer) {
+    if (!/^[A-Za-z0-9-]+$/.test(gameId)) throw new Error("Invalid game id");
+    await mkdir(path.join(this.dir, "portraits"), { recursive: true });
+    await writeFile(this.imagePath(gameId), bytes);
+  }
+  override async delete(id: string) {
+    await this.ensureLoaded();
+    const existed = await super.delete(id);
+    if (existed) {
+      await rm(path.join(this.dir, `${id}.json`), { force: true });
+      await rm(this.imagePath(id), { force: true });
+    }
+    return existed;
   }
 }

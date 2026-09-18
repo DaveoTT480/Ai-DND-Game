@@ -194,6 +194,8 @@ export interface GameState {
   scenarios: ScenarioOption[];
   /** Titles and taglines the player passed on, so rerolls stay fresh. */
   passedScenarios: string[];
+  /** True when a painted portrait was generated and stored for this game. */
+  portraitImage: boolean;
   scenario: ScenarioOption | null;
   hp: number;
   gold: number;
@@ -240,6 +242,7 @@ export interface GameSummary {
   level: number;
   eraName: string;
   portrait: Portrait;
+  portraitImage: boolean;
   scenarioTitle: string | null;
   location: string;
   turnCount: number;
@@ -261,6 +264,7 @@ export function toSummary(game: GameState): GameSummary {
     level: game.level,
     eraName: game.era.name,
     portrait: game.character.portrait ?? DEFAULT_PORTRAIT,
+    portraitImage: Boolean(game.portraitImage),
     scenarioTitle: game.scenario?.title ?? null,
     location: game.location,
     turnCount: game.turns.length,

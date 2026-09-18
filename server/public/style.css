@@ -73,6 +73,7 @@ textarea.field { min-height: 150px; resize: vertical; line-height: 1.45; }
 .era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
 .portrait { flex: 0 0 auto; line-height: 0; }
 .portrait svg { display: block; }
+.portrait img { display: block; object-fit: cover; border-radius: 50%; border: 1.6px solid var(--ember); background: #3a2718; }
 .loot { display: flex; flex-wrap: wrap; gap: 6px; }
 .loot .take { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--gold); color: var(--parchment); border-radius: 999px; padding: 6px 12px; font-size: 13px; margin: 0; }
 .loot .take b { color: var(--gold); }

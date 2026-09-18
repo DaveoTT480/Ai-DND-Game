@@ -10,7 +10,24 @@
   let eraId = "classic-fantasy";
   const eraById = (id) => eras.find((e) => e.id === id) || eras[0] || { id: "classic-fantasy", examples: [] };
   const shortCurrency = (g) => (g.era?.currency || "gold").split(" of ")[0];
+  const portraitUrls = new Map(); // gameId -> object URL of the painted portrait
   const portrait = (c, size, ring) => window.Portrait ? window.Portrait.portraitSVG(c.portrait || {}, size, ring) : "";
+  /** The painted portrait when the server has one (fetched with the token), else the drawn bust. */
+  function heroPortrait(id, hasImage, c, size, ring) {
+    if (hasImage && portraitUrls.has(id)) return `<img src="${portraitUrls.get(id)}" width="${size}" height="${size}" alt="portrait" style="border-color:${ring || "#e08f2b"}">`;
+    if (hasImage && !portraitUrls.has(id)) loadPortrait(id);
+    return portrait(c, size, ring);
+  }
+  async function loadPortrait(id) {
+    if (portraitUrls.has(id)) return;
+    portraitUrls.set(id, null); // in flight
+    try {
+      const res = await fetch(`/api/games/${id}/portrait`, { headers: token() ? { authorization: `Bearer ${token()}` } : {} });
+      if (!res.ok) { portraitUrls.delete(id); return; }
+      portraitUrls.set(id, URL.createObjectURL(await res.blob()));
+      render();
+    } catch { portraitUrls.delete(id); }
+  }
 
   const TONES = [
     ["classic fantasy", "Classic fantasy"], ["grimdark", "Grimdark"], ["lighthearted comedy", "Comedy"],
@@ -129,7 +146,7 @@
         : g.status === "playing" ? `${esc(g.scenarioTitle || "An adventure")} - ${esc(g.location)}, turn ${g.turnCount}`
         : `${esc(g.scenarioTitle || "An adventure")} - concluded after ${g.turnCount} turns`;
       return `<div class="card" style="padding:0"><button class="tale card" style="margin:0;border:0;background:none" data-action="open" data-id="${g.id}">
-        <span class="portrait">${g.portrait ? window.Portrait.portraitSVG(g.portrait, 48, g.status === "ended" ? "#edc252" : "#e08f2b") : glyph}</span>
+        <span class="portrait">${g.portrait ? heroPortrait(g.id, g.portraitImage, { portrait: g.portrait }, 48, g.status === "ended" ? "#edc252" : "#e08f2b") : glyph}</span>
         <span style="flex:1"><span class="name">${esc(g.characterName)}</span><br><span class="sub">${esc(g.race)} ${esc(g.characterClass)}, level ${g.level}${g.eraName ? ` &middot; ${esc(g.eraName)}` : ""}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <button class="btn link" style="padding:0 14px 10px" data-action="delete" data-id="${g.id}">Delete</button></div>`;
@@ -177,7 +194,7 @@
     $("pick").dataset.id = game.id;
     const c = game.character;
     $("p-hero").innerHTML = `<div class="card accent">
-      <div class="row" style="align-items:center"><span class="portrait">${portrait(c, 84, "#e08f2b")}</span><div style="flex:1"><h3 style="font-size:26px">${esc(c.name)}</h3></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game.id, game.portraitImage, c, 84, "#e08f2b")}</span><div style="flex:1"><h3 style="font-size:26px">${esc(c.name)}</h3></div></div>
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p style="margin:6px 0">${esc(c.appearance)}</p>
@@ -214,7 +231,7 @@
     $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
-    $("s-portrait").innerHTML = portrait(game.character, 28, low ? "#c9443a" : "#e08f2b");
+    $("s-portrait").innerHTML = heroPortrait(game.id, game.portraitImage, game.character, 28, low ? "#c9443a" : "#e08f2b");
     const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
     $("pack-n").textContent = String(packCount);
     $("pack-n").hidden = packCount === 0;
@@ -351,7 +368,7 @@
     const chronicle = game.turns.length ? game.turns.map((t, i) => `<details class="chapter"${i === game.turns.length - 1 ? " open" : ""}><summary><span class="n">${i + 1}</span><span class="t">${esc(t.scene.chapterTitle)}</span></summary><div class="r">${esc(t.scene.recap)}</div><div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0"><em>${esc(t.action.text)}</em></div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div></details>`).join("") : `<span class="stat">The tale has not begun.</span>`;
     const chips = (items, color) => items.length ? items.map((t) => `<span class="tag" style="border-color:${color}">${esc(t)}</span>`).join("") : `<span class="meta">none</span>`;
     $("sheet-body").innerHTML = `
-      <div class="row" style="align-items:center;margin-top:12px"><span class="portrait">${portrait(c, 104, "#e08f2b")}</span><h1 style="margin:0;flex:1">${esc(c.name)}</h1></div>
+      <div class="row" style="align-items:center;margin-top:12px"><span class="portrait">${heroPortrait(game.id, game.portraitImage, c, 104, "#e08f2b")}</span><h1 style="margin:0;flex:1">${esc(c.name)}</h1></div>
       <div class="tagline" style="font-style:normal">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div>
       <div class="meta">${esc(game.era?.name || "")}${game.era?.when ? `, ${esc(game.era.when)}` : ""}</div>
       <div class="meta">${esc(c.appearance)}</div>

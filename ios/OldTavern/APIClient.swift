@@ -32,6 +32,13 @@ struct APIClient {
         return envelope.game
     }
 
+    /// Painted portrait bytes for a game, or nil when the server has none.
+    func portraitData(id: String) async -> Data? {
+        guard let request = try? makeRequest(path: "/api/games/\(id)/portrait", method: "GET", body: nil, timeout: 30) else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: request), (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return data
+    }
+
     func listEras() async throws -> [Era] {
         let envelope: ErasEnvelope = try await request(path: "/api/eras")
         return envelope.eras
