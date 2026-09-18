@@ -17,9 +17,11 @@
 }
 * { box-sizing: border-box; }
 html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+html { background: var(--wood-deep); min-height: 100%; }
 body {
   margin: 0;
-  background: linear-gradient(180deg, var(--wood) 0%, var(--wood-deep) 100%) fixed;
+  min-height: 100%;
+  background: var(--wood-deep) linear-gradient(180deg, var(--wood) 0%, var(--wood-deep) 100%) no-repeat;
   color: var(--parchment);
   font-family: var(--serif);
   font-size: 17px;

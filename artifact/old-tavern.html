@@ -21,10 +21,12 @@
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  /* Paint the whole document, not just the first screen: the host frame behind the page is grey. */
+  html { background: var(--wood-deep); min-height: 100%; }
   body {
     margin: 0;
-    background: var(--wood) radial-gradient(ellipse 120% 70% at 50% -10%, #3a2718 0%, var(--wood) 55%, var(--wood-deep) 100%) fixed;
+    min-height: 100%;
+    background: var(--wood-deep) radial-gradient(ellipse 120% 60% at 50% 0%, #3a2718 0%, var(--wood) 45%, var(--wood-deep) 100%) no-repeat;
     color: var(--parchment);
     font-family: var(--body);
     font-size: 17px;
@@ -1476,7 +1478,9 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("free").disabled = $("send").disabled = busy || over;
     $("free").placeholder = over ? "The tale has ended" : "Or do something else...";
     animateDice();
-    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+    const firstShow = renderPlay.lastId !== game.id;
+    renderPlay.lastId = game.id;
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: firstShow ? "auto" : "smooth" }));
   }
 
   function shortCurrency(game) { const c = game.era?.currency || "gold"; return c.split(" of ")[0]; }
