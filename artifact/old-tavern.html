@@ -1267,7 +1267,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 
 ## Voice and style
 - Second person, present tense ("You push open the door...").
-- Vivid, concrete, and tight: 120 to 260 words of narration per turn, in short paragraphs.
+- Vivid, concrete, and tight: 100 to 200 words of narration per turn, in short paragraphs. Keep every other string brief; the whole reply must stay compact.
 - Tone for this adventure: ${game.tone}. Stay in it.
 - Give NPCs names, distinct voices and wants of their own. Quote their dialogue directly.
 - Never break character, never mention being an AI, never explain rules unless asked in play.
@@ -1279,7 +1279,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 - Dice are rolled by the game, not by you. Each turn you receive a "fate die" (a d20). If the player's action carries real risk, decide the ability, skill and DC (10 easy, 13 moderate, 16 hard, 20 very hard), add the hero's modifier (ability modifier, plus proficiency bonus ${2 + Math.floor((game.level - 1) / 4)} if proficient in the skill), compare to the DC, narrate the outcome, and report it in diceResult. If the game already resolved a check for the chosen option, you MUST honour that result exactly. Natural 20 is a critical success, natural 1 a critical failure. Routine actions need no check.
 - The game tracks hit points, gold, inventory, quests and conditions. Report every change in stateChange.
 - Things to find: in loot, list up to 3 objects physically present in this scene that the hero could plausibly pick up right now (a dropped key, a purse, a letter, a weapon from a fallen foe); empty when there is nothing worth taking. When the player picks something up, add it in stateChange.itemsGained. When the player uses or drops something from their inventory, honour it in the narration, and report consumed or dropped items in stateChange.itemsLost.
-- Every item in loot and itemsGained is a full item object: ${ITEM_SHAPE}
+- Every item in loot and itemsGained is a SHORT object: ITEM = {"name":string,"quantity":int,"description":string (one line, what it looks like)}. The tavern appraises details later; do not add other fields.
 - The state lists what the hero has equipped (worn or wielded). Narrate with that gear: an unequipped sword is in the pack, not in hand.
 - Wear: when a weapon or armour is used hard (a fight, a forced lock, a fall), report it in stateChange.wear as {"name":string,"durabilityDelta":int} with small negative numbers (-3 to -15). An item at 0 durability is broken and no longer works; say so if it happens. Damage should feel dangerous: a level 1 hero has around 10 hit points; a goblin's blade does 3 to 6.
 - Hero at 0 hit points = death: set ending with victory false and a fitting epilogue. Death is rare and earned, never arbitrary.
@@ -1607,7 +1607,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   }
 
   async function forgeWorld(game) {
-    const raw = await askDM(worldPrompt(game), { modelTier: "complex" });
+    const raw = await askDM(worldPrompt(game), { modelTier: "complex", accept: (r) => Array.isArray(r.places) && r.places.length >= 3 });
     const world = normWorld(raw, game);
     if (!world.places.length) throw { code: "invalid_json", message: "the cartographer drew nothing" };
     game.world = world;
@@ -1833,14 +1833,59 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     return level;
   }
 
+  /** Best-effort parse of a reply that was cut short or wrapped in prose: close open strings and brackets. */
+  function salvageJSON(text) {
+    if (!text) return null;
+    let s = String(text);
+    const fence = s.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
+    if (fence) s = fence[1];
+    const start = s.search(/[{[]/);
+    if (start < 0) return null;
+    s = s.slice(start);
+    const tryParse = (t) => { try { return JSON.parse(t); } catch { return null; } };
+    let v = tryParse(s);
+    if (v) return v;
+    const stack = []; let inStr = false, escd = false, out = "";
+    for (const ch of s) {
+      out += ch;
+      if (inStr) { if (escd) escd = false; else if (ch === "\\") escd = true; else if (ch === '"') inStr = false; continue; }
+      if (ch === '"') inStr = true;
+      else if (ch === "{" || ch === "[") stack.push(ch);
+      else if (ch === "}" || ch === "]") stack.pop();
+    }
+    if (inStr) out += '"';
+    const closers = () => stack.map((c) => (c === "{" ? "}" : "]")).reverse().join("");
+    const attempts = [
+      out,
+      out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, ""),
+      out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, "").replace(/:\s*$/, ":null"),
+      out.replace(/,\s*"(?:[^"\\]|\\.)*"\s*:\s*(?:"(?:[^"\\]|\\.)*"|[^,}\]]*)$/, ""),
+    ];
+    for (const a of attempts) { v = tryParse(a + closers()); if (v) return v; }
+    return null;
+  }
+
   async function askDM(input, opts) {
     if (!sample) throw { code: "sampling_disabled", message: "no sample capability" };
+    const o = opts || {};
     controller = new AbortController();
-    return sample.json(input, { modelTier: (opts && opts.modelTier) || tier, cache: false, signal: controller.signal });
+    try {
+      return await sample.json(input, { modelTier: o.modelTier || tier, cache: false, signal: controller.signal });
+    } catch (e) {
+      if (!e || e.code !== "invalid_json") throw e;
+      // The reply was cut off or had prose around it. Keep what can be kept...
+      const fixed = salvageJSON(e.text);
+      if (fixed && typeof fixed === "object" && (!o.accept || o.accept(fixed))) { console.warn("Kept a cut-off reply", e.message); return fixed; }
+      if (o.retried) throw e;
+      // ...else ask once more, briefer, on the same conversation.
+      const nudge = "\n\nYour previous reply was cut off or was not valid JSON. Reply again with ONLY the JSON object and keep it shorter: narration under 150 words, at most 2 loot items, every string brief.";
+      const again = Array.isArray(input) ? [...input.slice(0, -1), { role: "user", content: input[input.length - 1].content + nudge }] : input + nudge;
+      return askDM(again, { ...o, retried: true });
+    }
   }
 
   async function createGame({ background, tone: toneName, name, era }) {
-    const forged = await askDM(forgePrompt(background, toneName, name, era));
+    const forged = await askDM(forgePrompt(background, toneName, name, era), { accept: (r) => r.character && Array.isArray(r.scenarios) && r.scenarios.length >= 1 });
     const character = normCharacter(forged?.character);
     const scenarios = arr(forged?.scenarios).slice(0, 3).map(normScenario);
     if (!scenarios.length) throw { code: "invalid_json", message: "no scenarios" };
@@ -1860,7 +1905,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   async function rerollScenarios(game) {
     const passed = game.scenarios.map((sc) => `${sc.title}: ${sc.tagline}`);
     game.passedScenarios = game.passedScenarios.concat(passed).slice(-12);
-    const result = await askDM(rerollPrompt(game));
+    const result = await askDM(rerollPrompt(game), { accept: (r) => Array.isArray(r.scenarios) && r.scenarios.length >= 1 });
     const scenarios = arr(result?.scenarios).slice(0, 3).map(normScenario);
     if (!scenarios.length) throw { code: "invalid_json", message: "no scenarios" };
     // Fresh ids so a stale tap can never start an old tale.
@@ -1883,7 +1928,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     const fateRoll = d20();
     const draft = { ...game, scenario, location: scenario.openingLocation, status: "playing" };
     const opening = `Begin the adventure. Open on the hero in the opening location with a vivid scene, introduce the first hook or complication, and end with the first set of choices.\n\nCurrent state:\n${stateBlock(draft)}\n\nFate die for this turn: ${fateRoll}\n\nJSON only.`;
-    const scene = normScene(await askDM(buildTurns(draft, opening)));
+    const scene = normScene(await askDM(buildTurns(draft, opening), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40 }));
     Object.assign(game, draft);
     applyScene(game, { kind: "start", text: "Begin the adventure", choiceId: null }, fateRoll, scene);
     await store.save(game);
@@ -1908,7 +1953,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     parts.push(action.kind === "choice" ? `The player chooses: ${action.text}` : `The player says: "${action.text}"`, "");
     parts.push(resolved ? `The game already rolled for this choice: ${resolved}. Honour this result exactly and include it in diceResult.` : `Fate die for this turn: ${fateRoll}. Use it only if the action calls for a check.`);
     parts.push("", "Current state:", stateBlock(game), "", "Narrate what happens next and offer new choices. JSON only.");
-    const scene = normScene(await askDM(buildTurns(game, parts.join("\n"))));
+    const scene = normScene(await askDM(buildTurns(game, parts.join("\n")), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40 }));
     applyScene(game, action, fateRoll, scene);
     await store.save(game);
     return game;
