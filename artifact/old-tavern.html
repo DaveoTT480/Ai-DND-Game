@@ -512,11 +512,13 @@
   const eraById = (id) => ERAS.find((e) => e.id === id) || ERAS[0];
 
   /** The Keeper's briefing text for an era, ready to drop into a prompt. */
-  function eraBriefing(era) {
-    if (era.id === "custom") {
-      return `Era chosen by the player: ${era.custom}
+  function eraBriefing(ref) {
+    if (ref.id === "custom") {
+      return `Era chosen by the player: ${ref.custom || ref.name}
 This is a real historical period unless the player's words make it fictional. Before writing, recall what you know of it: the exact years, the rulers and notable people alive then, the technology, money, food, laws, beliefs and daily life. Use REAL documented people, places and events of that period in the tale; name them; keep them accurate; avoid anachronism.`;
     }
+    // A saved game keeps only a slim era record; the briefing lives in the catalogue.
+    const era = eraById(ref.id);
     const lines = [`Era: ${era.name} - ${era.when}.`, era.briefing];
     if (era.people.length) lines.push("", era.historical ? "Documented people alive and active in this year (use them as NPCs, keep them true to the record):" : "Cast to build from:", ...era.people.map((p) => `- ${p}`));
     if (era.places?.length) lines.push("", "Places:", ...era.places.map((p) => `- ${p}`));
