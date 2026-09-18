@@ -136,6 +136,15 @@ iOS SDK in that Xcode (iOS 26 needs Xcode 26), or Xcode will refuse to install.
 7. In the app, sign in to claude.ai. If you sign in with Google and the page refuses the
    embedded browser, use the "Open in Safari" menu item, or sign in with an email code.
 
+**Using a signing service instead (Signulous, AltStore, Sideloadly).** These need an unsigned
+`.ipa`. GitHub builds one for you: every push that touches `ios/` runs the "Build unsigned
+IPA" workflow on a macOS runner and attaches `OldTavern-ipa` to the run (Actions tab, open the
+latest run, Artifacts, download, unzip to get `OldTavern.ipa`). You can also start it by hand
+from the Actions tab with "Run workflow". On a Mac with Xcode, `bash ios/make-ipa.sh` writes
+the same file to `ios/OldTavern.ipa`. Upload it to the service and install its signed copy;
+the game inside updates on its own, so a new `.ipa` is only needed when the Swift shell
+changes.
+
 A free Personal Team signs the app for 7 days; after that it stops opening until you press
 Run in Xcode again (the phone can be plugged in or on the same Wi-Fi). A paid Apple
 Developer account extends this to a year. Free teams can have three sideloaded apps at a
