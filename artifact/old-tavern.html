@@ -1,23 +1,24 @@
 <title>The Old Tavern</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
-  /* A tavern after midnight: one committed palette, painted explicitly on both host grounds. */
+  /* A tavern under the night sky: near-black ground, faint stars, blackletter titles, clean sans body. */
   :root {
-    --wood: #1c1410;
-    --wood-deep: #0d0806;
-    --wood-light: #2d2119;
-    --border: #4d3a2b;
-    --parchment: #f2e6c8;
-    --parchment-dim: rgba(242, 230, 200, 0.82);
-    --ember: #e08f2b;
-    --ember-soft: rgba(224, 143, 43, 0.14);
-    --muted: #a8917a;
+    --wood: #0a0908;
+    --wood-deep: #030303;
+    --wood-light: #141210;
+    --border: #2a2521;
+    --parchment: #f3efe6;
+    --parchment-dim: rgba(243, 239, 230, 0.8);
+    --ember: #d9892c;
+    --ember-soft: rgba(217, 137, 44, 0.14);
+    --muted: #8f8a82;
     --blood: #c9443a;
     --moss: #6ea45f;
     --gold: #edc252;
     --violet: #9a82d6;
-    --display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    --body: "Lora", Georgia, "Iowan Old Style", serif;
+    --display: "Grenze Gotisch", "Cormorant Garamond", Georgia, serif;
+    --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='900'%3E%3Ccircle cx='194.3' cy='135.8' r='1.3' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='43.5' cy='482.3' r='0.8' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='34.8' cy='456.7' r='0.6' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='260.2' cy='62.9' r='0.6' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='254.7' cy='744.2' r='0.6' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='378.4' cy='524.7' r='0.6' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='351.3' cy='44.6' r='0.7' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='334.0' cy='119.9' r='0.9' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='324.4' cy='513.8' r='1.1' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='108.4' cy='523.4' r='1.3' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='223.4' cy='493.0' r='0.6' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='35.8' cy='185.4' r='1.3' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='256.6' cy='282.7' r='1.1' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='216.9' cy='223.6' r='0.7' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='467.9' cy='73.7' r='0.8' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='297.1' cy='309.1' r='0.9' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='365.4' cy='65.9' r='1.1' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='99.0' cy='307.9' r='0.9' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='23.5' cy='601.4' r='1.1' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='473.5' cy='736.5' r='0.8' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='210.1' cy='447.0' r='0.9' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='504.0' cy='850.2' r='0.9' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='398.5' cy='54.6' r='1.3' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='388.3' cy='893.8' r='0.9' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='430.0' cy='798.3' r='0.8' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='564.4' cy='319.9' r='1.1' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='296.2' cy='196.4' r='0.8' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='443.0' cy='358.1' r='0.9' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='99.8' cy='361.5' r='0.8' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='491.6' cy='777.6' r='0.8' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='249.2' cy='322.9' r='0.9' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='90.6' cy='158.6' r='0.7' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='140.0' cy='436.5' r='1.1' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='157.6' cy='3.7' r='0.9' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='221.6' cy='509.7' r='0.7' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='515.5' cy='855.2' r='1.3' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='443.9' cy='411.0' r='1.3' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='235.4' cy='359.1' r='0.6' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='380.6' cy='56.0' r='0.6' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='264.4' cy='98.9' r='1.1' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='61.4' cy='510.1' r='1.1' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='569.4' cy='552.4' r='0.6' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='368.4' cy='133.7' r='0.8' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='361.4' cy='426.7' r='0.6' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='595.9' cy='419.4' r='0.9' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='51.5' cy='92.0' r='0.8' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='158.9' cy='746.0' r='0.7' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='13.9' cy='855.9' r='1.1' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='88.0' cy='488.9' r='0.6' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='178.9' cy='578.6' r='0.6' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='507.3' cy='466.6' r='0.7' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='463.2' cy='479.3' r='1.1' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='381.9' cy='551.9' r='0.7' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='491.0' cy='665.9' r='0.7' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='310.6' cy='320.0' r='0.6' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='474.1' cy='425.0' r='0.7' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='363.1' cy='309.9' r='1.3' fill='%23fff' opacity='0.38'/%3E%3Ccircle cx='573.0' cy='328.2' r='0.7' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='136.1' cy='177.0' r='0.7' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='374.4' cy='810.3' r='0.6' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='545.5' cy='309.6' r='1.3' fill='%23fff' opacity='0.22'/%3E%3Ccircle cx='500.8' cy='107.9' r='0.9' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='450.1' cy='430.2' r='0.7' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='473.5' cy='299.3' r='1.3' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='277.9' cy='669.0' r='0.6' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='95.3' cy='893.8' r='0.6' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='354.5' cy='418.8' r='1.3' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='366.9' cy='536.3' r='0.9' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='562.5' cy='140.3' r='1.1' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='12.8' cy='719.4' r='1.3' fill='%23fff' opacity='0.75'/%3E%3C/svg%3E");
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -26,10 +27,10 @@
   body {
     margin: 0;
     min-height: 100%;
-    background: var(--wood-deep) radial-gradient(ellipse 120% 60% at 50% 0%, #3a2718 0%, var(--wood) 45%, var(--wood-deep) 100%) no-repeat;
+    background: var(--wood-deep) var(--stars) repeat;
     color: var(--parchment);
     font-family: var(--body);
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.55;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
@@ -38,30 +39,30 @@
   button { cursor: pointer; }
   button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
   h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
-  h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
-  h2 { font-size: 26px; font-weight: 600; }
-  h3 { font-size: 22px; font-weight: 600; }
+  h1 { font-size: 38px; font-weight: 600; letter-spacing: 0.01em; }
+  h2 { font-size: 28px; font-weight: 600; }
+  h3 { font-size: 24px; font-weight: 600; }
   p { margin: 0; }
 
   .screen { max-width: 640px; margin: 0 auto; padding-block: 18px 32px; padding-inline: 18px; display: flex; flex-direction: column; gap: 14px; }
-  .lead { color: var(--muted); font-size: 16px; }
-  .label { font-family: var(--body); font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .lead { color: var(--muted); font-size: 15px; }
+  .label { font-family: var(--body); font-weight: 500; text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; color: var(--muted); margin-top: 8px; }
   .stack { display: flex; flex-direction: column; gap: 10px; }
   .row { display: flex; gap: 10px; align-items: center; }
   .grow { flex: 1; }
   .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
-  .card { background: var(--wood-light); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .card { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
   .card.accent { border-color: rgba(224, 143, 43, 0.55); }
   .card.error { border-color: var(--blood); color: #ffb0a6; font-size: 15px; }
-  .tagline { font-family: var(--display); font-style: italic; font-size: 19px; color: var(--ember); }
+  .tagline { font-family: var(--body); font-style: italic; font-size: 15px; color: var(--ember); }
   .meta { color: var(--muted); font-size: 14px; }
   .quiet-text { color: var(--parchment-dim); }
 
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; font-family: var(--display); font-size: 20px; font-weight: 700; transition: transform .08s ease, opacity .12s ease; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; font-family: var(--body); font-size: 17px; font-weight: 600; letter-spacing: .01em; transition: transform .08s ease, opacity .12s ease; }
   .btn:active { transform: scale(.985); }
   .btn:disabled { opacity: .45; cursor: default; transform: none; }
-  .btn.ember { background: var(--ember); color: var(--wood-deep); }
+  .btn.ember { background: linear-gradient(180deg, #1c1510, #0f0b08); color: var(--ember); border: 1px solid #7a4a1c; box-shadow: 0 0 18px rgba(217, 137, 44, .12); }
   .btn.quiet { background: var(--wood-light); color: var(--parchment); border: 1px solid var(--border); font-weight: 600; }
   .btn.link { background: none; color: var(--ember); font-family: var(--body); font-size: 15px; font-weight: 500; padding: 6px 0; width: auto; }
 
@@ -73,21 +74,21 @@
   .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: 0 0 auto; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
-  .chip.on { background: var(--ember); color: var(--wood-deep); border-color: var(--ember); font-weight: 600; }
+  .chip.on { background: var(--ember-soft); color: var(--ember); border-color: var(--ember); font-weight: 600; }
   .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--wood); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 13px; margin: 4px 4px 0 0; }
   .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
 
   .era-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .era { text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 96px; }
   .era.on { border-color: var(--ember); background: var(--ember-soft); }
-  .era .nm { font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .era .nm { font-family: var(--display); font-size: 21px; font-weight: 600; line-height: 1.1; }
   .era .wh { color: var(--ember); font-size: 12px; }
   .era .bl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
   .era.on .bl { color: var(--parchment-dim); }
   .hist { color: var(--gold); font-size: 11px; letter-spacing: .06em; }
   .portrait { flex: 0 0 auto; line-height: 0; }
   .portrait svg { display: block; }
-  .portrait img { display: block; object-fit: cover; border-radius: 50%; border: 1.6px solid var(--ember); background: #3a2718; }
+  .portrait img { display: block; object-fit: cover; border-radius: 50%; border: 1.6px solid var(--ember); background: #1a1410; box-shadow: 0 0 16px rgba(217, 137, 44, .18); }
   .portrait.square img { border-radius: 14px; }
   .prompt-box { width: 100%; min-height: 110px; background: var(--wood); border: 1px solid var(--border); border-radius: 10px; color: var(--parchment); padding: 10px; font-size: 13px; line-height: 1.45; resize: vertical; }
   .loot { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -96,7 +97,7 @@
   .inv-item { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .inv-item .head { display: flex; align-items: center; gap: 10px; }
   .inv-item .head button { background: none; border: 0; padding: 0; text-align: left; color: var(--parchment); flex: 1; display: flex; align-items: center; gap: 10px; }
-  .item-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; background: radial-gradient(ellipse 70% 60% at 50% 40%, #4a3320 0%, var(--wood-light) 60%, var(--wood-light) 100%); border: 1px solid var(--border); border-radius: 14px; }
+  .item-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 16px; background: radial-gradient(ellipse 70% 60% at 50% 40%, #3a2412 0%, var(--wood-light) 60%, var(--wood-light) 100%); border: 1px solid var(--border); border-radius: 14px; }
   .item-hero .sprite { image-rendering: pixelated; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
   .item-hero h2 { font-size: 30px; text-align: center; }
   .badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
@@ -112,12 +113,12 @@
   .slots { display: flex; flex-direction: column; gap: 6px; }
   .slot { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; color: var(--muted); }
   .slot .box { width: 56px; height: 56px; border-radius: 9px; background: var(--wood); border: 1px solid var(--border); display: grid; place-items: center; box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
-  .slot.filled .box { border-color: var(--ember); background: #2a1d14; }
+  .slot.filled .box { border-color: var(--ember); background: #1c150e; }
   .slot.empty .box svg { opacity: .28; }
   .slot small { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
   .doll-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 6px; }
   .doll-mid .portrait img, .doll-mid .portrait svg { display: block; }
-  .doll-mid .who { text-align: center; font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.15; }
+  .doll-mid .who { text-align: center; font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.15; }
   .doll-mid .cls { color: var(--ember); font-size: 12px; text-align: center; }
   .ac { width: 54px; height: 60px; display: grid; place-items: center; background: var(--wood); border: 1.5px solid var(--gold); border-radius: 8px 8px 26px 26px; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--parchment); }
   .ac small { display: block; font-size: 9px; color: var(--muted); letter-spacing: .08em; text-align: center; font-family: var(--body); }
@@ -140,7 +141,7 @@
   .inv-actions button { flex: 1; background: var(--wood); border: 1px solid var(--border); color: var(--parchment); border-radius: 8px; padding: 8px; font-size: 13px; }
   .inv-actions button.drop { color: #ff9d94; }
   .inputbar .pack { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--wood-light); color: var(--parchment); font-size: 20px; position: relative; }
-  .inputbar .pack .n { position: absolute; top: -4px; right: -4px; background: var(--ember); color: var(--wood-deep); border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; }
+  .inputbar .pack .n { position: absolute; top: -4px; right: -4px; background: var(--ember); color: #0a0908; border-radius: 999px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 4px; }
   details.chapter { border-bottom: 1px solid var(--border); padding: 8px 0; }
   details.chapter summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; }
   details.chapter summary::-webkit-details-marker { display: none; }
@@ -153,9 +154,9 @@
   /* Saved tales */
   .tale { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: none; border: 0; padding: 0; }
   .tale .glyph { font-size: 22px; width: 30px; text-align: center; padding-top: 2px; }
-  .tale .name { font-family: var(--display); font-size: 22px; font-weight: 600; }
-  .tale .sub { color: var(--muted); font-size: 14px; }
-  .tale .where { color: var(--ember); font-size: 14px; }
+  .tale .name { font-family: var(--display); font-size: 24px; font-weight: 600; }
+  .tale .sub { color: var(--muted); font-size: 13px; }
+  .tale .where { color: var(--ember); font-size: 13px; }
   .tale .chev { color: var(--muted); align-self: center; font-size: 20px; }
 
   /* Abilities and sheet */
@@ -175,17 +176,18 @@
 
   /* Play */
   #play { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-  .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(28, 20, 16, .96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 12px; align-items: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .statusbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(6, 6, 6, .92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 12px; align-items: center; font-size: 13px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
   .statusbar .loc { margin-left: auto; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42%; }
   .statusbar .hp.low { color: var(--blood); }
   .statusbar .back { color: var(--ember); background: none; border: 0; padding: 0 6px 0 0; font-size: 22px; line-height: 1; }
   .log { max-width: 640px; margin: 0 auto; padding-block: 12px; padding-inline: 16px; display: flex; flex-direction: column; gap: 12px; }
   .bubble { margin-left: 40px; background: var(--ember-soft); border: 1px solid rgba(224, 143, 43, .4); border-radius: 14px; padding: 10px 14px; font-style: italic; }
   .bubble::before { content: "\276F  "; color: var(--ember); font-style: normal; }
-  .scene { background: var(--wood-light); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .scene { background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .scene .head h3 { font-size: 26px; }
   .scene .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .scene .mood { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
-  .narration { line-height: 1.6; }
+  .scene .mood { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  .narration { line-height: 1.65; font-size: 16px; }
   .narration p { margin: 0 0 10px; }
   .narration p:last-child { margin-bottom: 0; }
   .dice { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; }
@@ -201,10 +203,10 @@
   .changes { font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
   .changes .hurt { color: var(--blood); } .changes .heal { color: var(--moss); } .changes .gold { color: var(--gold); } .changes .xp { color: var(--ember); } .changes .item { color: var(--parchment-dim); } .changes .quest { color: var(--muted); }
   .ending { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .ending h4 { font-size: 28px; }
+  .ending h4 { font-size: 30px; }
   .ending.win h4 { color: var(--gold); } .ending.lose h4 { color: var(--muted); }
   .choices { display: flex; flex-direction: column; gap: 8px; }
-  .choice { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: var(--wood-light); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .choice { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: rgba(20, 18, 16, .92); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
   .choice:active { background: var(--wood); }
   .choice .lbl { font-weight: 600; }
   .choice .hint { color: var(--muted); font-size: 14px; }
@@ -213,32 +215,33 @@
   .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ember); border-radius: 50%; animation: spin .9s linear infinite; flex: 0 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--ember); } .btn { transition: none; } }
-  .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(28, 20, 16, .97); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
+  .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(6, 6, 6, .96); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
   .inputbar textarea { flex: 1; min-height: 46px; max-height: 120px; resize: none; border-radius: 16px; padding: 11px 14px; }
-  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ember); color: var(--wood-deep); font-size: 22px; font-weight: 700; }
+  .inputbar .send { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #7a4a1c; background: #1c1510; color: var(--ember); font-size: 22px; font-weight: 700; }
   .inputbar .send:disabled { background: var(--border); color: var(--muted); }
   .stop { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; margin-left: auto; }
 
   /* Overlays */
-  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .66); display: grid; place-items: start center; padding: min(28vh, 160px) 24px 24px; z-index: 20; }
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .78); display: grid; place-items: start center; padding: min(28vh, 160px) 24px 24px; z-index: 20; }
   .overlay .card { max-width: 380px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 10px; }
-  .sheet-panel { position: relative; min-height: 100vh; background: var(--wood-deep) radial-gradient(ellipse 120% 60% at 50% 0%, #3a2718 0%, var(--wood) 45%, var(--wood-deep) 100%) no-repeat; }
+  .sheet-panel { position: relative; min-height: 100vh; }
   .toast.ok { background: #1f2e1c; border-color: var(--moss); color: #cfe8c6; }
   .toast { position: fixed; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); background: #3a1f1a; border: 1px solid var(--blood); color: #ffb3ab; border-radius: 12px; padding: 10px 14px; z-index: 30; font-size: 15px; }
   .notice { border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--muted); }
   .notice b { color: var(--parchment); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .seg button { flex: 1; background: none; border: 0; padding: 10px; font-size: 14px; color: var(--muted); }
-  .seg button.on { background: var(--ember); color: var(--wood-deep); font-weight: 600; }
+  .seg button.on { background: var(--ember-soft); color: var(--ember); font-weight: 600; }
 </style>
 
 <!-- Home -->
 <section id="home" class="screen" hidden>
   <div class="spread">
-    <h1>The Old Tavern</h1>
-    <button class="icon-btn" data-action="settings" aria-label="Settings">&#9881;</button>
+    <span style="width:28px"></span>
+    <h1 class="grow" style="text-align:center;font-size:40px">The Old Tavern</h1>
+    <button class="icon-btn" data-action="settings" aria-label="Settings">&#9776;</button>
   </div>
-  <p class="lead">Pull up a chair by the fire. Every tale starts with who you are.</p>
+  <p class="lead" style="text-align:center">Pull up a chair by the fire. Every tale starts with who you are.</p>
   <div id="availability" class="notice" hidden></div>
   <button id="new-btn" class="btn ember" data-action="new">Begin a new adventure</button>
   <div class="label">Saved tales</div>
@@ -674,7 +677,7 @@ This is a real historical period unless the player's words make it fictional. Be
 
   /** Portrait markup for a game: the uploaded painting when there is one, else the drawn bust. */
   function heroPortrait(game, size, ring) {
-    if (game && game.portraitAssetId) return `<img src="/_blob/${esc(game.portraitAssetId)}" width="${size}" height="${size}" alt="portrait" style="border-color:${ring || "#e08f2b"}">`;
+    if (game && game.portraitAssetId) return `<img src="/_blob/${esc(game.portraitAssetId)}" width="${size}" height="${size}" alt="portrait" style="border-color:${ring || "#d9892c"}">`;
     return portraitSVG(game?.character?.portrait || {}, size, ring);
   }
 
@@ -868,7 +871,7 @@ This is a real historical period unless the player's words make it fictional. Be
     k: "#1b1410", h: "#ffffff", c: "#2a2a2e",
     s: "#d3d9de", S: "#7f8a93", w: "#8a5a2b", W: "#5b3a1c", g: "#e8c04a", G: "#a67c1e",
     r: "#c23b2e", R: "#7a1f18", b: "#3f7fbf", B: "#24486f", n: "#5a9a4c", N: "#2d5a2b",
-    p: "#efe3c2", P: "#c9b98d", l: "#a7743c", L: "#6b4520", x: "#8a5fc0", X: "#4f3378", o: "#e08f2b", O: "#a85f14",
+    p: "#efe3c2", P: "#c9b98d", l: "#a7743c", L: "#6b4520", x: "#8a5fc0", X: "#4f3378", o: "#d9892c", O: "#a85f14",
   };
   const SPRITES = {
     dagger: [
@@ -1685,7 +1688,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         : g.status === "playing" ? `${esc(g.scenario?.title || "An adventure")} - ${esc(g.location)}, turn ${g.turns.length}`
         : `${esc(g.scenario?.title || "An adventure")} - concluded after ${g.turns.length} turns`;
       return `<div class="card stack" style="gap:6px"><button class="tale" data-action="open" data-id="${esc(g.id)}">
-        <span class="portrait">${heroPortrait(g, 48, g.status === "ended" ? "#edc252" : "#e08f2b")}</span>
+        <span class="portrait">${heroPortrait(g, 48, g.status === "ended" ? "#edc252" : "#d9892c")}</span>
         <span class="grow"><span class="name">${esc(g.character.name)} <span style="font-size:14px">${glyph}</span></span><br><span class="sub">${esc(g.character.race)} ${esc(g.character.characterClass)}, level ${g.level} &middot; ${esc(g.era?.name || "Classic Fantasy")}</span><br><span class="where">${where}</span></span>
         <span class="chev">&#8250;</span></button>
         <div class="row" style="gap:6px"><button class="btn link" data-action="delete" data-id="${esc(g.id)}">Delete</button></div></div>`;
@@ -1732,7 +1735,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("pick").dataset.id = game.id;
     const c = game.character;
     $("p-hero").innerHTML = `<div class="card accent stack">
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#e08f2b")}</span><div class="grow"><h2 style="font-size:30px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 88, "#d9892c")}</span><div class="grow"><h2 style="font-size:30px">${esc(c.name)}</h2><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${c.level}</div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div></div>
       <div class="abilities">${ABILITIES.map((a) => `<div><small>${a}</small><b>${c.abilities[a]}</b></div>`).join("")}</div>
       <p>${esc(c.appearance)}</p>
       <div class="narration quiet-text">${md(c.backstory)}</div>
@@ -1769,7 +1772,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     $("s-gold").innerHTML = `<span style="color:var(--gold)">&#9679;</span> ${game.gold} <span style="color:var(--muted)">${esc(shortCurrency(game))}</span>`;
     $("s-lv").textContent = `Lv ${game.level}`;
     $("s-loc").textContent = game.location || "Somewhere";
-    $("s-portrait").innerHTML = heroPortrait(game, 28, low ? "#c9443a" : "#e08f2b");
+    $("s-portrait").innerHTML = heroPortrait(game, 28, low ? "#c9443a" : "#d9892c");
     const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
     $("pack-n").textContent = String(packCount);
     $("pack-n").hidden = packCount === 0;
@@ -1907,7 +1910,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
         <div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0">${esc(t.action.text)}</div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div>
       </details>`).join("") : `<span class="meta">The tale has not begun.</span>`;
     $("sheet-body").innerHTML = `
-      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#e08f2b")}</span><div class="grow"><h1 style="font-size:32px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
+      <div class="row" style="align-items:center"><span class="portrait">${heroPortrait(game, 110, "#d9892c")}</span><div class="grow"><h1 style="font-size:32px">${esc(c.name)}</h1><div class="tagline" style="font-style:normal;font-size:17px">${esc(c.race)} ${esc(c.characterClass)}, level ${game.level}</div><div class="meta">${esc(game.era.name)}${game.era.when ? `, ${esc(game.era.when)}` : ""}</div></div></div>
       <div class="meta">${esc(c.appearance)}</div>
       <div><button class="btn link" data-action="paint">&#127912; ${game.portraitAssetId ? "Change painted portrait" : "Get a painted portrait"}</button></div>
       <div class="vitals">
@@ -2058,7 +2061,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       <div class="doll">
         <div class="slots">${["head", "chest", "cloak", "hands", "feet"].map(slot).join("")}</div>
         <div class="doll-mid">
-          <span class="portrait">${heroPortrait(game, 118, "#e08f2b")}</span>
+          <span class="portrait">${heroPortrait(game, 118, "#d9892c")}</span>
           <div class="who">${esc(c.name)}</div>
           <div class="cls">${esc(c.race)} ${esc(c.characterClass)}</div>
           <div class="ac"><span>${c.armorClass}<small>armour</small></span></div>
