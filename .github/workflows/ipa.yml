@@ -1,0 +1,31 @@
+name: Build unsigned IPA
+
+# Produces OldTavern.ipa (unsigned) for signing services such as Signulous.
+# Runs on every push that touches the iOS app, and on demand from the Actions tab.
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ipa.yml"
+  workflow_dispatch:
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -n 1)"
+          xcodebuild -version
+      - name: Build unsigned .ipa
+        run: sh ios/make-ipa.sh
+      - name: Upload OldTavern.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: OldTavern-ipa
+          path: ios/OldTavern.ipa
+          if-no-files-found: error
+          retention-days: 90

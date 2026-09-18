@@ -11,3 +11,6 @@ DerivedData/
 build/
 *.moved-aside
 .DS_Store
+ios/build/
+ios/Payload/
+ios/*.ipa
