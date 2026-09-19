@@ -220,6 +220,20 @@
   .thinking { display: flex; align-items: center; gap: 12px; color: var(--muted); font-style: italic; }
   .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ember); border-radius: 50%; animation: spin .9s linear infinite; flex: 0 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .dicebox { text-align: center; align-items: center; }
+  .d20big { position: relative; width: 132px; height: 132px; margin: 4px auto; display: grid; place-items: center; }
+  .d20big svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 8px 16px rgba(0,0,0,.6)); }
+  .d20big span { position: relative; font-family: var(--display); font-size: 48px; font-weight: 700; color: var(--parchment); line-height: 1; }
+  .d20big.rolling svg { animation: tumble .16s linear infinite; }
+  .d20big.rolling span { opacity: .85; }
+  @keyframes tumble { from { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(.9); } to { transform: rotate(360deg) scale(1); } }
+  .d20big polygon, .d20big path { stroke: #b8874a; }
+  .d20big.ok polygon, .d20big.ok path { stroke: var(--moss); } .d20big.bad polygon, .d20big.bad path { stroke: var(--blood); }
+  .d20big.ok, .d20big.bad { animation: land .35s ease-out; }
+  @keyframes land { from { transform: scale(1.25); } to { transform: scale(1); } }
+  .dicebox .verdict { font-family: var(--display); font-size: 28px; min-height: 34px; line-height: 1.1; }
+  .dicebox .verdict.ok { color: var(--moss); } .dicebox .verdict.bad { color: var(--blood); }
+  @media (prefers-reduced-motion: reduce) { .d20big.rolling svg, .d20big.ok, .d20big.bad { animation: none; } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--ember); } .btn { transition: none; } }
   .inputbar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(6, 6, 6, .96); border-top: 1px solid var(--border); padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; z-index: 6; }
   .inputbar textarea { flex: 1; min-height: 42px; max-height: 110px; resize: none; border-radius: 14px; padding: 10px 12px; }
@@ -395,6 +409,19 @@
 </div>
 
 <!-- Busy -->
+<div id="dice" class="overlay" data-action="dice-done" hidden>
+  <div class="card accent dicebox">
+    <div class="label" style="margin:0" id="dice-what">Check</div>
+    <div class="d20big rolling" id="dice-die">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" fill="#15110d" stroke-width="2.6" stroke-linejoin="round"/><path d="M50 3 L50 22 M91 26.5 L78 68 M9 26.5 L22 68 M50 97 L78 68 M50 97 L22 68 M91 73.5 L78 68 M9 73.5 L22 68 M9 26.5 L50 22 M91 26.5 L50 22" fill="none" stroke-width="1.2" opacity=".55"/><polygon points="50,22 78,68 22,68" fill="none" stroke-width="1.6" opacity=".8"/></svg>
+      <span id="dice-num">?</span>
+    </div>
+    <div id="dice-math" class="meta" style="min-height:18px"></div>
+    <div id="dice-verdict" class="verdict"></div>
+    <div class="meta" style="font-size:11px">Tap to continue</div>
+  </div>
+</div>
+
 <div id="loot" class="overlay" hidden>
   <div class="card accent" style="text-align:left">
     <div class="label" style="margin:0">Something worth taking</div>
@@ -1277,7 +1304,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 
 ## Voice and style
 - Second person, present tense ("You push open the door...").
-- Vivid, concrete, and tight: 100 to 200 words of narration per turn, in short paragraphs. Keep every other string brief; the whole reply must stay compact.
+- Vivid, concrete, and tight: 120 to 220 words of narration per turn, in short paragraphs. Keep every other string brief; the whole reply must stay compact.
+- PLAY IT OUT, never summarise. When the player acts, show the hero doing it beat by beat, then let whoever is present answer in their own words. If anyone is there to talk to, the scene includes a real exchange of dialogue: three to six spoken lines, quoted directly, with reactions and what changes because of them. The words go into the scene, not the choices.
 - Tone for this adventure: ${game.tone}. Stay in it.
 - Give NPCs names, distinct voices and wants of their own. Quote their dialogue directly.
 - Never break character, never mention being an AI, never explain rules unless asked in play.
@@ -1299,7 +1327,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 ## Choices
 - Offer 3 or 4 choices every turn (none only when the story has ended). Make them genuinely different: bold, cautious, social, clever, unexpected.
 - Attach a check to any choice with real risk; check is null for safe actions.
-- Labels are imperative, at most 60 characters. Hints at most 90 characters, honestly signalling cost or reward.
+- Keep choices short and open: a direction or an intent, never a plan with its outcome spelled out ("Approach the guards", "Ask about the letter", "Slip away", "Draw steel"). Labels at most 40 characters. Hints are optional and at most a few words (an empty string is fine); leave the details for the scene to reveal.
 - Never offer a choice that repeats what was already done.
 
 ## Pacing
@@ -1945,7 +1973,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     return game;
   }
 
-  async function takeTurn(game, { choiceId, freeText }) {
+  async function takeTurn(game, { choiceId, freeText, onRoll }) {
     const last = game.turns[game.turns.length - 1];
     let action, resolved = null;
     const fateRoll = d20();
@@ -1953,7 +1981,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
       const choice = last.scene.choices.find((c) => c.id === choiceId);
       if (!choice) throw { code: "invalid_request", message: "stale choice" };
       action = { kind: "choice", text: choice.label, choiceId: choice.id };
-      if (choice.check) resolved = resolveCheck(game, choice.check, fateRoll).summary;
+      if (choice.check) { const res = resolveCheck(game, choice.check, fateRoll); resolved = res.summary; if (onRoll) onRoll(res); }
     } else {
       action = { kind: "freeText", text: freeText.slice(0, 600), choiceId: null };
     }
@@ -2297,6 +2325,34 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   }
 
   let lastError = "";
+  // ------------------------------------------------------------------
+  // The dice pop-up: a tumbling d20 that lands on the real roll.
+  // ------------------------------------------------------------------
+  let diceCtx = null;
+  function showDice(r) {
+    return new Promise((resolve) => {
+      if (diceCtx) diceCtx.done();
+      const box = $("dice"), die = $("dice-die"), num = $("dice-num"), verdict = $("dice-verdict"), math = $("dice-math");
+      $("dice-what").textContent = `${r.skill || LONG[r.ability] || r.ability || "Fate"} check \u00b7 DC ${r.dc}`;
+      die.className = "d20big rolling"; num.textContent = "?"; verdict.textContent = ""; verdict.className = "verdict"; math.textContent = "";
+      box.hidden = false;
+      let timer = null;
+      const tick = setInterval(() => { num.textContent = String(1 + Math.floor(Math.random() * 20)); }, 75);
+      const done = () => { clearInterval(tick); clearTimeout(timer); box.hidden = true; diceCtx = null; resolve(); };
+      diceCtx = { done };
+      timer = setTimeout(() => {
+        clearInterval(tick);
+        die.className = "d20big " + (r.success ? "ok" : "bad");
+        num.textContent = String(r.roll);
+        math.textContent = `${r.roll} ${r.modifier >= 0 ? "+" : "-"} ${Math.abs(r.modifier)} = ${r.total}  vs  DC ${r.dc}`;
+        verdict.textContent = r.roll === 20 ? "Critical!" : r.roll === 1 ? "Fumble!" : r.success ? "Success" : "Failure";
+        verdict.className = "verdict " + (r.success ? "ok" : "bad");
+        if (navigator.vibrate) navigator.vibrate(r.success ? [20, 40, 30] : 70);
+        timer = setTimeout(done, 2800);
+      }, 1200);
+    });
+  }
+
   /** Move a listed loot item into the pack without asking the Dungeon Master. */
   async function takeLocal(game, name) {
     const last = game.turns[game.turns.length - 1];
@@ -2353,7 +2409,11 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     renderPlay(game);
     const ticker = rotate("think-line", THINK_LINES, 4000);
     try {
-      await takeTurn(game, body);
+      let rolling = null;
+      await takeTurn(game, { ...body, onRoll: (r) => { rolling = showDice(r); } });
+      const scene = game.turns[game.turns.length - 1].scene;
+      if (rolling) await rolling;
+      else if (scene.diceResult) await showDice(scene.diceResult);
       $("free").value = "";
       $("free").style.height = "auto";
       if (navigator.vibrate) navigator.vibrate(15);
@@ -2812,6 +2872,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
         break;
       }
       case "slot-hint": toast(`Nothing equipped here. Tap an item in your backpack to equip it.`, 2500); break;
+      case "dice-done": if (diceCtx) diceCtx.done(); break;
       case "loot-take": await answerLoot(true); break;
       case "loot-leave": await answerLoot(false); break;
       case "take": {
