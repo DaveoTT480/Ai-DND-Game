@@ -192,6 +192,8 @@
   .scene .head h3 { font-size: 22px; }
   .scene .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .scene .mood { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  .scene .when { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ember-dim); margin-top: -4px; }
+  .scene .when b { color: var(--parchment-dim); font-weight: 600; }
   .narration { line-height: 1.55; font-size: 14px; }
   .narration p { margin: 0 0 8px; }
   .narration p:last-child { margin-bottom: 0; }
@@ -1336,6 +1338,10 @@ Alone in a scene? Use the hero's own muttered words, a letter, a memory or an ov
 - Keep choices short and open: a direction or an intent, never a plan with its outcome spelled out ("Approach the guards", "Ask about the letter", "Slip away", "Draw steel"). Labels at most 40 characters. Hints are optional and at most a few words (an empty string is fine); leave the details for the scene to reveal.
 - Never offer a choice that repeats what was already done.
 
+## Time
+- Keep an in-world clock. Every reply ends with "clock": the day count since the tale began (day 1 is the opening scene), the hour (0 to 23) at the END of the scene, and a short era-fitting date (a real calendar for a historical era, e.g. "Ides of Quintilis, 63 BC" or "Tuesday, 14 May 1888"; an invented one for an invented world). Time only moves forward. Advance it by what the scene took: talk costs minutes, a search or a meal an hour, a watch or a journey hours, lying low or waiting whole days (say so in the narration when time jumps: "Two days pass...").
+- Any deadline in the story ("within three days", "by the new moon") is measured against this clock: keep count, mention the days remaining when it matters, and let the deadline arrive on time.
+
 ## Pacing
 - Every turn changes something: new information, a threat, a relationship shift, a reward, or a cost.
 - A complication or a surprising NPC at least every three turns.
@@ -1370,7 +1376,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
  "choices":[{"id":"a","label":string,"hint":string,"check":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int}}],
  "stateChange":{"hpDelta":int,"goldDelta":int,"xpGained":int,"itemsGained":[ITEM],"itemsLost":[string],"questUpdates":[string],"location":string,"statusEffects":[string],"wear":[{"name":string,"durabilityDelta":int}],"mapAt":string|null,"mapReveal":[{"name":string,"kind":"city|town|village|fort|ruin|shrine|landmark|wild|hideout|camp","note":string,"lat":number|null,"lon":number|null,"x":number|null,"y":number|null}]},
  "loot":[ITEM],
- "recap":string,"mood":"calm|tense|mysterious|combat|triumphant|grim|festive","ending":null|{"victory":bool,"epilogue":string}}`;
+ "recap":string,"mood":"calm|tense|mysterious|combat|triumphant|grim|festive","clock":{"day":int,"hour":int,"date":string},"ending":null|{"victory":bool,"epilogue":string}}`;
   }
 
   function stateBlock(game) {
@@ -1384,6 +1390,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       `Conditions: ${game.statusEffects.join(", ") || "none"}`,
       `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,
       `Location: ${game.location || "unknown"}`,
+      game.clock ? `Time now: day ${game.clock.day}, ${timeOfDay(game.clock.hour)} (hour ${game.clock.hour}), ${game.clock.date}` : "Time now: the clock is not yet set; start it at day 1 with a date fitting the era.",
       mapLine(game),
       `Turns played: ${game.turns.length}`,
     ].filter(Boolean).join("\n");
@@ -1504,6 +1511,22 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
     if (!ability) return null;
     return { ability, skill: c.skill ? String(c.skill) : null, dc: Math.max(5, int(c.dc, 12)) };
   }
+  function normClock(c) {
+    if (!c || typeof c !== "object") return null;
+    const day = int(c.day, 0), hour = int(c.hour, -1);
+    if (day < 1 && hour < 0 && !str(c.date)) return null;
+    return { day: Math.max(1, day), hour: Math.max(0, Math.min(23, hour < 0 ? 12 : hour)), date: str(c.date).trim().slice(0, 48) };
+  }
+  /** Time never runs backwards, whatever the Dungeon Master says. */
+  function advanceClock(prev, next) {
+    if (!next) return prev || null;
+    if (!prev) return next;
+    if (next.day < prev.day || (next.day === prev.day && next.hour < prev.hour)) return prev;
+    return { ...next, date: next.date || prev.date };
+  }
+  function timeOfDay(h) { return h < 5 ? "night" : h < 7 ? "dawn" : h < 12 ? "morning" : h < 14 ? "midday" : h < 18 ? "afternoon" : h < 21 ? "evening" : "night"; }
+  function clockLine(c) { return c ? `Day ${c.day} \u00b7 ${timeOfDay(c.hour)}${c.date ? ` \u00b7 ${c.date}` : ""}` : ""; }
+
   function normScene(s) {
     s = s && typeof s === "object" ? s : {};
     const sc = s.stateChange && typeof s.stateChange === "object" ? s.stateChange : {};
@@ -1527,6 +1550,7 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       },
       loot: arr(s.loot).slice(0, 3).map(normItem),
       recap: str(s.recap, "The tale went on."), mood: MOODS.includes(s.mood) ? s.mood : "calm", ending,
+      clock: normClock(s.clock),
     };
   }
 
@@ -2036,6 +2060,8 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     if (game.quests.length > 12) game.quests = game.quests.slice(-12);
     game.statusEffects = ch.statusEffects.map((s) => s.trim()).filter(Boolean);
     if (ch.location.trim()) game.location = ch.location.trim();
+    game.clock = advanceClock(game.clock, scene.clock);
+    scene.clock = game.clock ? { ...game.clock } : null;
     if (game.world) {
       const region = game.world.regionId ? MAP_REGIONS[game.world.regionId] : null;
       for (const r of ch.mapReveal || []) addPlace(game.world, r, region);
@@ -2306,6 +2332,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     const color = MOOD_COLOR[s.mood] || "var(--muted)";
     return `<div class="scene" style="border-color:color-mix(in srgb, ${color} 40%, var(--border))">
       <div class="head"><h3>${esc(s.chapterTitle)}</h3><span class="mood" style="color:${color}">${esc(s.mood)}</span></div>
+      ${s.clock ? `<div class="when"><b>Day ${s.clock.day}</b> \u00b7 ${esc(timeOfDay(s.clock.hour))}${s.clock.date ? ` \u00b7 ${esc(s.clock.date)}` : ""}</div>` : ""}
       ${d ? `<div class="dice ${d.success ? "ok" : "bad"}"><div class="d20"><span data-roll="${d.roll}">${d.roll}</span></div>
         <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
         <div class="verdict">${d.roll === 20 ? "Critical!" : d.roll === 1 ? "Fumble!" : d.success ? "Success" : "Failure"}</div></div>` : ""}
@@ -2467,7 +2494,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     const chips = (items, color) => items.length ? items.map((t) => `<span class="tag" style="border-color:${color}">${esc(t)}</span>`).join("") : `<span class="meta">none</span>`;
     const chronicle = game.turns.length ? game.turns.map((t, i) => `<details class="chapter"${i === game.turns.length - 1 ? " open" : ""}>
         <summary><span class="n">${i + 1}</span><span class="t">${esc(t.scene.chapterTitle)}</span></summary>
-        <div class="r">${esc(t.scene.recap)}</div>
+        <div class="r">${t.scene.clock ? `<span style="color:var(--ember-dim)">${esc(clockLine(t.scene.clock))}</span> \u2014 ` : ""}${esc(t.scene.recap)}</div>
         <div class="body">${t.action.kind !== "start" ? `<div class="bubble" style="margin-left:0">${esc(t.action.text)}</div>` : ""}<div class="narration">${md(t.scene.narration)}</div>${t.scene.ending ? `<div class="ending ${t.scene.ending.victory ? "win" : "lose"}"><h4>${t.scene.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(t.scene.ending.epilogue)}</div></div>` : ""}</div>
       </details>`).join("") : `<span class="meta">The tale has not begun.</span>`;
     $("sheet-body").innerHTML = `
