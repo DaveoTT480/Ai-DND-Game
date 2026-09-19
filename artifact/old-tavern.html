@@ -388,17 +388,6 @@
   <div class="card drawer" id="drawer-body"></div>
 </div>
 
-<!-- Quest log -->
-<section id="quests" class="sheet-panel" hidden>
-  <div class="screen">
-    <div class="spread">
-      <h2>Quest log</h2>
-      <button class="btn link" data-action="close-quests">Done</button>
-    </div>
-    <div id="quests-body" class="stack"></div>
-  </div>
-</section>
-
 <!-- People met -->
 <section id="people" class="sheet-panel" hidden>
   <div class="screen">
@@ -1943,21 +1932,35 @@ People:
 ${missing.map((n) => `- ${n.name}: ${n.role || "unknown role"}. ${n.description || ""}`).join("\n")}
 Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"name":string,"portrait":{"skin":string,"hair":string,"hairStyle":string,"facialHair":string,"eyes":string,"headwear":string,"clothing":string,"symbol":string,"age":string,"scar":bool}}]`;
     try {
-      const raw = await sample.json(prompt, { modelTier: "quick", cache: false });
-      for (const r of arr(raw)) {
-        const n = r && missing.find((m) => sameName(m.name, r.name));
-        if (n && r.portrait && typeof r.portrait === "object") n.portrait = normPortrait(r.portrait);
+      const raw = await askDM(prompt, { modelTier: "quick", accept: (r) => Array.isArray(r) ? r.length > 0 : r && typeof r === "object" });
+      // Accept an array, an object wrapping an array, or an object keyed by name.
+      let list = Array.isArray(raw) ? raw : raw && typeof raw === "object" ? (Object.values(raw).find(Array.isArray) || Object.entries(raw).map(([name, v]) => (v && typeof v === "object" ? { name, portrait: v.portrait || v } : null))) : [];
+      let painted = 0;
+      for (const r of arr(list)) {
+        if (!r || typeof r !== "object") continue;
+        const key = String(r.name || "").trim().toLowerCase();
+        const n = missing.find((m) => sameName(m.name, r.name)) || missing.find((m) => key.length > 2 && (m.name.toLowerCase().includes(key) || key.includes(m.name.toLowerCase())));
+        const p = r.portrait && typeof r.portrait === "object" ? r.portrait : (r.skin || r.hair ? r : null);
+        if (n && p && !n.portrait) { n.portrait = normPortrait(p); painted += 1; }
       }
-      for (const n of missing) n.portraitTried = true;
+      if (painted) for (const n of missing) n.portraitTried = true; // leave a fruitless call open for a retry
       await store.save(game);
-      return true;
+      return painted > 0;
     } catch (e) { console.warn("portraits failed", e); return false; }
   }
   async function openPeople(game) {
     const needs = game.npcsMet.some((n) => !n.portrait && !n.portraitTried);
     renderPeople(game, needs ? "The Keeper is sketching faces..." : "");
     openPanel("people");
-    if (needs) { await paintPeople(game); if (!$("people").hidden) renderPeople(game, ""); }
+    if (needs) {
+      const ok = await paintPeople(game);
+      if ($("people").hidden) return;
+      const still = game.npcsMet.filter((n) => !n.portrait).length;
+      renderPeople(game, ok && !still ? "" : still ? `${ok ? "Some" : "The"} faces could not be sketched just now.` : "");
+      if (still) $("people-note").innerHTML += ` <button class="btn link" data-action="sketch-people" style="display:inline;padding:0">Try again</button>`;
+    } else if (game.npcsMet.some((n) => !n.portrait)) {
+      $("people-note").innerHTML = `Some faces are missing. <button class="btn link" data-action="sketch-people" style="display:inline;padding:0">Sketch them</button>`; $("people-note").hidden = false;
+    }
   }
 
   function renderDrawer(game) {
@@ -1967,18 +1970,10 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
       ["inventory", "\u{1F392}", "Inventory", `${packCount} carried${loot ? ` \u00b7 ${loot} nearby` : ""}`],
       game.world ? ["map", "\u{1F5FA}\uFE0F", "Map", game.mapAt ? `at ${game.mapAt}` : ""] : game.status === "playing" ? ["chart", "\u{1F5FA}\uFE0F", "Chart this land", "draw a map"] : null,
       ["people", "\u{1F465}", "People met", String(game.npcsMet.length)],
-      ["quests", "\u{1F4DC}", "Quest log", String((game.questLog || game.quests).length)],
       ["sheet", "\u{1F4D6}", "Character sheet & chronicle", `level ${game.level}`],
     ].filter(Boolean);
     $("drawer-body").innerHTML = items.map(([a, ic, label, cnt]) => `<button data-action="${a}"><span class="ic">${ic}</span><span>${label}</span><span class="cnt">${esc(cnt)}</span></button>`).join("");
   }
-  function renderQuests(game) {
-    const log = [...(game.questLog || [])].reverse();
-    $("quests-body").innerHTML = log.length ? log.map((q) => `<div class="card quest-entry"><span class="ic">&#128220;</span><div><div>${esc(q.text)}</div><div class="meta" style="font-size:11.5px;margin-top:3px">${q.clock ? `Day ${q.clock.day}, ${esc(timeOfDay(q.clock.hour))}` : ""}${q.clock && q.chapter ? " \u00b7 " : ""}${q.chapter ? `"${esc(q.chapter)}"` : q.clock ? "" : "earlier in the tale"}</div></div></div>`).join("")
-      : `<div class="card meta">Nothing written yet. Leads, promises and debts the Dungeon Master notes will gather here.</div>`;
-  }
-  function openQuests(game) { renderQuests(game); openPanel("quests"); }
-
   function openMap(game) {
     if (!game.world) return;
     renderMap(game, null);
@@ -2260,6 +2255,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     if (g.world && !Array.isArray(g.world.visited)) g.world.visited = [];
     if (g.world) g.world.places = arr(g.world.places).filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
     if (!Array.isArray(g.questLog)) g.questLog = arr(g.quests).map((t) => ({ text: t, turn: null, chapter: "", clock: null }));
+    for (const n of arr(g.npcsMet)) if (n && !n.portrait) delete n.portraitTried;
     if (typeof g.mapAt !== "string") g.mapAt = g.world ? g.world.at || "" : "";
     if (g.character && !g.character.portrait) g.character.portrait = normPortrait({ symbol: "\u2694\uFE0F" });
     if (Array.isArray(g.inventory)) g.inventory = g.inventory.map(normItem);
@@ -2669,7 +2665,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
   // and swap back out, restoring the scroll position. No fixed layers:
   // the viewer's frame handles those unpredictably.
   // ------------------------------------------------------------------
-  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map", "people", "quests"];
+  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map", "people"];
   const panelStack = [];
   function openPanel(id) {
     const from = SCREENS.filter((k) => !$(k).hidden);
@@ -2692,7 +2688,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
   function closeAllPanels() {
     while (panelStack.length) {
       const prev = panelStack.pop();
-      for (const k of ["sheet", "inventory", "paint", "item", "map", "people", "quests"]) $(k).hidden = true;
+      for (const k of ["sheet", "inventory", "paint", "item", "map", "people"]) $(k).hidden = true;
       for (const k of prev.from) $(k).hidden = false;
       if (!panelStack.length) window.scrollTo(0, prev.scroll);
     }
@@ -3029,8 +3025,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       case "people": if (current) openPeople(current); break;
       case "drawer": if (current) { renderDrawer(current); $("drawer").hidden = false; } break;
       case "close-drawer": break;
-      case "quests": if (current) openQuests(current); break;
-      case "close-quests": closePanel("quests"); break;
+      case "sketch-people": if (current) { for (const n of current.npcsMet) if (!n.portrait) delete n.portraitTried; openPeople(current); } break;
       case "paint-npc": if (current) openPaint(current, el.dataset.name); break;
       case "close-people": closePanel("people"); break;
       case "seek": {
