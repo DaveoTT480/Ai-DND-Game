@@ -1390,7 +1390,9 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
       `Conditions: ${game.statusEffects.join(", ") || "none"}`,
       `Quest log: ${game.quests.length ? game.quests.map((q) => `- ${q}`).join("\n") : "empty"}`,
       `Location: ${game.location || "unknown"}`,
-      game.clock ? `Time now: day ${game.clock.day}, ${timeOfDay(game.clock.hour)} (hour ${game.clock.hour}), ${game.clock.date}` : "Time now: the clock is not yet set; start it at day 1 with a date fitting the era.",
+      game.clock ? `Time now: day ${game.clock.day}, ${timeOfDay(game.clock.hour)} (hour ${game.clock.hour}), ${game.clock.date}`
+        : game.turns.length ? `Time now: no clock has been kept so far, and this tale is already ${game.turns.length} scenes in. Reckon from the story so far how many days have passed since the opening scene (nights slept, journeys, waits, deadlines mentioned), and set the clock to that day (day 1 = the opening scene) at a fitting hour, with a date that suits the era and the season the scenes describe. Do not restart at day 1.`
+        : "Time now: the clock is not yet set; start it at day 1 with a date fitting the era.",
       mapLine(game),
       `Turns played: ${game.turns.length}`,
     ].filter(Boolean).join("\n");
