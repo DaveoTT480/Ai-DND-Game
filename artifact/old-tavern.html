@@ -158,6 +158,11 @@
 
   /* Saved tales */
   .tale { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: none; border: 0; padding: 0; }
+  .person { display: flex; gap: 12px; align-items: flex-start; }
+  .person .nm { font-family: var(--display); font-size: 19px; font-weight: 600; line-height: 1.1; }
+  .person .tag { margin: 0; font-size: 11px; padding: 2px 8px; flex: 0 0 auto; }
+  .person .desc { font-size: 13px; color: var(--parchment-dim); margin-top: 2px; }
+  .person .trail { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
   .tale .glyph { font-size: 22px; width: 30px; text-align: center; padding-top: 2px; }
   .tale .name { font-family: var(--display); font-size: 20px; font-weight: 600; }
   .tale .sub { color: var(--muted); font-size: 12.5px; }
@@ -321,6 +326,7 @@
   <div class="inputbar">
     <button id="pack" class="pack" data-action="inventory" aria-label="Inventory">&#127890;<span class="n" id="pack-n" hidden>0</span></button>
     <button id="mapbtn" class="pack" data-action="map" aria-label="Map" hidden>&#128506;</button>
+    <button id="peoplebtn" class="pack" data-action="people" aria-label="People met" hidden>&#128101;<span class="n" id="people-n" hidden>0</span></button>
     <textarea id="free" rows="1" placeholder="Or do something else..."></textarea>
     <button id="send" class="send" data-action="send" aria-label="Act">&#8593;</button>
   </div>
@@ -366,6 +372,18 @@
       <button class="btn link" data-action="close-item">Done</button>
     </div>
     <div id="item-body" class="stack"></div>
+  </div>
+</section>
+
+<!-- People met -->
+<section id="people" class="sheet-panel" hidden>
+  <div class="screen">
+    <div class="spread">
+      <h2>People met</h2>
+      <button class="btn link" data-action="close-people">Done</button>
+    </div>
+    <div id="people-note" class="meta" hidden></div>
+    <div id="people-body" class="stack"></div>
   </div>
 </section>
 
@@ -1852,6 +1870,63 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     const box = $("map-svg").getBoundingClientRect(); const nw = mapCtx.w / 3.2; const nh = nw * (box.height / box.width);
     setView({ x: here.x - nw / 2, y: here.y - nh / 2, w: nw, h: nw * (mapCtx.h / mapCtx.w) });
   }
+  // ------------------------------------------------------------------
+  // People met: everyone the hero has dealt with, with tavern-sign portraits
+  // painted on first visit (one quick call for the whole cast).
+  // ------------------------------------------------------------------
+  const ATT_HEX = { friendly: "#6ea45f", neutral: "#8f8a82", suspicious: "#c4914f", hostile: "#c9443a" };
+  const PORTRAIT_CHOICES = "skin light|fair|tan|olive|brown|dark; hair black|brown|blond|red|grey|white|none; hairStyle short|long|braided|curly|topknot|bald; facialHair none|stubble|moustache|beard|fullbeard; eyes brown|blue|green|grey|hazel|dark; headwear none|hood|helmet|crown|hat|turban|headscarf|cap|laurel|veil; clothing crimson|forest|navy|umber|ochre|black|grey|white|purple|teal|olive|sand; symbol = one emoji for their trade or defining object; age young|adult|old; scar true|false";
+  function personPortrait(n, size) {
+    if (n.portrait) return portraitSVG(n.portrait, size, ATT_HEX[n.attitude] || ATT_HEX.neutral);
+    const initial = esc((n.name || "?").trim().charAt(0).toUpperCase());
+    return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" role="img" aria-label="portrait"><circle cx="50" cy="50" r="47" fill="#1a1410" stroke="${ATT_HEX[n.attitude] || ATT_HEX.neutral}" stroke-width="2"/><text x="50" y="64" text-anchor="middle" font-size="42" fill="#8f8a82" font-family="Grenze Gotisch, serif">${initial}</text></svg>`;
+  }
+  function renderPeople(game, note) {
+    const list = [...game.npcsMet].sort((a, b) => (b.lastTurn ?? -1) - (a.lastTurn ?? -1));
+    const playing = game.status === "playing";
+    $("people-note").textContent = note || ""; $("people-note").hidden = !note;
+    $("people-body").innerHTML = list.length ? list.map((n) => {
+      const met = n.metClock ? `Day ${n.metClock.day}, ${timeOfDay(n.metClock.hour)}` : n.metChapter ? `"${esc(n.metChapter)}"` : "earlier in the tale";
+      const last = n.lastChapter && n.lastChapter !== n.metChapter ? ` \u00b7 last seen in "${esc(n.lastChapter)}"` : "";
+      const seen = n.seen && n.seen > 1 ? ` \u00b7 ${n.seen} scenes` : "";
+      return `<div class="card person">
+        <span class="portrait">${personPortrait(n, 56)}</span>
+        <div class="grow">
+          <div class="spread"><span class="nm">${esc(n.name)}</span><span class="tag" style="border-color:${ATT_COLOR[n.attitude] || "var(--border)"};color:${ATT_COLOR[n.attitude] || "var(--muted)"}">${esc(n.attitude || "neutral")}</span></div>
+          <div class="meta">${esc(n.role || "")}${n.real ? ` \u00b7 <span class="hist">&#10022; historical</span>` : ""}</div>
+          ${n.description ? `<div class="desc">${esc(n.description)}</div>` : ""}
+          <div class="trail">Met ${met}${last}${seen}</div>
+          ${playing ? `<button class="btn link" data-action="seek" data-name="${esc(n.name)}">Seek out ${esc(n.name)}</button>` : ""}
+        </div>
+      </div>`;
+    }).join("") : `<div class="card meta">No one yet. The people you deal with will gather here, with their faces and where you met them.</div>`;
+  }
+  async function paintPeople(game) {
+    if (!sample) return false;
+    const missing = game.npcsMet.filter((n) => !n.portrait && !n.portraitTried).slice(0, 12);
+    if (!missing.length) return false;
+    const prompt = `You are the Keeper of the Old Tavern painting small tavern-sign portraits of people in a tale. Era: ${game.era.name}${game.era.when ? `, ${game.era.when}` : ""}. For each person below choose their look using ONLY these fixed choices: ${PORTRAIT_CHOICES}. Fit the era, their role and description; a historical person should look as the record describes them.
+People:
+${missing.map((n) => `- ${n.name}: ${n.role || "unknown role"}. ${n.description || ""}`).join("\n")}
+Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"name":string,"portrait":{"skin":string,"hair":string,"hairStyle":string,"facialHair":string,"eyes":string,"headwear":string,"clothing":string,"symbol":string,"age":string,"scar":bool}}]`;
+    try {
+      const raw = await sample.json(prompt, { modelTier: "quick", cache: false });
+      for (const r of arr(raw)) {
+        const n = r && missing.find((m) => sameName(m.name, r.name));
+        if (n && r.portrait && typeof r.portrait === "object") n.portrait = normPortrait(r.portrait);
+      }
+      for (const n of missing) n.portraitTried = true;
+      await store.save(game);
+      return true;
+    } catch (e) { console.warn("portraits failed", e); return false; }
+  }
+  async function openPeople(game) {
+    const needs = game.npcsMet.some((n) => !n.portrait && !n.portraitTried);
+    renderPeople(game, needs ? "The Keeper is sketching faces..." : "");
+    openPanel("people");
+    if (needs) { await paintPeople(game); if (!$("people").hidden) renderPeople(game, ""); }
+  }
+
   function openMap(game) {
     if (!game.world) return;
     renderMap(game, null);
@@ -2074,9 +2149,12 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
         if (p) { p.known = true; game.mapAt = p.name; game.world.at = p.name; if (!game.world.visited.includes(p.name)) game.world.visited.push(p.name); }
       }
     }
+    const turnIndex = game.turns.length;
     for (const npc of scene.npcs) {
       const ex = game.npcsMet.find((n) => n.name.toLowerCase() === npc.name.toLowerCase());
-      if (ex) Object.assign(ex, npc); else game.npcsMet.push({ ...npc });
+      const trail = { lastTurn: turnIndex, lastChapter: scene.chapterTitle, lastClock: game.clock ? { ...game.clock } : null };
+      if (ex) { Object.assign(ex, npc, trail, { seen: (ex.seen || 1) + 1 }); if (ex.metTurn === undefined) { ex.metTurn = turnIndex; ex.metChapter = scene.chapterTitle; } }
+      else game.npcsMet.push({ ...npc, ...trail, seen: 1, metTurn: turnIndex, metChapter: scene.chapterTitle, metClock: game.clock ? { ...game.clock } : null });
     }
     if (game.hp <= 0 && !scene.ending) {
       scene.ending = { victory: false, epilogue: `${game.character.name}'s story ends here, in ${game.location || "a place far from home"}. The tavern will remember the name.` };
@@ -2282,6 +2360,9 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
     $("pack-n").textContent = String(packCount);
     $("pack-n").hidden = packCount === 0;
     $("mapbtn").hidden = !game.world;
+    $("peoplebtn").hidden = false;
+    $("people-n").textContent = String(game.npcsMet.length);
+    $("people-n").hidden = !game.npcsMet.length;
 
     const over = game.status === "ended";
     const parts = [];
@@ -2534,7 +2615,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   // and swap back out, restoring the scroll position. No fixed layers:
   // the viewer's frame handles those unpredictably.
   // ------------------------------------------------------------------
-  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map"];
+  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map", "people"];
   const panelStack = [];
   function openPanel(id) {
     const from = SCREENS.filter((k) => !$(k).hidden);
@@ -2557,7 +2638,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   function closeAllPanels() {
     while (panelStack.length) {
       const prev = panelStack.pop();
-      for (const k of ["sheet", "inventory", "paint", "item", "map"]) $(k).hidden = true;
+      for (const k of ["sheet", "inventory", "paint", "item", "map", "people"]) $(k).hidden = true;
       for (const k of prev.from) $(k).hidden = false;
       if (!panelStack.length) window.scrollTo(0, prev.scroll);
     }
@@ -2873,6 +2954,15 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       }
       case "close-item": itemCtx = null; closePanel("item"); break;
       case "map": if (current && current.world) openMap(current); break;
+      case "people": if (current) openPeople(current); break;
+      case "close-people": closePanel("people"); break;
+      case "seek": {
+        const game = games.get($("play").dataset.id);
+        if (!game || game.status !== "playing") break;
+        closeAllPanels();
+        act(game, { freeText: `I go looking for ${el.dataset.name}.` });
+        break;
+      }
       case "close-map": closePanel("map"); break;
       case "map-reset": if (mapCtx) setView({ x: 0, y: 0, w: mapCtx.w, h: mapCtx.h }); break;
       case "map-centre": centreOnHero(); break;
