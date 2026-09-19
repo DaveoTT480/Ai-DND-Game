@@ -159,6 +159,17 @@
   /* Saved tales */
   .tale { display: flex; gap: 12px; align-items: flex-start; text-align: left; width: 100%; background: none; border: 0; padding: 0; }
   .person { display: flex; gap: 12px; align-items: flex-start; }
+  .person img.face { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border); display: block; }
+  .drawer { width: 100%; max-width: 640px; padding: 6px 4px; }
+  .drawer button { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; border-bottom: 1px solid var(--border); padding: 12px 8px; color: var(--parchment); font-size: 15px; text-align: left; }
+  .drawer button:last-child { border-bottom: 0; }
+  .drawer .ic { font-size: 20px; width: 28px; text-align: center; flex: 0 0 auto; }
+  .drawer .cnt { margin-left: auto; color: var(--muted); font-size: 12px; }
+  .overlay.bottom { place-items: end center; padding: 0 12px calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .tag .face { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; display: block; flex: 0 0 auto; }
+  .tag svg.face { width: 20px; height: 20px; flex: 0 0 auto; }
+  .quest-entry { display: flex; gap: 10px; align-items: flex-start; }
+  .quest-entry .ic { flex: 0 0 auto; font-size: 18px; padding-top: 1px; }
   .person .nm { font-family: var(--display); font-size: 19px; font-weight: 600; line-height: 1.1; }
   .person .tag { margin: 0; font-size: 11px; padding: 2px 8px; flex: 0 0 auto; }
   .person .desc { font-size: 13px; color: var(--parchment-dim); margin-top: 2px; }
@@ -324,9 +335,7 @@
   </div>
   <div id="log" class="log"></div>
   <div class="inputbar">
-    <button id="pack" class="pack" data-action="inventory" aria-label="Inventory">&#127890;<span class="n" id="pack-n" hidden>0</span></button>
-    <button id="mapbtn" class="pack" data-action="map" aria-label="Map" hidden>&#128506;</button>
-    <button id="peoplebtn" class="pack" data-action="people" aria-label="People met" hidden>&#128101;<span class="n" id="people-n" hidden>0</span></button>
+    <button id="pack" class="pack" data-action="drawer" aria-label="Menu">&#9776;<span class="n" id="pack-n" hidden>0</span></button>
     <textarea id="free" rows="1" placeholder="Or do something else..."></textarea>
     <button id="send" class="send" data-action="send" aria-label="Act">&#8593;</button>
   </div>
@@ -347,7 +356,7 @@
 <section id="paint" class="sheet-panel" hidden>
   <div class="screen">
     <div class="spread">
-      <h2>A painted portrait</h2>
+      <h2 id="paint-title">A painted portrait</h2>
       <button class="btn link" data-action="close-paint">Done</button>
     </div>
     <p class="meta">This page cannot generate images itself, but any image generator can paint your hero from the prompt below. Save the result, then upload it here and it replaces the drawn portrait everywhere.</p>
@@ -372,6 +381,21 @@
       <button class="btn link" data-action="close-item">Done</button>
     </div>
     <div id="item-body" class="stack"></div>
+  </div>
+</section>
+
+<div id="drawer" class="overlay bottom" data-action="close-drawer" hidden>
+  <div class="card drawer" id="drawer-body"></div>
+</div>
+
+<!-- Quest log -->
+<section id="quests" class="sheet-panel" hidden>
+  <div class="screen">
+    <div class="spread">
+      <h2>Quest log</h2>
+      <button class="btn link" data-action="close-quests">Done</button>
+    </div>
+    <div id="quests-body" class="stack"></div>
   </div>
 </section>
 
@@ -1876,7 +1900,16 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
   // ------------------------------------------------------------------
   const ATT_HEX = { friendly: "#6ea45f", neutral: "#8f8a82", suspicious: "#c4914f", hostile: "#c9443a" };
   const PORTRAIT_CHOICES = "skin light|fair|tan|olive|brown|dark; hair black|brown|blond|red|grey|white|none; hairStyle short|long|braided|curly|topknot|bald; facialHair none|stubble|moustache|beard|fullbeard; eyes brown|blue|green|grey|hazel|dark; headwear none|hood|helmet|crown|hat|turban|headscarf|cap|laurel|veil; clothing crimson|forest|navy|umber|ochre|black|grey|white|purple|teal|olive|sand; symbol = one emoji for their trade or defining object; age young|adult|old; scar true|false";
+  /** A small face for a person named in a scene: uploaded picture, drawn portrait, or the attitude dot. */
+  function npcAvatar(game, n, size) {
+    const key = String(n.name || "").trim().toLowerCase();
+    const met = game.npcsMet.find((m) => sameName(m.name, n.name)) || game.npcsMet.find((m) => key.length > 3 && (m.name.toLowerCase().includes(key) || key.includes(m.name.toLowerCase()))) || n;
+    if (met.imageAssetId) return `<img class="face" src="/_blob/${esc(met.imageAssetId)}" width="${size}" height="${size}" alt="">`;
+    if (met.portrait) return `<span class="face" style="display:inline-block;width:${size}px;height:${size}px;line-height:0">${portraitSVG(met.portrait, size, ATT_HEX[n.attitude] || ATT_HEX.neutral)}</span>`;
+    return `<span class="dot" style="background:${ATT_COLOR[n.attitude] || "var(--muted)"}"></span>`;
+  }
   function personPortrait(n, size) {
+    if (n.imageAssetId) return `<img class="face" src="/_blob/${esc(n.imageAssetId)}" alt="portrait" style="border-color:${ATT_HEX[n.attitude] || ATT_HEX.neutral}">`;
     if (n.portrait) return portraitSVG(n.portrait, size, ATT_HEX[n.attitude] || ATT_HEX.neutral);
     const initial = esc((n.name || "?").trim().charAt(0).toUpperCase());
     return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" role="img" aria-label="portrait"><circle cx="50" cy="50" r="47" fill="#1a1410" stroke="${ATT_HEX[n.attitude] || ATT_HEX.neutral}" stroke-width="2"/><text x="50" y="64" text-anchor="middle" font-size="42" fill="#8f8a82" font-family="Grenze Gotisch, serif">${initial}</text></svg>`;
@@ -1896,7 +1929,7 @@ Reply with ONLY a JSON object: {"name":string (the land's name, max 40 chars),"b
           <div class="meta">${esc(n.role || "")}${n.real ? ` \u00b7 <span class="hist">&#10022; historical</span>` : ""}</div>
           ${n.description ? `<div class="desc">${esc(n.description)}</div>` : ""}
           <div class="trail">Met ${met}${last}${seen}</div>
-          ${playing ? `<button class="btn link" data-action="seek" data-name="${esc(n.name)}">Seek out ${esc(n.name)}</button>` : ""}
+          <div class="row" style="gap:12px">${playing ? `<button class="btn link" data-action="seek" data-name="${esc(n.name)}">Seek out</button>` : ""}<button class="btn link" data-action="paint-npc" data-name="${esc(n.name)}">&#127912; ${n.imageAssetId ? "Change picture" : "Picture"}</button></div>
         </div>
       </div>`;
     }).join("") : `<div class="card meta">No one yet. The people you deal with will gather here, with their faces and where you met them.</div>`;
@@ -1926,6 +1959,25 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     openPanel("people");
     if (needs) { await paintPeople(game); if (!$("people").hidden) renderPeople(game, ""); }
   }
+
+  function renderDrawer(game) {
+    const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
+    const loot = game.status === "playing" ? (game.turns[game.turns.length - 1]?.scene.loot || []).length : 0;
+    const items = [
+      ["inventory", "\u{1F392}", "Inventory", `${packCount} carried${loot ? ` \u00b7 ${loot} nearby` : ""}`],
+      game.world ? ["map", "\u{1F5FA}\uFE0F", "Map", game.mapAt ? `at ${game.mapAt}` : ""] : game.status === "playing" ? ["chart", "\u{1F5FA}\uFE0F", "Chart this land", "draw a map"] : null,
+      ["people", "\u{1F465}", "People met", String(game.npcsMet.length)],
+      ["quests", "\u{1F4DC}", "Quest log", String((game.questLog || game.quests).length)],
+      ["sheet", "\u{1F4D6}", "Character sheet & chronicle", `level ${game.level}`],
+    ].filter(Boolean);
+    $("drawer-body").innerHTML = items.map(([a, ic, label, cnt]) => `<button data-action="${a}"><span class="ic">${ic}</span><span>${label}</span><span class="cnt">${esc(cnt)}</span></button>`).join("");
+  }
+  function renderQuests(game) {
+    const log = [...(game.questLog || [])].reverse();
+    $("quests-body").innerHTML = log.length ? log.map((q) => `<div class="card quest-entry"><span class="ic">&#128220;</span><div><div>${esc(q.text)}</div><div class="meta" style="font-size:11.5px;margin-top:3px">${q.clock ? `Day ${q.clock.day}, ${esc(timeOfDay(q.clock.hour))}` : ""}${q.clock && q.chapter ? " \u00b7 " : ""}${q.chapter ? `"${esc(q.chapter)}"` : q.clock ? "" : "earlier in the tale"}</div></div></div>`).join("")
+      : `<div class="card meta">Nothing written yet. Leads, promises and debts the Dungeon Master notes will gather here.</div>`;
+  }
+  function openQuests(game) { renderQuests(game); openPanel("quests"); }
 
   function openMap(game) {
     if (!game.world) return;
@@ -2133,7 +2185,11 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
       if (idx === -1) continue;
       if (game.inventory[idx].quantity > 1) game.inventory[idx].quantity -= 1; else game.inventory.splice(idx, 1);
     }
-    for (const q of ch.questUpdates) { const t = q.trim(); if (t && !game.quests.includes(t)) game.quests.push(t); }
+    if (!Array.isArray(game.questLog)) game.questLog = [];
+    for (const q of ch.questUpdates) {
+      const t = q.trim();
+      if (t && !game.quests.includes(t)) { game.quests.push(t); game.questLog.push({ text: t, turn: game.turns.length, chapter: scene.chapterTitle, clock: game.clock ? { ...game.clock } : null }); }
+    }
     if (game.quests.length > 12) game.quests = game.quests.slice(-12);
     game.statusEffects = ch.statusEffects.map((s) => s.trim()).filter(Boolean);
     if (ch.location.trim()) game.location = ch.location.trim();
@@ -2203,6 +2259,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     if (!Array.isArray(g.passedScenarios)) g.passedScenarios = [];
     if (g.world && !Array.isArray(g.world.visited)) g.world.visited = [];
     if (g.world) g.world.places = arr(g.world.places).filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
+    if (!Array.isArray(g.questLog)) g.questLog = arr(g.quests).map((t) => ({ text: t, turn: null, chapter: "", clock: null }));
     if (typeof g.mapAt !== "string") g.mapAt = g.world ? g.world.at || "" : "";
     if (g.character && !g.character.portrait) g.character.portrait = normPortrait({ symbol: "\u2694\uFE0F" });
     if (Array.isArray(g.inventory)) g.inventory = g.inventory.map(normItem);
@@ -2359,10 +2416,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     const packCount = game.inventory.reduce((n, i) => n + (i.quantity || 1), 0);
     $("pack-n").textContent = String(packCount);
     $("pack-n").hidden = packCount === 0;
-    $("mapbtn").hidden = !game.world;
-    $("peoplebtn").hidden = false;
-    $("people-n").textContent = String(game.npcsMet.length);
-    $("people-n").hidden = !game.npcsMet.length;
+
 
     const over = game.status === "ended";
     const parts = [];
@@ -2420,7 +2474,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
         <div><div class="what">${esc(d.skill || LONG[d.ability])} check</div><div class="math">${d.roll} ${d.modifier >= 0 ? "+" : "-"} ${Math.abs(d.modifier)} = ${d.total} vs DC ${d.dc}</div></div>
         <div class="verdict">${d.roll === 20 ? "Critical!" : d.roll === 1 ? "Fumble!" : d.success ? "Success" : "Failure"}</div></div>` : ""}
       <div class="narration">${md(s.narration)}</div>
-      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag"><span class="dot" style="background:${ATT_COLOR[n.attitude]}"></span>${esc(n.name)}, ${esc(n.role)}${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}</span>`).join("")}</div>` : ""}
+      ${s.npcs.length ? `<div>${s.npcs.map((n) => `<span class="tag">${npcAvatar(game, n, 20)}${esc(n.name)}, ${esc(n.role)}${n.real ? ` <span class="hist">&#10022; historical</span>` : ""}</span>`).join("")}</div>` : ""}
       ${lines.length ? `<div class="changes">${lines.join("")}</div>` : ""}
       ${loot}
       ${s.ending ? `<div class="ending ${s.ending.victory ? "win" : "lose"}"><h4>${s.ending.victory ? "Victory" : "The End"}</h4><div class="narration">${md(s.ending.epilogue)}</div></div>` : ""}
@@ -2615,7 +2669,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
   // and swap back out, restoring the scroll position. No fixed layers:
   // the viewer's frame handles those unpredictably.
   // ------------------------------------------------------------------
-  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map", "people"];
+  const SCREENS = ["home", "forge", "pick", "play", "sheet", "inventory", "paint", "item", "map", "people", "quests"];
   const panelStack = [];
   function openPanel(id) {
     const from = SCREENS.filter((k) => !$(k).hidden);
@@ -2638,7 +2692,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
   function closeAllPanels() {
     while (panelStack.length) {
       const prev = panelStack.pop();
-      for (const k of ["sheet", "inventory", "paint", "item", "map", "people"]) $(k).hidden = true;
+      for (const k of ["sheet", "inventory", "paint", "item", "map", "people", "quests"]) $(k).hidden = true;
       for (const k of prev.from) $(k).hidden = false;
       if (!panelStack.length) window.scrollTo(0, prev.scroll);
     }
@@ -2782,13 +2836,27 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
   // Painted portrait: prompt for an outside generator, upload the result
   // ------------------------------------------------------------------
   let paintGameId = null;
-  function openPaint(game) {
+  let paintNpc = null; // name of the person being painted, or null for the hero
+  function paintTarget(game) { return paintNpc ? game.npcsMet.find((m) => sameName(m.name, paintNpc)) || null : null; }
+  function npcPaintPrompt(game, n) {
+    const era = game.era || {};
+    const p = n.portrait ? normPortrait(n.portrait) : null;
+    const look = p ? ` ${p.age} ${p.skin}-skinned face, ${p.hairStyle === "bald" ? "shaved head" : `${p.hairStyle} ${p.hair} hair`}, ${p.eyes} eyes${p.facialHair !== "none" ? `, ${p.facialHair === "fullbeard" ? "full beard" : p.facialHair}` : ""}${p.headwear !== "none" ? `, wearing a ${p.headwear}` : ""}, ${p.clothing} clothing${p.scar ? ", a scar on the cheek" : ""}.` : "";
+    return `Painterly character portrait, bust framing, of ${n.name}, ${n.role || "a figure"} from ${era.name || "a fantasy world"}${era.when ? ` (${era.when})` : ""}${n.real ? ", a real historical person, faithful to how the record describes them" : ""}, period-accurate dress, no anachronisms. ${n.description || ""}${look} Oil painting with visible brushwork, dramatic warm rim light from behind, ember glow, dark smoky background, highly detailed face, gaze slightly off camera, moody, square composition, no text, no watermark, no frame.`;
+  }
+  function openPaint(game, npcName) {
     paintGameId = game.id;
-    $("paint-prompt").value = paintPrompt(game);
+    paintNpc = npcName || null;
+    const n = paintTarget(game);
+    if (npcName && !n) return;
+    const current = n ? n.imageAssetId : game.portraitAssetId;
+    $("paint-title").textContent = n ? `A picture of ${n.name}` : "A painted portrait";
+    $("paint-prompt").value = n ? npcPaintPrompt(game, n) : paintPrompt(game);
     $("paint-status").textContent = assets ? "" : "Uploads are not available in this view.";
     $("paint-file").disabled = !assets;
-    $("paint-preview").innerHTML = game.portraitAssetId ? `<img src="/_blob/${esc(game.portraitAssetId)}" width="160" height="160" alt="portrait">` : "";
-    $("paint-remove").hidden = !game.portraitAssetId;
+    $("paint-preview").innerHTML = current ? `<img src="/_blob/${esc(current)}" width="160" height="160" alt="portrait">` : "";
+    $("paint-remove").hidden = !current;
+    $("paint-remove").textContent = n ? "Remove the picture and use the drawn face" : "Remove painted portrait and use the drawn one";
     openPanel("paint");
   }
 
@@ -2818,11 +2886,12 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
     try {
       const blob = await squareJpeg(file);
       const result = await assets.upload(blob, { type: "image/jpeg" });
-      const old = game.portraitAssetId;
-      game.portraitAssetId = result.id;
+      const n = paintTarget(game);
+      const old = n ? n.imageAssetId : game.portraitAssetId;
+      if (n) n.imageAssetId = result.id; else game.portraitAssetId = result.id;
       await store.save(game);
       if (old) assets.delete(old).catch(() => undefined);
-      status.textContent = "Portrait saved.";
+      status.textContent = n ? "Picture saved." : "Portrait saved.";
       $("paint-preview").innerHTML = `<img src="/_blob/${esc(result.id)}" width="160" height="160" alt="portrait">`;
       $("paint-remove").hidden = false;
       render();
@@ -2833,9 +2902,11 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
 
   async function removePortrait() {
     const game = games.get(paintGameId);
-    if (!game || !game.portraitAssetId) return;
-    const old = game.portraitAssetId;
-    game.portraitAssetId = null;
+    if (!game) return;
+    const n = paintTarget(game);
+    const old = n ? n.imageAssetId : game.portraitAssetId;
+    if (!old) return;
+    if (n) n.imageAssetId = null; else game.portraitAssetId = null;
     await store.save(game);
     if (assets) assets.delete(old).catch(() => undefined);
     $("paint-preview").innerHTML = "";
@@ -2867,6 +2938,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       return;
     }
     const action = el.dataset.action;
+    if (action !== "drawer") $("drawer").hidden = true;
     const current = games.get($("play").dataset.id) || games.get($("pick").dataset.id);
     switch (action) {
       case "home": ev.stopPropagation(); go("#home"); break;
@@ -2934,7 +3006,7 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       case "sheet": if (current) openSheet(current); break;
       case "close-sheet": closePanel("sheet"); break;
       case "inventory": if (current) openInventory(current); break;
-      case "paint": if (current) openPaint(current); break;
+      case "paint": if (current) openPaint(current, null); break;
       case "close-paint": closePanel("paint"); break;
       case "copy-prompt": {
         const box = $("paint-prompt");
@@ -2955,6 +3027,11 @@ Keep the name exactly "${item.name}". Era: ${game.era.name}${game.era.when ? `, 
       case "close-item": itemCtx = null; closePanel("item"); break;
       case "map": if (current && current.world) openMap(current); break;
       case "people": if (current) openPeople(current); break;
+      case "drawer": if (current) { renderDrawer(current); $("drawer").hidden = false; } break;
+      case "close-drawer": break;
+      case "quests": if (current) openQuests(current); break;
+      case "close-quests": closePanel("quests"); break;
+      case "paint-npc": if (current) openPaint(current, el.dataset.name); break;
       case "close-people": closePanel("people"); break;
       case "seek": {
         const game = games.get($("play").dataset.id);
