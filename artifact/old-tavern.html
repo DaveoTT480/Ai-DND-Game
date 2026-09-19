@@ -1337,7 +1337,8 @@ Reply with ONLY a JSON object, no prose before or after, exactly this shape:
 
 ## Voice and style
 - Second person, present tense ("You push open the door...").
-- Vivid, concrete, and tight: 140 to 240 words of narration per turn, in short paragraphs. Keep every other string brief; the whole reply must stay compact.
+- Vivid, concrete, and tight: 140 to 220 words of narration per turn, in short paragraphs. Keep every other string brief; the whole reply must stay compact.
+- Plain English only, in the narration and everywhere else: no characters from other scripts.
 - Give NPCs names, distinct voices and wants of their own. Quote their dialogue directly.
 - Tone for this adventure: ${game.tone}. Stay in it.
 - Never break character, never mention being an AI, never explain rules unless asked in play.
@@ -1401,7 +1402,7 @@ Setting: ${s.setting}
 Opening location: ${s.openingLocation}
 
 ## Output
-Reply with ONLY a JSON object, no prose before or after, exactly this shape:
+Reply with ONLY a JSON object, no prose before or after. The whole scene, dialogue included, goes inside the narration string. Exactly this shape:
 {"chapterTitle":string (max 40 chars),"narration":string (markdown),"diceResult":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int,"roll":int,"modifier":int,"total":int,"success":bool,"summary":string},
  "npcs":[{"name":string,"role":string,"description":string,"attitude":"friendly|neutral|suspicious|hostile","real":bool}],
  "choices":[{"id":"a","label":string,"hint":string,"check":null|{"ability":"STR|DEX|CON|INT|WIS|CHA","skill":string|null,"dc":int}}],
@@ -2103,35 +2104,64 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     return level;
   }
 
+  let lastBadReply = "";
+  /** Last resort for a scene reply: pull the narration and choices out with regular expressions, or treat plain prose as the scene. */
+  function scrapeScene(text) {
+    text = String(text || "").trim();
+    if (!text) return null;
+    const unq = (v) => { try { return JSON.parse(`"${v}"`); } catch { return v.replace(/\\n/g, "\n").replace(/\\"/g, '"'); } };
+    const grab = (key) => { const m = text.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)`)); return m ? unq(m[1]) : ""; };
+    let narration = grab("narration");
+    let chapterTitle = grab("chapterTitle");
+    const labels = [...text.matchAll(/"label"\s*:\s*"((?:[^"\\]|\\.)*)"/g)].map((m) => unq(m[1])).slice(0, 4);
+    if (!narration) {
+      if (/[{}]/.test(text) || text.length < 80) return null;
+      narration = text.replace(/```[a-z]*\n?/gi, "").trim();
+    }
+    if (narration.length < 40) return null;
+    const mood = (text.match(/"mood"\s*:\s*"([a-z]+)"/) || [])[1];
+    const choices = (labels.length ? labels : ["Press on", "Look around carefully", "Wait and watch"]).map((label, i) => ({ id: "abcd"[i], label, hint: "", check: null }));
+    return { chapterTitle: chapterTitle || "The Story Continues", narration, diceResult: null, npcs: [], choices, stateChange: {}, loot: [], recap: grab("recap") || narration.slice(0, 120), mood: mood || "calm", ending: null };
+  }
+
   /** Best-effort parse of a reply that was cut short or wrapped in prose: close open strings and brackets. */
   function salvageJSON(text) {
     if (!text) return null;
     let s = String(text);
     const fence = s.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/i);
     if (fence) s = fence[1];
-    const start = s.search(/[{[]/);
-    if (start < 0) return null;
-    s = s.slice(start);
     const tryParse = (t) => { try { return JSON.parse(t); } catch { return null; } };
-    let v = tryParse(s);
-    if (v) return v;
-    const stack = []; let inStr = false, escd = false, out = "";
-    for (const ch of s) {
-      out += ch;
-      if (inStr) { if (escd) escd = false; else if (ch === "\\") escd = true; else if (ch === '"') inStr = false; continue; }
-      if (ch === '"') inStr = true;
-      else if (ch === "{" || ch === "[") stack.push(ch);
-      else if (ch === "}" || ch === "]") stack.pop();
+    const closeUp = (t) => {
+      const stack = []; let inStr = false, escd = false, out = "";
+      for (const ch of t) {
+        out += ch;
+        if (inStr) { if (escd) escd = false; else if (ch === "\\") escd = true; else if (ch === '"') inStr = false; continue; }
+        if (ch === '"') inStr = true;
+        else if (ch === "{" || ch === "[") stack.push(ch);
+        else if (ch === "}" || ch === "]") stack.pop();
+      }
+      if (inStr) out += '"';
+      const closers = stack.map((c) => (c === "{" ? "}" : "]")).reverse().join("");
+      const attempts = [
+        out,
+        out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, ""),
+        out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, "").replace(/:\s*$/, ":null"),
+        out.replace(/,\s*"(?:[^"\\]|\\.)*"\s*:\s*(?:"(?:[^"\\]|\\.)*"|[^,}\]]*)$/, ""),
+      ];
+      for (const a of attempts) { const v = tryParse(a + closers); if (v) return v; }
+      return null;
+    };
+    // Candidate starts: the first brace, then the object that holds the scene's own keys.
+    const starts = [];
+    const first = s.search(/[{[]/);
+    if (first >= 0) starts.push(first);
+    const keyAt = s.search(/"(chapterTitle|narration|character|places)"\s*:/);
+    if (keyAt > 0) { const k = s.lastIndexOf("{", keyAt); if (k >= 0 && !starts.includes(k)) starts.push(k); }
+    for (const at of starts) {
+      const t = s.slice(at);
+      const v = tryParse(t) || closeUp(t);
+      if (v && typeof v === "object") return v;
     }
-    if (inStr) out += '"';
-    const closers = () => stack.map((c) => (c === "{" ? "}" : "]")).reverse().join("");
-    const attempts = [
-      out,
-      out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, ""),
-      out.replace(/,\s*("(?:[^"\\]|\\.)*"\s*:?\s*)?$/, "").replace(/:\s*$/, ":null"),
-      out.replace(/,\s*"(?:[^"\\]|\\.)*"\s*:\s*(?:"(?:[^"\\]|\\.)*"|[^,}\]]*)$/, ""),
-    ];
-    for (const a of attempts) { v = tryParse(a + closers()); if (v) return v; }
     return null;
   }
 
@@ -2146,7 +2176,11 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
       // The reply was cut off or had prose around it. Keep what can be kept...
       const fixed = salvageJSON(e.text);
       if (fixed && typeof fixed === "object" && (!o.accept || o.accept(fixed))) { console.warn("Kept a cut-off reply", e.message); return fixed; }
-      if (o.retried) throw e;
+      if (o.retried) {
+        if (o.scrape) { const scraped = o.scrape(e.text); if (scraped) { console.warn("Scraped a broken reply", e.message); return scraped; } }
+        lastBadReply = String(e.text || "").slice(-1600);
+        throw e;
+      }
       // ...else ask once more, briefer, on the same conversation.
       const nudge = "\n\nYour previous reply was cut off or was not valid JSON. Reply again with ONLY the JSON object and keep it shorter: narration under 150 words, at most 2 loot items, every string brief.";
       const again = Array.isArray(input) ? [...input.slice(0, -1), { role: "user", content: input[input.length - 1].content + nudge }] : input + nudge;
@@ -2198,7 +2232,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     const fateRoll = d20();
     const draft = { ...game, scenario, location: scenario.openingLocation, status: "playing" };
     const opening = `Begin the adventure. Open on the hero in the opening location with a vivid scene, introduce the first hook or complication, and end with the first set of choices.\n\nCurrent state:\n${stateBlock(draft)}\n\nFate die for this turn: ${fateRoll}\n\nJSON only.`;
-    const scene = normScene(await askDM(buildTurns(draft, opening), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40 }));
+    const scene = normScene(await askDM(buildTurns(draft, opening), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40, scrape: scrapeScene }));
     Object.assign(game, draft);
     applyScene(game, { kind: "start", text: "Begin the adventure", choiceId: null }, fateRoll, scene);
     await store.save(game);
@@ -2224,7 +2258,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     parts.push(action.kind === "choice" ? `The player chooses: ${action.text}` : `The player says: "${action.text}"`, "");
     parts.push(resolved ? `The game already rolled for this choice: ${resolved}. Honour this result exactly and include it in diceResult.` : `Fate die for this turn: ${fateRoll}. Use it only if the action calls for a check.`);
     parts.push("", "Current state:", stateBlock(game), "", "Narrate what happens next and offer new choices. JSON only.");
-    const scene = normScene(await askDM(buildTurns(game, parts.join("\n")), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40 }));
+    const scene = normScene(await askDM(buildTurns(game, parts.join("\n")), { accept: (r) => typeof r.narration === "string" && r.narration.length > 40, scrape: scrapeScene }));
     applyScene(game, action, fateRoll, scene);
     await store.save(game);
     return game;
@@ -2502,7 +2536,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
     if (busy) {
       parts.push(`<div class="scene thinking"><div class="spinner"></div><span id="think-line">${THINK_LINES[0]}</span><button class="stop" data-action="stop">Stop</button></div>`);
     } else {
-      if (lastError) parts.push(`<div class="card error">${esc(lastError)}</div>`);
+      if (lastError) parts.push(`<div class="card error">${esc(lastError)}${lastBadReply ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--muted)">Show what the Keeper actually said</summary><pre style="white-space:pre-wrap;font-size:11px;color:var(--muted);max-height:220px;overflow:auto;margin:6px 0 0">${esc(lastBadReply)}</pre></details>` : ""}</div>`);
       const last = game.turns[game.turns.length - 1];
       if (last && last.scene.choices.length) {
         parts.push(`<div class="choices"><div class="label">What do you do?</div>${last.scene.choices.map((c) => `
@@ -2648,7 +2682,7 @@ Reply with ONLY a JSON array, one entry per person, names exactly as given: [{"n
   async function act(game, body) {
     if (busy) return;
     busy = true;
-    lastError = "";
+    lastError = ""; lastBadReply = "";
     let taken = false;
     renderPlay(game);
     const ticker = rotate("think-line", THINK_LINES, 4000);
